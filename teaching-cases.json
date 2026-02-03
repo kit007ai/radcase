@@ -1,0 +1,226 @@
+{
+  "version": "1.0",
+  "description": "RadCase Teaching Case Archive - Classic Radiology Cases",
+  "cases": [
+    {
+      "title": "Tension Pneumothorax",
+      "modality": "X-Ray",
+      "body_part": "Chest",
+      "difficulty": 2,
+      "diagnosis": "Left-sided tension pneumothorax",
+      "clinical_history": "45-year-old male presents to the ED after a motor vehicle collision. Patient is hypotensive, tachycardic, and in respiratory distress. Decreased breath sounds on the left.",
+      "findings": "• Complete collapse of the left lung\n• Mediastinal shift to the right\n• Depression of the left hemidiaphragm\n• Widening of the left intercostal spaces\n• Tracheal deviation to the right",
+      "teaching_points": "• Tension pneumothorax is a clinical diagnosis - do not delay treatment for imaging\n• Key finding is mediastinal shift AWAY from the affected side\n• Immediate needle decompression followed by chest tube is life-saving\n• Differentiate from simple pneumothorax (no mediastinal shift)",
+      "tags": ["emergency", "trauma", "classic", "must-know"]
+    },
+    {
+      "title": "Pulmonary Embolism - Saddle Type",
+      "modality": "CT",
+      "body_part": "Chest",
+      "difficulty": 3,
+      "diagnosis": "Saddle pulmonary embolism",
+      "clinical_history": "62-year-old female with sudden onset dyspnea and pleuritic chest pain. Recent hip replacement surgery 2 weeks ago. D-dimer elevated at 4500 ng/mL.",
+      "findings": "• Large filling defect straddling the main pulmonary artery bifurcation (saddle embolus)\n• Extension into bilateral main pulmonary arteries\n• Right heart strain: RV/LV ratio > 1.0\n• Reflux of contrast into the IVC and hepatic veins\n• Mosaic attenuation of lung parenchyma",
+      "teaching_points": "• Saddle PE has high mortality - emergent consult for thrombolysis or embolectomy\n• RV strain on CT predicts worse outcomes\n• Wells criteria and D-dimer help stratify pre-test probability\n• Look for DVT source - consider lower extremity venous ultrasound\n• Window/level: mediastinal windows, ~100-300 HU width",
+      "tags": ["emergency", "vascular", "classic", "pe", "must-know"]
+    },
+    {
+      "title": "Acute Appendicitis",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 2,
+      "diagnosis": "Acute uncomplicated appendicitis",
+      "clinical_history": "28-year-old male with 18 hours of periumbilical pain that has migrated to the right lower quadrant. Fever 38.2°C, WBC 14,000.",
+      "findings": "• Dilated appendix measuring 12mm in diameter (normal <6mm)\n• Appendiceal wall thickening and enhancement\n• Periappendiceal fat stranding\n• No extraluminal air or abscess\n• Appendicolith present at the base",
+      "teaching_points": "• Appendix >6mm with periappendiceal inflammation is diagnostic\n• Appendicolith increases risk of perforation\n• Look for secondary signs: cecal apical thickening, local lymphadenopathy\n• Perforation signs: extraluminal air, abscess, phlegmon\n• In women of childbearing age, consider ovarian pathology in differential",
+      "tags": ["emergency", "gi", "classic", "must-know", "surgical"]
+    },
+    {
+      "title": "Acute Ischemic Stroke - MCA Territory",
+      "modality": "CT",
+      "body_part": "Head",
+      "difficulty": 3,
+      "diagnosis": "Acute left MCA territory infarct",
+      "clinical_history": "72-year-old male with sudden onset right hemiparesis and aphasia. Symptoms began 2 hours ago. History of atrial fibrillation, not on anticoagulation.",
+      "findings": "• Hyperdense left MCA sign (acute thrombus)\n• Loss of gray-white differentiation in left insular cortex\n• Subtle effacement of left sylvian fissure\n• Loss of definition of left lentiform nucleus\n• ASPECTS score: 7",
+      "teaching_points": "• Early CT signs appear within 3-6 hours: hyperdense vessel, insular ribbon sign, loss of basal ganglia definition\n• ASPECTS score helps quantify infarct extent (≥7 favorable for intervention)\n• Window width 30-40 HU, center 30-40 HU to detect subtle changes\n• CT angiography essential to identify occlusion site for thrombectomy\n• Time is brain - door to needle <60 min for tPA",
+      "tags": ["emergency", "neuro", "stroke", "classic", "must-know"]
+    },
+    {
+      "title": "Subarachnoid Hemorrhage",
+      "modality": "CT",
+      "body_part": "Head",
+      "difficulty": 2,
+      "diagnosis": "Aneurysmal subarachnoid hemorrhage",
+      "clinical_history": "55-year-old female with sudden onset 'worst headache of my life' followed by brief loss of consciousness. Now alert but photophobic with neck stiffness.",
+      "findings": "• High-density blood in the basal cisterns (suprasellar, ambient, quadrigeminal)\n• Blood in the Sylvian fissures bilaterally\n• Extension into the interhemispheric fissure\n• No hydrocephalus currently\n• Modified Fisher Grade 3",
+      "teaching_points": "• CT sensitivity for SAH decreases with time: 95% day 1, 50% day 7\n• If CT negative but high clinical suspicion, perform lumbar puncture\n• Pattern of blood can suggest aneurysm location (anterior communicating most common)\n• CTA should follow to identify aneurysm\n• Watch for complications: rebleeding, vasospasm, hydrocephalus",
+      "tags": ["emergency", "neuro", "vascular", "classic", "must-know"]
+    },
+    {
+      "title": "Small Bowel Obstruction",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 2,
+      "diagnosis": "High-grade small bowel obstruction secondary to adhesions",
+      "clinical_history": "68-year-old female with abdominal distension, vomiting, and obstipation for 2 days. History of hysterectomy 10 years ago. Last bowel movement 3 days ago.",
+      "findings": "• Dilated small bowel loops (>3cm) with air-fluid levels\n• Transition point in the right lower quadrant\n• Decompressed distal small bowel and colon\n• Small bowel feces sign proximal to obstruction\n• No free air or bowel wall thickening to suggest ischemia",
+      "teaching_points": "• 3-6-9 rule: small bowel >3cm, large bowel >6cm, cecum >9cm is dilated\n• Adhesions are the most common cause of SBO in patients with prior surgery\n• Transition point: where dilated bowel meets decompressed bowel\n• Closed loop obstruction and strangulation require emergent surgery\n• Signs of ischemia: decreased enhancement, pneumatosis, portal venous gas",
+      "tags": ["emergency", "gi", "classic", "surgical", "must-know"]
+    },
+    {
+      "title": "Aortic Dissection - Type A",
+      "modality": "CT",
+      "body_part": "Chest",
+      "difficulty": 4,
+      "diagnosis": "Stanford Type A aortic dissection",
+      "clinical_history": "58-year-old male with sudden onset tearing chest pain radiating to the back. History of poorly controlled hypertension. BP 180/110 mmHg, pulse deficit noted in left arm.",
+      "findings": "• Intimal flap extending from the aortic root to the descending thoracic aorta\n• True and false lumens identified with differential enhancement\n• False lumen is larger and has slower flow\n• Dissection extends into the left common carotid artery\n• Moderate pericardial effusion concerning for hemopericardium",
+      "teaching_points": "• Type A (involves ascending aorta) is a surgical emergency - mortality 1-2% per hour untreated\n• Type B (descending only) typically managed medically unless complicated\n• Look for malperfusion: coronary, cerebral, mesenteric, renal, limb\n• Pericardial effusion suggests rupture - extremely high mortality\n• ECG-gated CT helps reduce motion artifact at the root",
+      "tags": ["emergency", "vascular", "cardiac", "must-know", "classic"]
+    },
+    {
+      "title": "Lobar Pneumonia",
+      "modality": "X-Ray",
+      "body_part": "Chest",
+      "difficulty": 1,
+      "diagnosis": "Right lower lobe pneumonia",
+      "clinical_history": "45-year-old male smoker with 5 days of productive cough, fever, and right-sided pleuritic chest pain. Temperature 39°C, SpO2 92% on room air.",
+      "findings": "• Dense airspace consolidation in the right lower lobe\n• Air bronchograms visible within the consolidation\n• Silhouetting of the right hemidiaphragm\n• No significant pleural effusion\n• No cavitation",
+      "teaching_points": "• Silhouette sign helps localize: RLL silhouettes the diaphragm, RML silhouettes the right heart border\n• Air bronchograms indicate airspace (not atelectatic) process\n• Consider CT if: immunocompromised, not improving on antibiotics, suspected complication\n• Follow-up imaging in 6-8 weeks to document resolution (especially in smokers to exclude mass)",
+      "tags": ["infection", "pulmonary", "classic", "common"]
+    },
+    {
+      "title": "Renal Cell Carcinoma",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 3,
+      "diagnosis": "Left renal cell carcinoma with renal vein invasion",
+      "clinical_history": "62-year-old male with incidentally discovered renal mass on ultrasound performed for unrelated abdominal pain. No hematuria. Mild flank discomfort.",
+      "findings": "• 7cm heterogeneously enhancing mass arising from the left kidney\n• Enhancement >20 HU between unenhanced and nephrographic phases\n• Tumor thrombus extending into the left renal vein\n• No IVC extension\n• No lymphadenopathy or distant metastases",
+      "teaching_points": "• Enhancement >20 HU is the key criterion for a solid renal mass\n• Bosniak classification for cystic lesions (I, II, IIF, III, IV)\n• Always evaluate the renal vein and IVC for tumor thrombus - affects surgical approach\n• RCC spreads to lungs, bones, and brain - staging CT chest recommended\n• Classic triad (hematuria, flank pain, palpable mass) seen in only 10%",
+      "tags": ["oncology", "gu", "staging", "classic"]
+    },
+    {
+      "title": "Pneumoperitoneum - Perforated Viscus",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 2,
+      "diagnosis": "Perforated duodenal ulcer with pneumoperitoneum",
+      "clinical_history": "52-year-old male with sudden onset severe epigastric pain. Rigid abdomen on examination. History of NSAID use for chronic back pain. No prior abdominal surgery.",
+      "findings": "• Large volume free intraperitoneal air\n• Air tracking along the falciform ligament\n• Focal discontinuity of the anterior duodenal wall\n• Surrounding inflammatory changes in the periduodenal fat\n• Small amount of free fluid in the pelvis",
+      "teaching_points": "• Free air is best seen on CT with lung windows\n• Upright CXR: air under the diaphragm (more on right due to liver providing contrast)\n• Most common causes: perforated peptic ulcer, diverticulitis, appendicitis\n• Rigler sign on plain film: both sides of bowel wall visible\n• Emergent surgical consultation required",
+      "tags": ["emergency", "gi", "surgical", "classic", "must-know"]
+    },
+    {
+      "title": "Epidural Hematoma",
+      "modality": "CT",
+      "body_part": "Head",
+      "difficulty": 2,
+      "diagnosis": "Acute epidural hematoma",
+      "clinical_history": "22-year-old male brought in after assault with loss of consciousness. Had a 'lucid interval' before becoming increasingly drowsy. Left temporal scalp laceration noted.",
+      "findings": "• Biconvex (lens-shaped) hyperdense extra-axial collection in the left temporal region\n• Does not cross suture lines\n• Associated left temporal bone fracture\n• 8mm midline shift to the right\n• Effacement of the left lateral ventricle",
+      "teaching_points": "• Biconvex shape is classic - dura stripped from calvarium\n• 85% associated with skull fracture (usually middle meningeal artery)\n• Lucid interval is classic history but only present in 20-50%\n• Does NOT cross sutures (dura attached at sutures)\n• Surgical emergency if: >30cc volume, >15mm thickness, >5mm midline shift, GCS <8",
+      "tags": ["emergency", "neuro", "trauma", "classic", "must-know"]
+    },
+    {
+      "title": "Subdural Hematoma - Acute",
+      "modality": "CT",
+      "body_part": "Head",
+      "difficulty": 2,
+      "diagnosis": "Acute subdural hematoma",
+      "clinical_history": "78-year-old female on warfarin found unresponsive at home. INR 4.2. Unknown time of symptom onset. Evidence of head trauma.",
+      "findings": "• Crescentic hyperdense extra-axial collection along the right cerebral convexity\n• Crosses suture lines, limited by falx and tentorium\n• 12mm thickness with 10mm midline shift\n• Compression of the right lateral ventricle\n• Uncal herniation with effacement of the suprasellar cistern",
+      "teaching_points": "• Crescentic shape (concave toward brain) - follows brain surface\n• Crosses sutures but NOT dural reflections (falx, tentorium)\n• Elderly and anticoagulated patients at highest risk\n• CT density changes with age: acute (hyperdense) → subacute (isodense) → chronic (hypodense)\n• Anticoagulation reversal is critical - consult hematology",
+      "tags": ["emergency", "neuro", "trauma", "classic", "must-know"]
+    },
+    {
+      "title": "Cholecystitis - Acute",
+      "modality": "Ultrasound",
+      "body_part": "Abdomen",
+      "difficulty": 2,
+      "diagnosis": "Acute calculous cholecystitis",
+      "clinical_history": "48-year-old obese female with RUQ pain after eating, nausea, and fever. Positive Murphy's sign on examination. WBC 15,000.",
+      "findings": "• Gallbladder wall thickening >3mm\n• Pericholecystic fluid\n• Multiple gallstones with posterior acoustic shadowing\n• Stone impacted in the gallbladder neck\n• Sonographic Murphy's sign positive",
+      "teaching_points": "• Ultrasound is first-line imaging for suspected cholecystitis\n• Sonographic Murphy sign: maximal tenderness when transducer presses on gallbladder\n• HIDA scan if ultrasound equivocal (non-visualization of GB = cystic duct obstruction)\n• Complications: gangrenous cholecystitis, perforation, emphysematous cholecystitis\n• Acalculous cholecystitis in critically ill patients - high mortality",
+      "tags": ["gi", "hepatobiliary", "classic", "common", "surgical"]
+    },
+    {
+      "title": "Abdominal Aortic Aneurysm - Ruptured",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 3,
+      "diagnosis": "Ruptured infrarenal abdominal aortic aneurysm",
+      "clinical_history": "72-year-old male with sudden severe abdominal and back pain. Hypotensive with BP 80/50. Known 5.5cm AAA on prior imaging, declined elective repair.",
+      "findings": "• 7cm infrarenal aortic aneurysm with eccentric mural thrombus\n• Discontinuity of the posterior aortic wall on the left\n• Large retroperitoneal hematoma with active contrast extravasation\n• Hematoma tracking into the left psoas muscle\n• Draped aorta sign - posterior wall draped over spine",
+      "teaching_points": "• Ruptured AAA has 80-90% mortality - immediate surgical/endovascular repair\n• Classic triad: abdominal/back pain, pulsatile mass, hypotension (only 50% present)\n• Contained rupture may be stable initially - can decompensate rapidly\n• High-attenuating crescent sign indicates impending rupture\n• Most ruptures are posterior/left posterolateral",
+      "tags": ["emergency", "vascular", "classic", "must-know", "surgical"]
+    },
+    {
+      "title": "Pulmonary Nodule - Suspicious",
+      "modality": "CT",
+      "body_part": "Chest",
+      "difficulty": 3,
+      "diagnosis": "Suspicious pulmonary nodule - primary lung cancer",
+      "clinical_history": "65-year-old male with 40 pack-year smoking history. Incidental 18mm pulmonary nodule found on CT performed for trauma. No prior imaging available.",
+      "findings": "• 18mm spiculated solid nodule in the right upper lobe\n• Pleural tail extending toward the major fissure\n• No calcification or fat attenuation\n• Adjacent ground-glass halo\n• Mildly enlarged right hilar lymph node (12mm short axis)",
+      "teaching_points": "• Spiculation, size >8mm, upper lobe location increase malignancy risk\n• Fleischner Society guidelines for nodule follow-up based on size and risk\n• PET-CT for nodules >8mm to assess metabolic activity\n• Tissue diagnosis required before treatment - consider CT-guided biopsy vs bronchoscopy\n• Lung-RADS for screening population nodule management",
+      "tags": ["oncology", "pulmonary", "screening", "must-know"]
+    },
+    {
+      "title": "Mesenteric Ischemia - Acute",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 4,
+      "diagnosis": "Acute superior mesenteric artery occlusion with bowel ischemia",
+      "clinical_history": "76-year-old female with atrial fibrillation presenting with acute severe abdominal pain 'out of proportion to exam.' Pain began 6 hours ago after eating.",
+      "findings": "• Filling defect in the proximal SMA consistent with embolus\n• Decreased enhancement of multiple jejunal loops\n• Bowel wall thickening with submucosal edema (target sign)\n• Pneumatosis intestinalis in affected segments\n• Portal venous gas",
+      "teaching_points": "• 'Pain out of proportion to exam' is the classic clinical clue\n• SMA embolism (usually cardiac source) vs SMA thrombosis (atherosclerotic)\n• CT signs of ischemia: decreased enhancement, wall thickening, pneumatosis, portal venous gas\n• Pneumatosis + portal venous gas = bowel necrosis, extremely high mortality\n• Time sensitive - revascularization within 6-12 hours for viable bowel",
+      "tags": ["emergency", "vascular", "gi", "must-know", "classic"]
+    },
+    {
+      "title": "Diverticulitis - Acute Complicated",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 2,
+      "diagnosis": "Acute sigmoid diverticulitis with abscess",
+      "clinical_history": "58-year-old male with 3 days of left lower quadrant pain, fever, and constipation. Temperature 38.5°C, WBC 18,000. Tender LLQ with guarding.",
+      "findings": "• Multiple sigmoid diverticula with focal wall thickening\n• 4cm rim-enhancing pericolic fluid collection (abscess)\n• Pericolic fat stranding and fascial thickening\n• No free air\n• Mild proximal colonic dilatation",
+      "teaching_points": "• CT is imaging modality of choice for suspected diverticulitis\n• Hinchey classification guides management (I-IV based on complication severity)\n• Abscess >3-4cm typically requires percutaneous drainage\n• Avoid colonoscopy during acute episode - perform 6-8 weeks later\n• 'Left-sided appendicitis' - but can occur anywhere in colon",
+      "tags": ["gi", "infection", "surgical", "common", "classic"]
+    },
+    {
+      "title": "Ovarian Torsion",
+      "modality": "Ultrasound",
+      "body_part": "Pelvis",
+      "difficulty": 3,
+      "diagnosis": "Right ovarian torsion with underlying dermoid cyst",
+      "clinical_history": "24-year-old female with sudden onset severe right lower quadrant pain and vomiting. Pain is intermittent and colicky. LMP 2 weeks ago, negative pregnancy test.",
+      "findings": "• Enlarged right ovary (8cm) with heterogeneous echogenicity\n• Peripheral follicles displaced to the cortex (string of pearls sign)\n• 5cm complex cystic lesion with echogenic component and posterior shadowing (dermoid)\n• Absent or reversed diastolic flow on Doppler\n• Whirlpool sign of twisted vascular pedicle",
+      "teaching_points": "• Ovarian torsion is a surgical emergency - ovarian salvage requires prompt surgery\n• Risk factors: ovarian mass (especially dermoid), pregnancy, ovulation induction\n• Doppler findings are not always reliable - absence of flow is specific but not sensitive\n• Whirlpool sign is highly specific when present\n• Clinical correlation crucial - if high suspicion, proceed to surgery even with normal Doppler",
+      "tags": ["emergency", "gyn", "surgical", "must-know"]
+    },
+    {
+      "title": "Cervical Spine Fracture - Hangman's",
+      "modality": "CT",
+      "body_part": "Spine",
+      "difficulty": 3,
+      "diagnosis": "Hangman's fracture (traumatic spondylolisthesis of C2)",
+      "clinical_history": "45-year-old male in high-speed MVA with hyperextension mechanism. Complaining of neck pain. Neurologically intact. Cervical collar in place.",
+      "findings": "• Bilateral pars interarticularis fractures of C2\n• Anterior subluxation of C2 on C3 (5mm)\n• Prevertebral soft tissue swelling\n• C2-C3 disc space widening\n• No evidence of vertebral artery injury on CTA",
+      "teaching_points": "• Hangman's fracture = bilateral C2 pars fractures (traumatic spondylolisthesis)\n• Levine-Edwards classification guides management\n• Paradoxically, spinal canal widens with this fracture - neurologic injury uncommon\n• Associated injuries common - evaluate entire spine\n• CTA to evaluate vertebral arteries with C1-C2 injuries",
+      "tags": ["trauma", "spine", "emergency", "classic"]
+    },
+    {
+      "title": "Liver Metastases",
+      "modality": "CT",
+      "body_part": "Abdomen",
+      "difficulty": 2,
+      "diagnosis": "Multiple hepatic metastases from colorectal cancer",
+      "clinical_history": "62-year-old male with history of sigmoid colon adenocarcinoma resected 2 years ago. Presenting for surveillance imaging. CEA elevated at 45 ng/mL.",
+      "findings": "• Multiple hypodense hepatic lesions ranging from 1-4cm\n• Peripheral enhancement pattern on arterial phase\n• Target-like appearance with central necrosis\n• Lesions in both hepatic lobes (>4 segments involved)\n• No extrahepatic metastatic disease",
+      "teaching_points": "• Colorectal metastases are typically hypovascular (enhance less than liver)\n• Hypervascular metastases: RCC, melanoma, carcinoid, thyroid, breast\n• PET-CT useful for detecting extrahepatic disease and small lesions\n• Hepatic metastasectomy can be curative in selected patients\n• MRI with hepatobiliary contrast most sensitive for small lesions",
+      "tags": ["oncology", "hepatobiliary", "staging", "common"]
+    }
+  ]
+}

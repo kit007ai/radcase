@@ -1,0 +1,2622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RadCase - Radiology Case Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a25;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+      --gradient-2: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Layout */
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .main {
+      flex: 1;
+      margin-left: 280px;
+      padding: 32px;
+      max-width: 1400px;
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--gradient-1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .logo h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 32px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent-hover);
+    }
+
+    .nav-item .icon {
+      font-size: 1.25rem;
+    }
+
+    /* Stats Card */
+    .stats-card {
+      background: var(--bg-tertiary);
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: auto;
+    }
+
+    .stats-card h3 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: var(--accent-hover);
+    }
+
+    /* Page Headers */
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-secondary);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background: var(--gradient-1);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    /* Case Card */
+    .case-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .case-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .case-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: var(--bg-tertiary);
+    }
+
+    .case-image-placeholder {
+      width: 100%;
+      height: 200px;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 3rem;
+    }
+
+    .case-content {
+      padding: 20px;
+    }
+
+    .case-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .case-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge-modality {
+      background: rgba(6, 182, 212, 0.15);
+      color: #22d3ee;
+    }
+
+    .badge-bodypart {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+    }
+
+    .difficulty {
+      display: flex;
+      gap: 3px;
+    }
+
+    .difficulty-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    .difficulty-dot.active {
+      background: var(--warning);
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 48px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .upload-zone .icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .upload-zone h3 {
+      margin-bottom: 8px;
+    }
+
+    .upload-zone p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Image Grid */
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .image-preview {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 1;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-preview .delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .image-preview:hover .delete-btn {
+      opacity: 1;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      max-width: 900px;
+      width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(20px);
+      transition: transform 0.3s;
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: var(--bg-secondary);
+      z-index: 10;
+    }
+
+    .modal-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: none;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    /* Case View */
+    .case-view {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 32px;
+    }
+
+    .case-viewer {
+      background: var(--bg-tertiary);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .case-viewer img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .case-thumbnails {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      overflow-x: auto;
+    }
+
+    .case-thumbnail {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      flex-shrink: 0;
+    }
+
+    .case-thumbnail.active {
+      border-color: var(--accent);
+    }
+
+    .case-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .case-details {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .detail-section h3 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .detail-content {
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+
+    /* Modal Tabs for DICOM/Images */
+    .modal-tabs {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      margin-right: 16px;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--accent);
+      color: var(--accent-hover);
+    }
+
+    .viewer-container {
+      flex: 1;
+    }
+
+    /* DICOM Series Selector */
+    .dicom-series-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding: 4px;
+    }
+
+    .dicom-series-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 150px;
+    }
+
+    .dicom-series-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .dicom-series-btn.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent);
+    }
+
+    .series-modality {
+      font-size: 0.75rem;
+      color: var(--accent-hover);
+      font-weight: 600;
+    }
+
+    .series-desc {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      margin: 4px 0;
+    }
+
+    .series-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Quiz Mode */
+    .quiz-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .quiz-image-container {
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .quiz-image-container img {
+      width: 100%;
+      max-height: 60vh;
+      object-fit: contain;
+    }
+
+    .quiz-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .quiz-option {
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--bg-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .quiz-option:hover {
+      border-color: var(--accent);
+    }
+
+    .quiz-option.correct {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .quiz-option.incorrect {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .quiz-reveal {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      display: none;
+    }
+
+    .quiz-reveal.show {
+      display: block;
+    }
+
+    .quiz-controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    /* Search & Filters */
+    .search-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      min-width: 300px;
+      position: relative;
+    }
+
+    .search-input-wrapper .icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 14px 16px 14px 48px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .filter-select {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      min-width: 150px;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 40px;
+    }
+
+    .empty-state .icon {
+      font-size: 4rem;
+      margin-bottom: 24px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* Annotations Canvas */
+    .annotation-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .annotation-tools {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .annotation-tool {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .annotation-tool.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.success {
+      border-color: var(--success);
+    }
+
+    .toast.error {
+      border-color: var(--danger);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+        z-index: 100;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main {
+        margin-left: 0;
+      }
+
+      .case-view {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* User Section */
+    .user-section {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .auth-buttons {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--gradient-1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: capitalize;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: var(--bg-secondary);
+    }
+
+    /* Auth Modal */
+    .auth-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .auth-modal.active {
+      display: flex;
+    }
+
+    .auth-box {
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid var(--border);
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .auth-header h2 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .auth-header p {
+      color: var(--text-muted);
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .auth-tab.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .auth-form {
+      display: none;
+    }
+
+    .auth-form.active {
+      display: block;
+    }
+
+    .auth-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .auth-error.show {
+      display: block;
+    }
+
+    .guest-link {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .guest-link a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .guest-link a:hover {
+      color: var(--text-primary);
+    }
+  </style>
+  
+  <!-- Cornerstone.js for DICOM viewing -->
+  <script src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
+  <script src="https://unpkg.com/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
+  <script src="https://unpkg.com/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js"></script>
+  <script src="https://unpkg.com/dicom-parser@1.8.21/dist/dicomParser.min.js"></script>
+  <script src="https://unpkg.com/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+  <script>
+    // Initialize Cornerstone WADO Image Loader
+    cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+    cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+    
+    // Initialize Cornerstone Tools
+    cornerstoneTools.external.cornerstone = cornerstone;
+    cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+    cornerstoneTools.external.Hammer = Hammer;
+    cornerstoneTools.init();
+    
+    // Configure WADO loader - use main thread decoding (more compatible)
+    cornerstoneWADOImageLoader.configure({
+      useWebWorkers: false,
+      decodeConfig: {
+        convertFloatPixelDataToInt: false
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">🏥</div>
+        <div>
+          <h1>RadCase</h1>
+          <span>Teaching Case Library</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-page="library">
+          <span class="icon">📚</span>
+          Case Library
+        </button>
+        <button class="nav-item" data-page="add">
+          <span class="icon">➕</span>
+          Add New Case
+        </button>
+        <button class="nav-item" data-page="quiz">
+          <span class="icon">🎯</span>
+          Quiz Mode
+        </button>
+        <button class="nav-item" data-page="analytics">
+          <span class="icon">📊</span>
+          Analytics
+        </button>
+      </nav>
+
+      <!-- User Auth Section -->
+      <div class="user-section" id="userSection">
+        <!-- Logged out state -->
+        <div id="authButtons" class="auth-buttons">
+          <button class="btn btn-primary btn-sm" onclick="showAuthModal('login')" style="width: 100%;">
+            🔐 Sign In
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="showAuthModal('register')" style="width: 100%; margin-top: 8px;">
+            ✨ Create Account
+          </button>
+        </div>
+        
+        <!-- Logged in state -->
+        <div id="userCard" class="user-card" style="display: none;">
+          <div class="user-avatar" id="userAvatar">👤</div>
+          <div class="user-info">
+            <div class="user-name" id="userName">-</div>
+            <div class="user-role" id="userRole">-</div>
+          </div>
+          <button class="btn-icon" onclick="logout()" title="Sign out">🚪</button>
+        </div>
+      </div>
+
+      <div class="stats-card" id="sidebarStats">
+        <h3>Library Stats</h3>
+        <div class="stat-row">
+          <span>Total Cases</span>
+          <span class="stat-value" id="statCases">-</span>
+        </div>
+        <div class="stat-row">
+          <span>Images</span>
+          <span class="stat-value" id="statImages">-</span>
+        </div>
+        <div class="stat-row">
+          <span>Quiz Accuracy</span>
+          <span class="stat-value" id="statAccuracy">-</span>
+        </div>
+      </div>
+      
+      <!-- Personal Progress (shown when logged in) -->
+      <div class="stats-card" id="progressCard" style="display: none; margin-top: 12px;">
+        <h3>Your Progress</h3>
+        <div class="stat-row">
+          <span>Cases Studied</span>
+          <span class="stat-value" id="statStudied">-</span>
+        </div>
+        <div class="stat-row">
+          <span>Mastered</span>
+          <span class="stat-value" id="statMastered">-</span>
+        </div>
+        <div class="stat-row">
+          <span>Due for Review</span>
+          <span class="stat-value" id="statDue" style="color: var(--warning);">-</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Library Page -->
+      <section id="page-library" class="page">
+        <div class="page-header">
+          <h2>Case Library</h2>
+          <p>Browse and search your radiology teaching cases</p>
+        </div>
+
+        <div class="search-bar">
+          <div class="search-input-wrapper">
+            <span class="icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search cases...">
+          </div>
+          <div class="filter-group">
+            <select class="filter-select" id="filterModality">
+              <option value="">All Modalities</option>
+            </select>
+            <select class="filter-select" id="filterBodyPart">
+              <option value="">All Body Parts</option>
+            </select>
+            <select class="filter-select" id="filterDifficulty">
+              <option value="">All Difficulties</option>
+              <option value="1">⭐ Easy</option>
+              <option value="2">⭐⭐ Medium</option>
+              <option value="3">⭐⭐⭐ Hard</option>
+              <option value="4">⭐⭐⭐⭐ Expert</option>
+              <option value="5">⭐⭐⭐⭐⭐ Master</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="caseGrid" class="card-grid">
+          <!-- Cases loaded dynamically -->
+        </div>
+      </section>
+
+      <!-- Add Case Page -->
+      <section id="page-add" class="page" style="display: none;">
+        <div class="page-header">
+          <h2>Add New Case</h2>
+          <p>Create a new teaching case for your library</p>
+        </div>
+
+        <div class="card">
+          <form id="addCaseForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Case Title *</label>
+                <input type="text" class="form-input" name="title" required placeholder="e.g., Classic Pneumothorax">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Diagnosis *</label>
+                <input type="text" class="form-input" name="diagnosis" required placeholder="e.g., Right-sided pneumothorax">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Modality</label>
+                <select class="form-select" name="modality">
+                  <option value="">Select modality...</option>
+                  <option value="X-Ray">X-Ray</option>
+                  <option value="CT">CT</option>
+                  <option value="MRI">MRI</option>
+                  <option value="Ultrasound">Ultrasound</option>
+                  <option value="Nuclear Medicine">Nuclear Medicine</option>
+                  <option value="Fluoroscopy">Fluoroscopy</option>
+                  <option value="Mammography">Mammography</option>
+                  <option value="Angiography">Angiography</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Body Part</label>
+                <select class="form-select" name="body_part">
+                  <option value="">Select body part...</option>
+                  <option value="Chest">Chest</option>
+                  <option value="Abdomen">Abdomen</option>
+                  <option value="Pelvis">Pelvis</option>
+                  <option value="Head">Head</option>
+                  <option value="Neck">Neck</option>
+                  <option value="Spine">Spine</option>
+                  <option value="Upper Extremity">Upper Extremity</option>
+                  <option value="Lower Extremity">Lower Extremity</option>
+                  <option value="Cardiac">Cardiac</option>
+                  <option value="Breast">Breast</option>
+                  <option value="MSK">MSK</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Difficulty (1-5)</label>
+                <select class="form-select" name="difficulty">
+                  <option value="1">1 - Easy</option>
+                  <option value="2" selected>2 - Medium</option>
+                  <option value="3">3 - Hard</option>
+                  <option value="4">4 - Expert</option>
+                  <option value="5">5 - Master</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Clinical History</label>
+              <textarea class="form-textarea" name="clinical_history" placeholder="Patient presentation, symptoms, relevant history..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Key Findings</label>
+              <textarea class="form-textarea" name="findings" placeholder="Describe the radiological findings..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Teaching Points</label>
+              <textarea class="form-textarea" name="teaching_points" placeholder="Important learning points for this case..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tags (comma separated)</label>
+              <input type="text" class="form-input" name="tags" placeholder="e.g., emergency, classic, must-know">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Images</label>
+              <div class="upload-zone" id="uploadZone">
+                <div class="icon">📁</div>
+                <h3>Drop images here</h3>
+                <p>or click to browse • JPEG, PNG up to 50MB</p>
+              </div>
+              <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+              <div class="image-grid" id="imagePreviewGrid"></div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+              <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear</button>
+              <button type="submit" class="btn btn-primary">💾 Save Case</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Quiz Page -->
+      <section id="page-quiz" class="page" style="display: none;">
+        <div class="page-header">
+          <h2>Quiz Mode</h2>
+          <p>Test your diagnostic skills</p>
+        </div>
+
+        <div class="quiz-container" id="quizContainer">
+          <div class="search-bar" style="justify-content: center;">
+            <select class="filter-select" id="quizModality">
+              <option value="">All Modalities</option>
+            </select>
+            <select class="filter-select" id="quizBodyPart">
+              <option value="">All Body Parts</option>
+            </select>
+            <select class="filter-select" id="quizDifficulty">
+              <option value="">All Difficulties</option>
+              <option value="1">Easy</option>
+              <option value="2">Medium</option>
+              <option value="3">Hard</option>
+              <option value="4">Expert</option>
+              <option value="5">Master</option>
+            </select>
+            <button class="btn btn-primary" onclick="startQuiz()">🎯 Start Quiz</button>
+          </div>
+
+          <div id="quizArea" style="display: none;">
+            <div class="quiz-image-container">
+              <img id="quizImage" src="" alt="Quiz case">
+            </div>
+
+            <div class="card" style="margin-bottom: 24px;">
+              <h3 style="margin-bottom: 12px;">Clinical History</h3>
+              <p id="quizHistory" style="color: var(--text-secondary);">-</p>
+            </div>
+
+            <div id="quizGuess" style="margin-bottom: 24px;">
+              <label class="form-label">What is your diagnosis?</label>
+              <div style="display: flex; gap: 12px;">
+                <input type="text" class="form-input" id="quizAnswer" placeholder="Enter your diagnosis...">
+                <button class="btn btn-primary" onclick="revealAnswer()">Reveal</button>
+              </div>
+            </div>
+
+            <div class="quiz-reveal" id="quizReveal">
+              <h3 style="color: var(--success); margin-bottom: 16px;">📋 Answer</h3>
+              <div style="margin-bottom: 16px;">
+                <strong>Diagnosis:</strong>
+                <p id="revealDiagnosis"></p>
+              </div>
+              <div style="margin-bottom: 16px;">
+                <strong>Key Findings:</strong>
+                <p id="revealFindings" style="color: var(--text-secondary);"></p>
+              </div>
+              <div style="margin-bottom: 24px;">
+                <strong>Teaching Points:</strong>
+                <p id="revealTeaching" style="color: var(--text-secondary);"></p>
+              </div>
+              <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="btn btn-danger" onclick="recordAttempt(false)">❌ Missed it</button>
+                <button class="btn btn-primary" onclick="recordAttempt(true)">✅ Got it!</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="quizEmpty" class="empty-state">
+            <div class="icon">🎯</div>
+            <h3>Ready to test your skills?</h3>
+            <p>Select filters above and click Start Quiz to begin</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics Page -->
+      <section id="page-analytics" class="page" style="display: none;">
+        <div class="page-header">
+          <h2>Analytics</h2>
+          <p>Track your learning progress</p>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3 style="margin-bottom: 16px; color: var(--text-muted);">Quiz Performance</h3>
+            <div id="quizStats">
+              <div class="stat-row">
+                <span>Total Attempts</span>
+                <span class="stat-value" id="analyticsAttempts">-</span>
+              </div>
+              <div class="stat-row">
+                <span>Correct</span>
+                <span class="stat-value" id="analyticsCorrect">-</span>
+              </div>
+              <div class="stat-row">
+                <span>Accuracy</span>
+                <span class="stat-value" id="analyticsAccuracy">-</span>
+              </div>
+              <div class="stat-row">
+                <span>Avg Time</span>
+                <span class="stat-value" id="analyticsTime">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-bottom: 16px; color: var(--text-muted);">Cases by Modality</h3>
+            <div id="modalityStats"></div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-bottom: 16px; color: var(--text-muted);">Cases by Body Part</h3>
+            <div id="bodyPartStats"></div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-bottom: 16px; color: var(--text-muted);">Cases to Review</h3>
+            <div id="reviewList">
+              <p style="color: var(--text-muted);">No cases need review yet</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Case View Modal -->
+  <div class="modal-overlay" id="caseModal">
+    <div class="modal" style="max-width: 1400px;">
+      <div class="modal-header">
+        <h2 id="modalTitle">Case Details</h2>
+        <div class="modal-tabs" id="viewerTabs" style="display: none;">
+          <button class="tab-btn active" data-tab="images" onclick="switchViewerTab('images')">📷 Images</button>
+          <button class="tab-btn" data-tab="dicom" onclick="switchViewerTab('dicom')">🔬 DICOM</button>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="case-view">
+          <div class="viewer-container">
+            <!-- Standard Image Viewer -->
+            <div id="imageViewerPanel">
+              <div class="case-viewer">
+                <img id="modalMainImage" src="" alt="Case image">
+              </div>
+              <div class="case-thumbnails" id="modalThumbnails"></div>
+            </div>
+            
+            <!-- DICOM Viewer -->
+            <div id="dicomViewerPanel" style="display: none;">
+              <div class="dicom-series-selector" id="dicomSeriesSelector"></div>
+              <div id="dicomViewerContainer" style="height: 500px;"></div>
+            </div>
+            
+            <!-- Upload DICOM Section -->
+            <div class="dicom-upload-section" id="dicomUploadSection" style="margin-top: 16px;">
+              <details>
+                <summary style="cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;">
+                  📤 Upload DICOM Series
+                </summary>
+                <div style="margin-top: 12px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                  <input type="file" id="dicomFileInput" multiple accept=".dcm,application/dicom" style="display: none;">
+                  <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dicomFileInput').click()">
+                    Select DICOM Files
+                  </button>
+                  <span id="dicomFileCount" style="margin-left: 12px; color: var(--text-muted);"></span>
+                  <button class="btn btn-primary btn-sm" id="uploadDicomBtn" style="margin-left: 12px; display: none;" onclick="uploadDicomFiles()">
+                    Upload
+                  </button>
+                </div>
+              </details>
+            </div>
+          </div>
+          
+          <div class="case-details">
+            <div class="case-meta" id="modalMeta"></div>
+            
+            <div class="detail-section">
+              <h3>Clinical History</h3>
+              <div class="detail-content" id="modalHistory">-</div>
+            </div>
+            
+            <div class="detail-section">
+              <h3>Diagnosis</h3>
+              <div class="detail-content" id="modalDiagnosis" style="color: var(--accent-hover); font-weight: 600;">-</div>
+            </div>
+            
+            <div class="detail-section">
+              <h3>Key Findings</h3>
+              <div class="detail-content" id="modalFindings">-</div>
+            </div>
+            
+            <div class="detail-section">
+              <h3>Teaching Points</h3>
+              <div class="detail-content" id="modalTeaching">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" onclick="deleteCase()">🗑️ Delete</button>
+        <button class="btn btn-secondary" onclick="annotateCase()">✏️ Annotate</button>
+        <button class="btn btn-primary" onclick="presentCase()">🎬 Present</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation Modal -->
+  <div class="modal-overlay" id="annotationModal">
+    <div class="modal" style="max-width: 1200px;">
+      <div class="modal-header">
+        <h2>Annotate Image</h2>
+        <button class="modal-close" onclick="closeAnnotationModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 0;">
+        <div id="annotationContainer" style="min-height: 500px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Auth Modal -->
+  <div class="auth-modal" id="authModal">
+    <div class="auth-box">
+      <button class="modal-close" onclick="closeAuthModal()" style="position: absolute; top: 16px; right: 16px;">✕</button>
+      
+      <div class="auth-header">
+        <h2>🏥 RadCase</h2>
+        <p>Track your learning progress</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Create Account</button>
+      </div>
+
+      <div class="auth-error" id="authError"></div>
+
+      <!-- Login Form -->
+      <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Username or Email</label>
+          <input type="text" class="form-input" name="username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" name="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input type="text" class="form-input" name="username" required autocomplete="username" 
+                 pattern="[a-zA-Z0-9_]+" title="Letters, numbers, and underscores only">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Display Name</label>
+          <input type="text" class="form-input" name="displayName" autocomplete="name" 
+                 placeholder="How should we call you?">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email (optional)</label>
+          <input type="email" class="form-input" name="email" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" class="form-input" name="password" required autocomplete="new-password"
+                 minlength="4" placeholder="At least 4 characters">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+          Create Account
+        </button>
+      </form>
+
+      <div class="guest-link">
+        <a href="#" onclick="closeAuthModal(); return false;">Continue as guest →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load modules -->
+  <script src="/annotate.js"></script>
+  <script src="/presentation.js"></script>
+  <script src="/spaced-repetition.js"></script>
+  <script src="/dicom-viewer.js"></script>
+
+  <script>
+    const API = '/api';
+    let currentCase = null;
+    let uploadedFiles = [];
+    let quizStartTime = null;
+    let currentQuizCase = null;
+    let dicomViewer = null;
+    let currentDicomSeries = [];
+    let currentUser = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuth(); // Check if user is logged in
+      loadCases();
+      loadFilters();
+      loadStats();
+      setupEventListeners();
+    });
+
+    // ============ Authentication ============
+    
+    async function checkAuth() {
+      try {
+        const res = await fetch(`${API}/auth/me`, { credentials: 'include' });
+        const data = await res.json();
+        currentUser = data.user;
+        updateAuthUI();
+        if (currentUser) {
+          loadUserProgress();
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        currentUser = null;
+        updateAuthUI();
+      }
+    }
+
+    function updateAuthUI() {
+      const authButtons = document.getElementById('authButtons');
+      const userCard = document.getElementById('userCard');
+      const progressCard = document.getElementById('progressCard');
+      
+      if (currentUser) {
+        authButtons.style.display = 'none';
+        userCard.style.display = 'flex';
+        progressCard.style.display = 'block';
+        
+        document.getElementById('userName').textContent = currentUser.displayName || currentUser.username;
+        document.getElementById('userRole').textContent = currentUser.role || 'resident';
+        document.getElementById('userAvatar').textContent = getAvatarEmoji(currentUser.role);
+      } else {
+        authButtons.style.display = 'flex';
+        userCard.style.display = 'none';
+        progressCard.style.display = 'none';
+      }
+    }
+
+    function getAvatarEmoji(role) {
+      const emojis = {
+        'resident': '👨‍⚕️',
+        'attending': '👩‍⚕️',
+        'fellow': '🧑‍⚕️',
+        'student': '📚',
+        'admin': '⚙️'
+      };
+      return emojis[role] || '👤';
+    }
+
+    async function loadUserProgress() {
+      if (!currentUser) return;
+      
+      try {
+        const [progressRes, dueRes] = await Promise.all([
+          fetch(`${API}/progress`, { credentials: 'include' }),
+          fetch(`${API}/review/due?limit=5`, { credentials: 'include' })
+        ]);
+        
+        if (progressRes.ok) {
+          const progress = await progressRes.json();
+          document.getElementById('statStudied').textContent = progress.uniqueCases || 0;
+          document.getElementById('statMastered').textContent = progress.masteredCases || 0;
+        }
+        
+        if (dueRes.ok) {
+          const due = await dueRes.json();
+          const dueCount = due.totalDue || 0;
+          document.getElementById('statDue').textContent = dueCount;
+          document.getElementById('statDue').style.color = dueCount > 0 ? 'var(--warning)' : 'inherit';
+        }
+      } catch (err) {
+        console.error('Failed to load user progress:', err);
+      }
+    }
+
+    function showAuthModal(tab = 'login') {
+      document.getElementById('authModal').classList.add('active');
+      document.getElementById('authError').classList.remove('show');
+      switchAuthTab(tab);
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.remove('active');
+      document.getElementById('loginForm').reset();
+      document.getElementById('registerForm').reset();
+      document.getElementById('authError').classList.remove('show');
+    }
+
+    function switchAuthTab(tab) {
+      const tabs = document.querySelectorAll('.auth-tab');
+      const forms = document.querySelectorAll('.auth-form');
+      
+      tabs.forEach(t => t.classList.remove('active'));
+      forms.forEach(f => f.classList.remove('active'));
+      
+      if (tab === 'login') {
+        tabs[0].classList.add('active');
+        document.getElementById('loginForm').classList.add('active');
+      } else {
+        tabs[1].classList.add('active');
+        document.getElementById('registerForm').classList.add('active');
+      }
+      
+      document.getElementById('authError').classList.remove('show');
+    }
+
+    function showAuthError(message) {
+      const errorEl = document.getElementById('authError');
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const form = e.target;
+      const username = form.username.value;
+      const password = form.password.value;
+      
+      try {
+        const res = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          showAuthError(data.error || 'Login failed');
+          return;
+        }
+        
+        currentUser = data.user;
+        updateAuthUI();
+        closeAuthModal();
+        toast(`Welcome back, ${currentUser.displayName || currentUser.username}!`, 'success');
+        loadUserProgress();
+        loadStats();
+        loadAnalytics();
+      } catch (err) {
+        showAuthError('Connection failed. Please try again.');
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const form = e.target;
+      const username = form.username.value;
+      const displayName = form.displayName.value;
+      const email = form.email.value;
+      const password = form.password.value;
+      
+      try {
+        const res = await fetch(`${API}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, displayName, email, password })
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          showAuthError(data.error || 'Registration failed');
+          return;
+        }
+        
+        currentUser = data.user;
+        updateAuthUI();
+        closeAuthModal();
+        toast(`Welcome to RadCase, ${currentUser.displayName || currentUser.username}! 🎉`, 'success');
+        loadUserProgress();
+      } catch (err) {
+        showAuthError('Connection failed. Please try again.');
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch(`${API}/auth/logout`, { 
+          method: 'POST',
+          credentials: 'include'
+        });
+        currentUser = null;
+        updateAuthUI();
+        toast('Signed out', 'success');
+        loadStats();
+        loadAnalytics();
+      } catch (err) {
+        console.error('Logout failed:', err);
+      }
+    }
+
+    // Close auth modal on escape or backdrop click
+    document.getElementById('authModal')?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('auth-modal')) closeAuthModal();
+    });
+
+    function setupEventListeners() {
+      // Navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const page = item.dataset.page;
+          showPage(page);
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+        });
+      });
+
+      // Search
+      let searchTimeout;
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => loadCases(), 300);
+      });
+
+      // Filters
+      ['filterModality', 'filterBodyPart', 'filterDifficulty'].forEach(id => {
+        document.getElementById(id).addEventListener('change', loadCases);
+      });
+
+      // Upload zone
+      const uploadZone = document.getElementById('uploadZone');
+      const fileInput = document.getElementById('fileInput');
+
+      uploadZone.addEventListener('click', () => fileInput.click());
+      uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+      });
+      uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+      uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+      });
+      fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+      // Form submit
+      document.getElementById('addCaseForm').addEventListener('submit', saveCase);
+    }
+
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+      document.getElementById(`page-${page}`).style.display = 'block';
+      
+      if (page === 'analytics') loadAnalytics();
+      if (page === 'quiz') {
+        loadFilters('quiz');
+        document.getElementById('quizArea').style.display = 'none';
+        document.getElementById('quizEmpty').style.display = 'block';
+      }
+    }
+
+    async function loadCases() {
+      const search = document.getElementById('searchInput').value;
+      const modality = document.getElementById('filterModality').value;
+      const body_part = document.getElementById('filterBodyPart').value;
+      const difficulty = document.getElementById('filterDifficulty').value;
+
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (modality) params.append('modality', modality);
+      if (body_part) params.append('body_part', body_part);
+      if (difficulty) params.append('difficulty', difficulty);
+
+      try {
+        const res = await fetch(`${API}/cases?${params}`);
+        const data = await res.json();
+        renderCases(data.cases);
+      } catch (err) {
+        console.error('Failed to load cases:', err);
+      }
+    }
+
+    function renderCases(cases) {
+      const grid = document.getElementById('caseGrid');
+      
+      if (cases.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="icon">📂</div>
+            <h3>No cases found</h3>
+            <p>Add your first case to get started!</p>
+            <button class="btn btn-primary" onclick="showPage('add'); document.querySelector('[data-page=add]').click();">
+              ➕ Add Case
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = cases.map(c => `
+        <div class="case-card" onclick="viewCase('${c.id}')">
+          ${c.thumbnail 
+            ? `<img class="case-image" src="/thumbnails/${c.thumbnail}" alt="${c.title}">`
+            : `<div class="case-image-placeholder">🩻</div>`
+          }
+          <div class="case-content">
+            <h3 class="case-title">${c.title}</h3>
+            <div class="case-meta">
+              ${c.modality ? `<span class="badge badge-modality">${c.modality}</span>` : ''}
+              ${c.body_part ? `<span class="badge badge-bodypart">${c.body_part}</span>` : ''}
+            </div>
+            <div class="difficulty">
+              ${[1,2,3,4,5].map(i => `<div class="difficulty-dot ${i <= c.difficulty ? 'active' : ''}"></div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadFilters(prefix = '') {
+      try {
+        const res = await fetch(`${API}/filters`);
+        const data = await res.json();
+
+        const modalitySelect = document.getElementById(prefix ? `${prefix}Modality` : 'filterModality');
+        const bodyPartSelect = document.getElementById(prefix ? `${prefix}BodyPart` : 'filterBodyPart');
+
+        if (modalitySelect) {
+          const currentVal = modalitySelect.value;
+          modalitySelect.innerHTML = '<option value="">All Modalities</option>' +
+            data.modalities.map(m => `<option value="${m}">${m}</option>`).join('');
+          modalitySelect.value = currentVal;
+        }
+
+        if (bodyPartSelect) {
+          const currentVal = bodyPartSelect.value;
+          bodyPartSelect.innerHTML = '<option value="">All Body Parts</option>' +
+            data.bodyParts.map(b => `<option value="${b}">${b}</option>`).join('');
+          bodyPartSelect.value = currentVal;
+        }
+      } catch (err) {
+        console.error('Failed to load filters:', err);
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const [analyticsRes, quizRes] = await Promise.all([
+          fetch(`${API}/analytics`),
+          fetch(`${API}/quiz/stats`)
+        ]);
+        
+        const analytics = await analyticsRes.json();
+        const quiz = await quizRes.json();
+
+        document.getElementById('statCases').textContent = analytics.counts.cases;
+        document.getElementById('statImages').textContent = analytics.counts.images;
+        
+        const accuracy = quiz.overall.total_attempts > 0 
+          ? Math.round((quiz.overall.correct_count / quiz.overall.total_attempts) * 100) + '%'
+          : '-';
+        document.getElementById('statAccuracy').textContent = accuracy;
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    async function viewCase(id) {
+      try {
+        const res = await fetch(`${API}/cases/${id}`);
+        const caseData = await res.json();
+        currentCase = caseData;
+
+        document.getElementById('modalTitle').textContent = caseData.title;
+        document.getElementById('modalHistory').textContent = caseData.clinical_history || '-';
+        document.getElementById('modalDiagnosis').textContent = caseData.diagnosis || '-';
+        document.getElementById('modalFindings').textContent = caseData.findings || '-';
+        document.getElementById('modalTeaching').textContent = caseData.teaching_points || '-';
+
+        // Meta badges
+        const meta = document.getElementById('modalMeta');
+        meta.innerHTML = `
+          ${caseData.modality ? `<span class="badge badge-modality">${caseData.modality}</span>` : ''}
+          ${caseData.body_part ? `<span class="badge badge-bodypart">${caseData.body_part}</span>` : ''}
+          <div class="difficulty">
+            ${[1,2,3,4,5].map(i => `<div class="difficulty-dot ${i <= caseData.difficulty ? 'active' : ''}"></div>`).join('')}
+          </div>
+        `;
+
+        // Images
+        const mainImg = document.getElementById('modalMainImage');
+        const thumbs = document.getElementById('modalThumbnails');
+
+        if (caseData.images && caseData.images.length > 0) {
+          mainImg.src = `/uploads/${caseData.images[0].filename}`;
+          thumbs.innerHTML = caseData.images.map((img, i) => `
+            <div class="case-thumbnail ${i === 0 ? 'active' : ''}" onclick="selectImage('${img.filename}', this)">
+              <img src="/thumbnails/${img.filename}" alt="Thumbnail">
+            </div>
+          `).join('');
+        } else {
+          mainImg.src = '';
+          thumbs.innerHTML = '<p style="color: var(--text-muted); padding: 20px;">No images</p>';
+        }
+
+        // Load DICOM series for this case
+        await loadDicomSeries(id);
+        
+        // Setup DICOM file input listener
+        document.getElementById('dicomFileInput').onchange = handleDicomFiles;
+
+        document.getElementById('caseModal').classList.add('active');
+      } catch (err) {
+        toast('Failed to load case', 'error');
+      }
+    }
+
+    function selectImage(filename, thumb) {
+      document.getElementById('modalMainImage').src = `/uploads/${filename}`;
+      document.querySelectorAll('.case-thumbnail').forEach(t => t.classList.remove('active'));
+      thumb.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('caseModal').classList.remove('active');
+      currentCase = null;
+      
+      // Cleanup DICOM viewer
+      if (dicomViewer) {
+        dicomViewer.destroy();
+        dicomViewer = null;
+      }
+      currentDicomSeries = [];
+      
+      // Reset viewer tabs
+      document.getElementById('viewerTabs').style.display = 'none';
+      switchViewerTab('images');
+    }
+    
+    // ============ DICOM Handling ============
+    
+    async function loadDicomSeries(caseId) {
+      try {
+        const res = await fetch(`${API}/cases/${caseId}/dicom`);
+        const data = await res.json();
+        currentDicomSeries = data.series || [];
+        
+        const viewerTabs = document.getElementById('viewerTabs');
+        const seriesSelector = document.getElementById('dicomSeriesSelector');
+        
+        if (currentDicomSeries.length > 0) {
+          // Show DICOM tab
+          viewerTabs.style.display = 'flex';
+          
+          // Populate series selector
+          seriesSelector.innerHTML = currentDicomSeries.map((s, i) => `
+            <button class="dicom-series-btn ${i === 0 ? 'active' : ''}" 
+                    onclick="loadDicomSeriesById('${s.id}', this)"
+                    data-series-id="${s.id}">
+              <span class="series-modality">${s.modality || 'DICOM'}</span>
+              <span class="series-desc">${s.series_description || 'Series ' + (i + 1)}</span>
+              <span class="series-count">${s.num_images} images</span>
+            </button>
+          `).join('');
+        } else {
+          viewerTabs.style.display = 'none';
+          seriesSelector.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No DICOM series uploaded</p>';
+        }
+      } catch (err) {
+        console.error('Failed to load DICOM series:', err);
+        currentDicomSeries = [];
+      }
+    }
+    
+    function switchViewerTab(tab) {
+      const imagePanel = document.getElementById('imageViewerPanel');
+      const dicomPanel = document.getElementById('dicomViewerPanel');
+      const tabBtns = document.querySelectorAll('.modal-tabs .tab-btn');
+      
+      tabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      
+      if (tab === 'dicom') {
+        imagePanel.style.display = 'none';
+        dicomPanel.style.display = 'block';
+        
+        // Initialize DICOM viewer if not already done
+        if (!dicomViewer && currentDicomSeries.length > 0) {
+          initDicomViewer();
+          loadDicomSeriesById(currentDicomSeries[0].id);
+        }
+      } else {
+        imagePanel.style.display = 'block';
+        dicomPanel.style.display = 'none';
+      }
+    }
+    
+    function initDicomViewer() {
+      if (dicomViewer) {
+        dicomViewer.destroy();
+      }
+      dicomViewer = new DicomViewer('dicomViewerContainer');
+      dicomViewer.init();
+    }
+    
+    async function loadDicomSeriesById(seriesId, btn = null) {
+      if (!dicomViewer) {
+        initDicomViewer();
+      }
+      
+      // Update active state
+      if (btn) {
+        document.querySelectorAll('.dicom-series-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      
+      try {
+        const res = await fetch(`${API}/dicom/${seriesId}`);
+        const data = await res.json();
+        
+        if (data.imageIds && data.imageIds.length > 0) {
+          await dicomViewer.loadImageIds(data.imageIds, {
+            patientName: data.patient_name,
+            modality: data.modality,
+            seriesDescription: data.series_description,
+            windowCenter: data.window_center,
+            windowWidth: data.window_width
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load DICOM series:', err);
+        toast('Failed to load DICOM series', 'error');
+      }
+    }
+    
+    function handleDicomFiles(e) {
+      const files = e.target.files;
+      const count = files.length;
+      document.getElementById('dicomFileCount').textContent = `${count} file${count !== 1 ? 's' : ''} selected`;
+      document.getElementById('uploadDicomBtn').style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+    
+    async function uploadDicomFiles() {
+      if (!currentCase) return;
+      
+      const fileInput = document.getElementById('dicomFileInput');
+      const files = fileInput.files;
+      
+      if (files.length === 0) {
+        toast('No files selected', 'error');
+        return;
+      }
+      
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+      
+      try {
+        toast('Uploading DICOM files...', 'info');
+        
+        const res = await fetch(`${API}/cases/${currentCase.id}/dicom`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await res.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        toast(`Uploaded ${data.numImages} DICOM images`, 'success');
+        
+        // Reset file input
+        fileInput.value = '';
+        document.getElementById('dicomFileCount').textContent = '';
+        document.getElementById('uploadDicomBtn').style.display = 'none';
+        
+        // Reload DICOM series and switch to DICOM tab
+        await loadDicomSeries(currentCase.id);
+        switchViewerTab('dicom');
+        
+      } catch (err) {
+        console.error('Upload failed:', err);
+        toast('Failed to upload DICOM files', 'error');
+      }
+    }
+
+    async function deleteCase() {
+      if (!currentCase || !confirm('Delete this case? This cannot be undone.')) return;
+
+      try {
+        await fetch(`${API}/cases/${currentCase.id}`, { method: 'DELETE' });
+        toast('Case deleted', 'success');
+        closeModal();
+        loadCases();
+        loadStats();
+      } catch (err) {
+        toast('Failed to delete case', 'error');
+      }
+    }
+
+    function handleFiles(files) {
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        uploadedFiles.push(file);
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const grid = document.getElementById('imagePreviewGrid');
+          const div = document.createElement('div');
+          div.className = 'image-preview';
+          div.innerHTML = `
+            <img src="${e.target.result}" alt="Preview">
+            <button class="delete-btn" onclick="removeUpload(${uploadedFiles.length - 1}, this.parentElement)">✕</button>
+          `;
+          grid.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function removeUpload(index, element) {
+      uploadedFiles.splice(index, 1);
+      element.remove();
+    }
+
+    async function saveCase(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      
+      const caseData = {
+        title: formData.get('title'),
+        diagnosis: formData.get('diagnosis'),
+        modality: formData.get('modality'),
+        body_part: formData.get('body_part'),
+        difficulty: parseInt(formData.get('difficulty')),
+        clinical_history: formData.get('clinical_history'),
+        findings: formData.get('findings'),
+        teaching_points: formData.get('teaching_points'),
+        tags: formData.get('tags')?.split(',').map(t => t.trim()).filter(t => t) || []
+      };
+
+      try {
+        // Create case
+        const res = await fetch(`${API}/cases`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(caseData)
+        });
+        const { id } = await res.json();
+
+        // Upload images
+        if (uploadedFiles.length > 0) {
+          const imageData = new FormData();
+          uploadedFiles.forEach(f => imageData.append('images', f));
+          await fetch(`${API}/cases/${id}/images`, {
+            method: 'POST',
+            body: imageData
+          });
+        }
+
+        toast('Case saved!', 'success');
+        resetForm();
+        loadCases();
+        loadStats();
+        loadFilters();
+        
+        // Switch to library
+        showPage('library');
+        document.querySelector('[data-page=library]').click();
+      } catch (err) {
+        toast('Failed to save case', 'error');
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('addCaseForm').reset();
+      document.getElementById('imagePreviewGrid').innerHTML = '';
+      uploadedFiles = [];
+    }
+
+    // Quiz
+    async function startQuiz() {
+      const modality = document.getElementById('quizModality').value;
+      const body_part = document.getElementById('quizBodyPart').value;
+      const difficulty = document.getElementById('quizDifficulty').value;
+
+      const params = new URLSearchParams();
+      if (modality) params.append('modality', modality);
+      if (body_part) params.append('body_part', body_part);
+      if (difficulty) params.append('difficulty', difficulty);
+
+      try {
+        const res = await fetch(`${API}/quiz/random?${params}`);
+        if (!res.ok) {
+          toast('No cases match your filters', 'error');
+          return;
+        }
+
+        currentQuizCase = await res.json();
+        quizStartTime = Date.now();
+
+        document.getElementById('quizEmpty').style.display = 'none';
+        document.getElementById('quizArea').style.display = 'block';
+        document.getElementById('quizReveal').classList.remove('show');
+        document.getElementById('quizAnswer').value = '';
+
+        const img = currentQuizCase.images?.[0];
+        document.getElementById('quizImage').src = img ? `/uploads/${img.filename}` : '';
+        document.getElementById('quizHistory').textContent = currentQuizCase.clinical_history || 'No history provided';
+      } catch (err) {
+        toast('Failed to load quiz case', 'error');
+      }
+    }
+
+    function revealAnswer() {
+      if (!currentQuizCase) return;
+      
+      document.getElementById('revealDiagnosis').textContent = currentQuizCase.diagnosis || '-';
+      document.getElementById('revealFindings').textContent = currentQuizCase.findings || '-';
+      document.getElementById('revealTeaching').textContent = currentQuizCase.teaching_points || '-';
+      document.getElementById('quizReveal').classList.add('show');
+    }
+
+    async function recordAttempt(correct) {
+      const timeSpent = Date.now() - quizStartTime;
+      
+      try {
+        await fetch(`${API}/quiz/attempt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            case_id: currentQuizCase.id,
+            correct,
+            time_spent_ms: timeSpent
+          })
+        });
+
+        toast(correct ? 'Nice! 🎉' : 'Keep studying! 📚', correct ? 'success' : 'error');
+        loadStats();
+        startQuiz(); // Load next case
+      } catch (err) {
+        toast('Failed to record attempt', 'error');
+      }
+    }
+
+    // Analytics
+    async function loadAnalytics() {
+      try {
+        const [analyticsRes, quizRes] = await Promise.all([
+          fetch(`${API}/analytics`),
+          fetch(`${API}/quiz/stats`)
+        ]);
+        
+        const analytics = await analyticsRes.json();
+        const quiz = await quizRes.json();
+
+        // Quiz stats
+        document.getElementById('analyticsAttempts').textContent = quiz.overall.total_attempts || 0;
+        document.getElementById('analyticsCorrect').textContent = quiz.overall.correct_count || 0;
+        document.getElementById('analyticsAccuracy').textContent = quiz.overall.total_attempts > 0
+          ? Math.round((quiz.overall.correct_count / quiz.overall.total_attempts) * 100) + '%'
+          : '-';
+        document.getElementById('analyticsTime').textContent = quiz.overall.avg_time_ms
+          ? Math.round(quiz.overall.avg_time_ms / 1000) + 's'
+          : '-';
+
+        // Modality stats
+        document.getElementById('modalityStats').innerHTML = analytics.byModality.length > 0
+          ? analytics.byModality.map(m => `
+              <div class="stat-row">
+                <span>${m.modality}</span>
+                <span class="stat-value">${m.count}</span>
+              </div>
+            `).join('')
+          : '<p style="color: var(--text-muted);">No data yet</p>';
+
+        // Body part stats
+        document.getElementById('bodyPartStats').innerHTML = analytics.byBodyPart.length > 0
+          ? analytics.byBodyPart.map(b => `
+              <div class="stat-row">
+                <span>${b.body_part}</span>
+                <span class="stat-value">${b.count}</span>
+              </div>
+            `).join('')
+          : '<p style="color: var(--text-muted);">No data yet</p>';
+
+        // Cases to review
+        document.getElementById('reviewList').innerHTML = quiz.recentMisses.length > 0
+          ? quiz.recentMisses.map(c => `
+              <div class="stat-row" style="cursor: pointer;" onclick="viewCase('${c.id}')">
+                <span>${c.title}</span>
+                <span style="color: var(--danger);">${c.miss_count} misses</span>
+              </div>
+            `).join('')
+          : '<p style="color: var(--text-muted);">No cases need review yet</p>';
+
+      } catch (err) {
+        console.error('Failed to load analytics:', err);
+      }
+    }
+
+    // Toast
+    function toast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <span>${type === 'success' ? '✅' : '❌'}</span>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Close modal on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('caseModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) closeModal();
+    });
+
+    // ============ Annotation ============
+    let annotationCanvas = null;
+
+    function annotateCase() {
+      if (!currentCase || !currentCase.images || currentCase.images.length === 0) {
+        toast('No images to annotate', 'error');
+        return;
+      }
+
+      const container = document.getElementById('annotationContainer');
+      const imageUrl = `/uploads/${currentCase.images[0].filename}`;
+      
+      annotationCanvas = new AnnotationCanvas(container, imageUrl);
+      annotationCanvas.onSave = async (annotations) => {
+        try {
+          await fetch(`/api/images/${currentCase.images[0].id}/annotations`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ annotations })
+          });
+          toast('Annotations saved!', 'success');
+        } catch (err) {
+          toast('Failed to save annotations', 'error');
+        }
+      };
+
+      // Load existing annotations
+      if (currentCase.images[0].annotations) {
+        try {
+          const existing = JSON.parse(currentCase.images[0].annotations);
+          annotationCanvas.load(existing);
+        } catch (e) {}
+      }
+
+      document.getElementById('annotationModal').classList.add('active');
+    }
+
+    function closeAnnotationModal() {
+      document.getElementById('annotationModal').classList.remove('active');
+      annotationCanvas = null;
+    }
+
+    document.getElementById('annotationModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) closeAnnotationModal();
+    });
+
+    // ============ Presentation Mode ============
+    function presentCase() {
+      if (!currentCase) return;
+      closeModal();
+      presentation.start(currentCase.id);
+    }
+
+    // ============ Spaced Repetition Quiz ============
+    async function recordAttempt(correct) {
+      const timeSpent = Date.now() - quizStartTime;
+      
+      // Record in spaced repetition system
+      const quality = correct ? SR_QUALITY.GOOD : SR_QUALITY.AGAIN;
+      spacedRep.review(currentQuizCase.id, quality);
+      
+      try {
+        await fetch(`${API}/quiz/attempt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            case_id: currentQuizCase.id,
+            correct,
+            time_spent_ms: timeSpent
+          })
+        });
+
+        toast(correct ? 'Nice! 🎉' : 'Keep studying! 📚', correct ? 'success' : 'error');
+        loadStats();
+        startQuiz(); // Load next case
+      } catch (err) {
+        toast('Failed to record attempt', 'error');
+      }
+    }
+
+    // Add SR stats to sidebar
+    function updateSRStats() {
+      const stats = spacedRep.getStats();
+      const dueCards = spacedRep.getDueCards();
+      
+      // Update sidebar if element exists
+      const srStatsEl = document.getElementById('srStats');
+      if (srStatsEl) {
+        srStatsEl.innerHTML = `
+          <div class="stat-row">
+            <span>Due Now</span>
+            <span class="stat-value" style="color: ${stats.dueNow > 0 ? 'var(--warning)' : 'inherit'}">${stats.dueNow}</span>
+          </div>
+          <div class="stat-row">
+            <span>Streak</span>
+            <span class="stat-value">🔥 ${stats.streak}</span>
+          </div>
+          <div class="stat-row">
+            <span>Retention</span>
+            <span class="stat-value">${stats.avgRetention}%</span>
+          </div>
+        `;
+      }
+    }
+
+    // Periodically update SR stats
+    setInterval(updateSRStats, 30000);
+    setTimeout(updateSRStats, 1000);
+  </script>
+</body>
+</html>
