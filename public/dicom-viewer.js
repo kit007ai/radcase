@@ -63,7 +63,12 @@ class DicomViewer {
             <span class="dicom-slice-counter" id="${this.containerId}-counter">0/0</span>
           </div>
           <div class="dicom-tool-controls">
-            <button class="dicom-btn dicom-tool-btn active" data-tool="wwwc" title="Window/Level (W)">
+            <button class="dicom-btn dicom-tool-btn active" data-tool="scroll" title="Scroll Slices (S)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v18M12 3l-4 4M12 3l4 4M12 21l-4-4M12 21l4-4"></path>
+              </svg>
+            </button>
+            <button class="dicom-btn dicom-tool-btn" data-tool="wwwc" title="Window/Level (W)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <path d="M12 2a10 10 0 0 1 0 20"></path>
@@ -123,11 +128,85 @@ class DicomViewer {
     cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
     cornerstoneTools.addTool(cornerstoneTools.StackScrollMouseWheelTool);
     
-    // Activate default tools
-    cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 1 });
-    cornerstoneTools.setToolActive('Pan', { mouseButtonMask: 4 }); // Middle click
-    cornerstoneTools.setToolActive('Zoom', { mouseButtonMask: 2 }); // Right click
+    // Default: scroll mode — disable all cornerstone touch/click tools
+    cornerstoneTools.setToolDisabled('Wwwc');
+    cornerstoneTools.setToolDisabled('Pan');
+    cornerstoneTools.setToolDisabled('Zoom');
     cornerstoneTools.setToolActive('StackScrollMouseWheel', {});
+    
+    // Track active touch tool (default: scroll through slices)
+    this.activeTouchTool = 'scroll';
+    
+    // Custom touch handling for slice scrolling
+    this.setupTouchScrolling();
+  }
+
+  setupTouchScrolling() {
+    if (!this.element) return;
+    
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let lastSliceChangeY = 0;
+    let axisLocked = null; // null | 'vertical' | 'horizontal'
+    const SLICE_THRESHOLD = 25; // pixels per slice
+    const LOCK_THRESHOLD = 10; // pixels before locking axis
+    
+    const onTouchStart = (e) => {
+      if (this.activeTouchTool !== 'scroll') return;
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      lastSliceChangeY = touchStartY;
+      axisLocked = null;
+      e.preventDefault();
+    };
+    
+    const onTouchMove = (e) => {
+      if (this.activeTouchTool !== 'scroll') return;
+      if (this.imageIds.length <= 1) return;
+      
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      
+      // Lock to one axis after initial movement
+      if (!axisLocked) {
+        const dx = Math.abs(currentX - touchStartX);
+        const dy = Math.abs(currentY - touchStartY);
+        if (dy > LOCK_THRESHOLD || dx > LOCK_THRESHOLD) {
+          axisLocked = dy >= dx ? 'vertical' : 'horizontal';
+        } else {
+          e.preventDefault();
+          return;
+        }
+      }
+      
+      // Only scroll slices on vertical axis
+      if (axisLocked === 'vertical') {
+        const deltaY = lastSliceChangeY - currentY;
+        
+        if (Math.abs(deltaY) >= SLICE_THRESHOLD) {
+          const sliceStep = Math.sign(deltaY);
+          const newIndex = Math.max(0, Math.min(this.imageIds.length - 1, this.currentIndex + sliceStep));
+          if (newIndex !== this.currentIndex) {
+            this.goToSlice(newIndex);
+          }
+          lastSliceChangeY = currentY;
+        }
+      }
+      // Ignore horizontal axis entirely in scroll mode
+      
+      e.preventDefault();
+    };
+    
+    const onTouchEnd = (e) => {
+      axisLocked = null;
+    };
+    
+    this.element.addEventListener('touchstart', onTouchStart, { passive: false });
+    this.element.addEventListener('touchmove', onTouchMove, { passive: false });
+    this.element.addEventListener('touchend', onTouchEnd, { passive: false });
+    
+    // Prevent double-tap zoom on the DICOM element
+    this.element.addEventListener('dblclick', (e) => e.preventDefault());
   }
 
   setupEventListeners() {
@@ -177,6 +256,10 @@ class DicomViewer {
           e.preventDefault();
           this.nextSlice();
           break;
+        case 's':
+        case 'S':
+          this.setActiveTool('scroll');
+          break;
         case 'w':
         case 'W':
           this.setActiveTool('wwwc');
@@ -209,14 +292,29 @@ class DicomViewer {
       'zoom': 'Zoom'
     };
 
-    // Deactivate all tools from left click
+    // Deactivate all cornerstone tools from left click / touch
     Object.values(toolMap).forEach(t => {
       cornerstoneTools.setToolPassive(t);
     });
 
-    // Activate selected tool
-    if (toolMap[tool]) {
+    if (tool === 'scroll') {
+      // Custom touch scroll mode — deactivate all cornerstone tools from touch/click
+      this.activeTouchTool = 'scroll';
+      // Deactivate everything so cornerstone doesn't intercept touch
+      Object.values(toolMap).forEach(t => {
+        cornerstoneTools.setToolDisabled(t);
+      });
+      // Re-enable mouse wheel scrolling and right-click zoom for desktop
+      cornerstoneTools.setToolActive('StackScrollMouseWheel', {});
+    } else if (toolMap[tool]) {
+      // Activate selected cornerstone tool for both mouse and touch
+      this.activeTouchTool = tool;
+      // Re-enable all tools but only activate the selected one on left click/touch
+      Object.values(toolMap).forEach(t => {
+        cornerstoneTools.setToolEnabled(t);
+      });
       cornerstoneTools.setToolActive(toolMap[tool], { mouseButtonMask: 1 });
+      cornerstoneTools.setToolActive('StackScrollMouseWheel', {});
     }
 
     // Update UI
@@ -305,7 +403,8 @@ class DicomViewer {
 
     } catch (e) {
       console.error('Failed to load DICOM series:', e);
-      this.showError(e.message);
+      const msg = e?.message || e?.error || (typeof e === 'string' ? e : JSON.stringify(e));
+      this.showError(msg || 'Failed to load DICOM series');
     } finally {
       this.showLoading(false);
     }
@@ -364,7 +463,8 @@ class DicomViewer {
 
     } catch (e) {
       console.error('Failed to load DICOM images:', e);
-      this.showError(e.message);
+      const msg = e?.message || e?.error || (typeof e === 'string' ? e : JSON.stringify(e));
+      this.showError(msg || 'Failed to load DICOM image');
     } finally {
       this.showLoading(false);
     }
@@ -635,6 +735,9 @@ const dicomStyles = `
     width: 100%;
     height: 100%;
     background: #000;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .dicom-overlay {

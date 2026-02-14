@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadCase User Interview - Shape the Future of Radiology Education</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .value-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            color: white;
+            margin: 30px 0;
+        }
+        
+        .value-box h2 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        
+        .interview-form {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 40px 0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .time-slot {
+            padding: 10px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .time-slot:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .time-slot.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .interview-details {
+            background: #f8f9ff;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border-left: 5px solid #667eea;
+        }
+        
+        .interview-details h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .interview-details ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .interview-details li {
+            padding: 5px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .interview-details li::before {
+            content: "⏱️";
+            position: absolute;
+            left: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .interview-form {
+                padding: 20px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .time-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>RadCase User Interview</h1>
+            <p><strong>Help Shape the Future of Radiology Education</strong></p>
+            <p>30 minutes • $50 Amazon Gift Card • Direct Impact on Product Development</p>
+        </div>
+        
+        <div class="value-box">
+            <h2>🎯 Your Voice Matters</h2>
+            <p>We're building RadCase based on real user needs. Your insights will directly influence the features we build and how we design the learning experience. Plus, you'll get early access to everything we create.</p>
+        </div>
+        
+        <form class="interview-form" id="interviewForm">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">Schedule Your Interview</h2>
+            
+            <div class="form-group">
+                <label for="name">Full Name *</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">Current Role/Training Level *</label>
+                <select id="role" name="role" required>
+                    <option value="">Select your current role</option>
+                    <option value="medical-student-clinical">Medical Student - Clinical (Years 3-4)</option>
+                    <option value="radiology-resident-r1">Radiology Resident - R1</option>
+                    <option value="radiology-resident-r2">Radiology Resident - R2</option>
+                    <option value="radiology-resident-r3">Radiology Resident - R3</option>
+                    <option value="radiology-resident-r4">Radiology Resident - R4</option>
+                    <option value="radiology-fellow">Radiology Fellow</option>
+                    <option value="attending-radiologist">Attending Radiologist</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="institution">Institution/Hospital *</label>
+                <input type="text" id="institution" name="institution" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="timezone">Your Time Zone *</label>
+                <select id="timezone" name="timezone" required>
+                    <option value="">Select your time zone</option>
+                    <option value="EST">Eastern Time (EST/EDT)</option>
+                    <option value="CST">Central Time (CST/CDT)</option>
+                    <option value="MST">Mountain Time (MST/MDT)</option>
+                    <option value="PST">Pacific Time (PST/PDT)</option>
+                    <option value="Other">Other/International</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Preferred Interview Times (Select 2-3 options) *</label>
+                <div class="time-grid" id="timeSlots">
+                    <!-- Time slots will be populated by JavaScript -->
+                </div>
+                <input type="hidden" id="selectedTimes" name="selectedTimes" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="platformPreference">Preferred Video Platform</label>
+                <select id="platformPreference" name="platformPreference">
+                    <option value="zoom">Zoom</option>
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="meet">Google Meet</option>
+                    <option value="webex">WebEx</option>
+                    <option value="any">Any platform is fine</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="studyHabits">Brief description of your current radiology study habits *</label>
+                <textarea id="studyHabits" name="studyHabits" rows="3" required placeholder="e.g., I study cases during call nights, use Anki for DR, struggle to find time for dedicated study..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="mainChallenge">What's your biggest challenge in radiology learning? *</label>
+                <textarea id="mainChallenge" name="mainChallenge" rows="2" required placeholder="e.g., Retaining what I learn, finding good cases, managing time, understanding complex diagnoses..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="additionalNotes">Anything else you'd like us to know?</label>
+                <textarea id="additionalNotes" name="additionalNotes" rows="2" placeholder="Special scheduling needs, specific topics of interest, questions about RadCase..."></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">Schedule Interview - Get $50 Gift Card</button>
+        </form>
+        
+        <div class="interview-details">
+            <h3>📋 Interview Details</h3>
+            <ul>
+                <li><strong>Duration:</strong> 30 minutes via video call</li>
+                <li><strong>Format:</strong> Casual conversation about your learning habits</li>
+                <li><strong>Preparation:</strong> None needed - just bring your experience</li>
+                <li><strong>Recording:</strong> With your permission (optional)</li>
+                <li><strong>Gift Card:</strong> Sent via email within 24 hours</li>
+                <li><strong>Follow-up:</strong> Early access to RadCase beta</li>
+            </ul>
+            
+            <h3 style="margin-top: 25px;">🗣️ Sample Questions</h3>
+            <ul>
+                <li>Walk me through your typical radiology study session</li>
+                <li>What tools do you currently use and what frustrates you?</li>
+                <li>How do you track your learning progress?</li>
+                <li>When do you study? Mobile or desktop?</li>
+                <li>How do you collaborate with peers/attendings?</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Generate time slots for the next 2 weeks
+        function generateTimeSlots() {
+            const timeGrid = document.getElementById('timeSlots');
+            const slots = [];
+            
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const times = [
+                '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+                '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
+            ];
+            
+            // Generate slots for next 2 weeks (weekdays only)
+            for (let week = 0; week < 2; week++) {
+                days.forEach(day => {
+                    times.forEach(time => {
+                        const slotElement = document.createElement('div');
+                        slotElement.className = 'time-slot';
+                        slotElement.textContent = `${day} ${time}`;
+                        slotElement.onclick = () => toggleTimeSlot(slotElement);
+                        timeGrid.appendChild(slotElement);
+                    });
+                });
+            }
+        }
+        
+        let selectedSlots = [];
+        
+        function toggleTimeSlot(element) {
+            const timeText = element.textContent;
+            
+            if (element.classList.contains('selected')) {
+                element.classList.remove('selected');
+                selectedSlots = selectedSlots.filter(slot => slot !== timeText);
+            } else {
+                if (selectedSlots.length < 3) {
+                    element.classList.add('selected');
+                    selectedSlots.push(timeText);
+                } else {
+                    alert('Please select maximum 3 time preferences');
+                }
+            }
+            
+            document.getElementById('selectedTimes').value = selectedSlots.join('; ');
+        }
+        
+        document.getElementById('interviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (selectedSlots.length < 2) {
+                alert('Please select at least 2 preferred time slots');
+                return;
+            }
+            
+            // Collect form data
+            const formData = new FormData(this);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            data.timestamp = new Date().toISOString();
+            data.source = 'interview-scheduling';
+            data.selectedTimes = selectedSlots;
+            
+            console.log('Interview request data:', data);
+            
+            // Send to backend
+            fetch('/api/interview-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    document.getElementById('interviewForm').innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <h2 style="color: #667eea; margin-bottom: 20px;">🎉 Interview Scheduled!</h2>
+                            <p style="font-size: 1.1rem; margin-bottom: 20px;">Thank you! We'll contact you within 24 hours to confirm your interview time.</p>
+                            <p style="color: #666; margin-bottom: 10px;">Your $50 Amazon gift card will be sent after the completed interview.</p>
+                            <p style="color: #666;">Check your email for confirmation and meeting details.</p>
+                        </div>
+                    `;
+                } else {
+                    alert('There was an error scheduling your interview. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error scheduling your interview. Please try again.');
+            });
+        });
+        
+        // Initialize
+        generateTimeSlots();
+    </script>
+</body>
+</html>

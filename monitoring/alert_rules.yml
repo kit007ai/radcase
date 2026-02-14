@@ -1,0 +1,250 @@
+# RadCase Production Alert Rules
+# Critical alerts for production operations
+
+groups:
+  - name: radcase.critical
+    interval: 30s
+    rules:
+      # Service availability
+      - alert: RadCaseServiceDown
+        expr: up{job="radcase-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: radcase
+          team: sentinel
+        annotations:
+          summary: "🚨 RadCase service is down"
+          description: "RadCase application has been down for more than 1 minute on {{ $labels.instance }}"
+          runbook_url: "https://docs.radcase.com/runbooks/service-down"
+
+      # High response time (Arc's performance targets)
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(radcase_http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+          service: radcase
+          team: arc
+        annotations:
+          summary: "⚡ High response time detected"
+          description: "95th percentile response time is {{ $value }}s, exceeding 1s threshold"
+          runbook_url: "https://docs.radcase.com/runbooks/high-response-time"
+
+      # Database performance (Arc's PostgreSQL optimization)
+      - alert: DatabaseSlowQueries
+        expr: rate(radcase_database_query_duration_seconds_sum[5m]) / rate(radcase_database_query_duration_seconds_count[5m]) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          service: database
+          team: arc
+        annotations:
+          summary: "💾 Database queries are slow"
+          description: "Average database query time is {{ $value }}s, exceeding 500ms threshold"
+          runbook_url: "https://docs.radcase.com/runbooks/slow-queries"
+
+      # DICOM processing performance
+      - alert: SlowDicomProcessing
+        expr: histogram_quantile(0.95, rate(radcase_dicom_processing_duration_seconds_bucket[5m])) > 2.0
+        for: 2m
+        labels:
+          severity: warning
+          service: dicom
+          team: arc
+        annotations:
+          summary: "🏥 DICOM processing is slow"
+          description: "95th percentile DICOM processing time is {{ $value }}s, exceeding 2s threshold"
+          runbook_url: "https://docs.radcase.com/runbooks/slow-dicom"
+
+      # Error rate monitoring
+      - alert: HighErrorRate
+        expr: rate(radcase_http_requests_total{status=~"5.."}[5m]) / rate(radcase_http_requests_total[5m]) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+          service: radcase
+          team: sentinel
+        annotations:
+          summary: "🔥 High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }}, exceeding 5% threshold"
+          runbook_url: "https://docs.radcase.com/runbooks/high-error-rate"
+
+      # Memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+          service: system
+          team: sentinel
+        annotations:
+          summary: "🧠 High memory usage"
+          description: "Memory usage is {{ $value }}%, exceeding 85% threshold on {{ $labels.instance }}"
+          runbook_url: "https://docs.radcase.com/runbooks/high-memory"
+
+      # Disk space
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 80
+        for: 1m
+        labels:
+          severity: warning
+          service: system
+          team: sentinel
+        annotations:
+          summary: "💽 Low disk space"
+          description: "Disk usage is {{ $value }}%, exceeding 80% threshold on {{ $labels.instance }}"
+          runbook_url: "https://docs.radcase.com/runbooks/low-disk-space"
+
+  - name: radcase.security
+    interval: 60s
+    rules:
+      # Failed login attempts (security monitoring)
+      - alert: HighFailedLogins
+        expr: rate(radcase_failed_logins_total[5m]) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+          team: sentinel
+        annotations:
+          summary: "🛡️ High failed login rate"
+          description: "Failed login rate is {{ $value }}/sec, potential brute force attack"
+          runbook_url: "https://docs.radcase.com/runbooks/failed-logins"
+
+      # Security events
+      - alert: SecurityEvents
+        expr: rate(radcase_security_events_total[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+          team: sentinel
+        annotations:
+          summary: "🚨 Security events detected"
+          description: "Security event rate is {{ $value }}/sec, immediate investigation required"
+          runbook_url: "https://docs.radcase.com/runbooks/security-events"
+
+      # SSL certificate expiry
+      - alert: SSLCertificateExpiry
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1m
+        labels:
+          severity: warning
+          service: ssl
+          team: sentinel
+        annotations:
+          summary: "📜 SSL certificate expiring soon"
+          description: "SSL certificate expires in {{ $value | humanizeDuration }}"
+          runbook_url: "https://docs.radcase.com/runbooks/ssl-expiry"
+
+  - name: radcase.business
+    interval: 300s  # 5 minute intervals for business metrics
+    rules:
+      # User activity monitoring
+      - alert: LowUserActivity
+        expr: avg_over_time(radcase_active_sessions[1h]) < 10
+        for: 10m
+        labels:
+          severity: info
+          service: business
+          team: product
+        annotations:
+          summary: "📊 Low user activity"
+          description: "Average active sessions is {{ $value }}, below normal threshold of 10"
+
+      # Quiz engagement
+      - alert: LowQuizEngagement
+        expr: rate(radcase_quiz_attempts_total[1h]) < 0.01
+        for: 30m
+        labels:
+          severity: info
+          service: business
+          team: product
+        annotations:
+          summary: "🎯 Low quiz engagement"
+          description: "Quiz attempt rate is {{ $value }}/sec, below expected engagement level"
+
+  - name: radcase.infrastructure
+    interval: 60s
+    rules:
+      # Database connection pool
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: pg_stat_database_numbackends{datname="radcase"} / pg_settings_max_connections * 100 > 80
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+          team: arc
+        annotations:
+          summary: "💾 Database connection pool nearly exhausted"
+          description: "Database connections at {{ $value }}% of maximum capacity"
+          runbook_url: "https://docs.radcase.com/runbooks/db-connections"
+
+      # Redis memory usage
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: redis
+          team: arc
+        annotations:
+          summary: "🚀 Redis memory usage high"
+          description: "Redis memory usage is {{ $value }}% of maximum"
+          runbook_url: "https://docs.radcase.com/runbooks/redis-memory"
+
+      # Cache hit rate (Arc's optimization focus)
+      - alert: LowCacheHitRate
+        expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) < 0.80
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+          team: arc
+        annotations:
+          summary: "📈 Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}, below 80% threshold"
+          runbook_url: "https://docs.radcase.com/runbooks/cache-hit-rate"
+
+      # File storage monitoring
+      - alert: HighStorageGrowth
+        expr: increase(radcase_storage_used_bytes[1h]) / 1024 / 1024 / 1024 > 1
+        for: 1m
+        labels:
+          severity: warning
+          service: storage
+          team: sentinel
+        annotations:
+          summary: "📦 High storage growth rate"
+          description: "Storage growth is {{ $value }}GB/hour, monitor for capacity planning"
+          runbook_url: "https://docs.radcase.com/runbooks/storage-growth"
+
+  - name: radcase.performance
+    interval: 30s
+    rules:
+      # Load balancer performance
+      - alert: HighRequestQueueTime
+        expr: histogram_quantile(0.95, rate(traefik_request_duration_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          service: loadbalancer
+          team: sentinel
+        annotations:
+          summary: "⚖️ High request queue time"
+          description: "95th percentile request queue time is {{ $value }}s"
+          runbook_url: "https://docs.radcase.com/runbooks/queue-time"
+
+      # Container resource limits
+      - alert: ContainerCPUThrottling
+        expr: rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: containers
+          team: sentinel
+        annotations:
+          summary: "🐳 Container CPU throttling"
+          description: "Container {{ $labels.name }} is experiencing CPU throttling"
+          runbook_url: "https://docs.radcase.com/runbooks/cpu-throttling"

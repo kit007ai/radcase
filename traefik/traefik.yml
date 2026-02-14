@@ -1,0 +1,103 @@
+# RadCase Production Traefik Configuration
+# SSL termination, security headers, and load balancing
+
+# Global configuration
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+# API and dashboard configuration
+api:
+  dashboard: true
+  insecure: false  # Only accessible via HTTPS
+
+# Entry points
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entrypoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        options: default
+      middlewares:
+        - security-headers@file
+        - rate-limit@file
+
+  metrics:
+    address: ":8082"
+
+# Certificate resolvers
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      tlsChallenge: {}
+      email: ${ACME_EMAIL}
+      storage: /data/acme.json
+      # Use Let's Encrypt staging for testing
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+
+  cloudflare:
+    acme:
+      dnsChallenge:
+        provider: cloudflare
+        delayBeforeCheck: 0
+      email: ${ACME_EMAIL}
+      storage: /data/acme.json
+
+# Providers
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: radcase-network
+
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+# Logging
+log:
+  level: INFO
+  filePath: "/data/traefik.log"
+  format: json
+
+accessLog:
+  filePath: "/data/access.log"
+  format: json
+  filters:
+    statusCodes:
+      - "400-499"
+      - "500-599"
+    retryAttempts: true
+    minDuration: "100ms"
+
+# Metrics for monitoring
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
+      - 10.0
+
+# Tracing (optional)
+tracing:
+  jaeger:
+    samplingServerURL: http://jaeger:14268/api/sampling
+    localAgentHostPort: jaeger:6831
+
+# Pilot (Traefik Cloud) - disabled for security
+pilot:
+  dashboard: false

@@ -1,0 +1,345 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "🏥 RadCase Production Dashboard",
+    "tags": ["radcase", "production", "medical"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "🎯 System Overview",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"radcase-app\"}",
+            "legendFormat": "Service Status"
+          },
+          {
+            "expr": "radcase_active_users",
+            "legendFormat": "Active Users"
+          },
+          {
+            "expr": "rate(radcase_http_requests_total[5m])",
+            "legendFormat": "Requests/sec"
+          },
+          {
+            "expr": "radcase_cases_total",
+            "legendFormat": "Total Cases"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "displayMode": "basic",
+              "orientation": "horizontal"
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "📊 Arc's Performance Metrics",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(radcase_http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 Response Time"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(radcase_http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P50 Response Time"
+          },
+          {
+            "expr": "rate(radcase_database_query_duration_seconds_sum[5m]) / rate(radcase_database_query_duration_seconds_count[5m])",
+            "legendFormat": "Avg DB Query Time"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)",
+            "min": 0
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [1], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "2m",
+          "frequency": "30s",
+          "handler": 1,
+          "name": "High Response Time Alert",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 3,
+        "title": "🔄 DICOM Processing Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(radcase_dicom_processing_duration_seconds_sum[5m]) / rate(radcase_dicom_processing_duration_seconds_count[5m])",
+            "legendFormat": "Avg DICOM Load Time"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(radcase_dicom_processing_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 DICOM Load Time"
+          },
+          {
+            "expr": "rate(radcase_dicom_files_processed_total[5m])",
+            "legendFormat": "DICOM Files/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Time (seconds) / Rate",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "💾 Database Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_tup_fetched{datname=\"radcase\"}[5m])",
+            "legendFormat": "Tuples Fetched/sec"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_inserted{datname=\"radcase\"}[5m])",
+            "legendFormat": "Tuples Inserted/sec"
+          },
+          {
+            "expr": "pg_stat_database_numbackends{datname=\"radcase\"}",
+            "legendFormat": "Active Connections"
+          },
+          {
+            "expr": "rate(pg_stat_database_deadlocks{datname=\"radcase\"}[5m])",
+            "legendFormat": "Deadlocks/sec"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "🚀 Redis Cache Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(redis_commands_processed_total[5m])",
+            "legendFormat": "Commands/sec"
+          },
+          {
+            "expr": "redis_connected_clients",
+            "legendFormat": "Connected Clients"
+          },
+          {
+            "expr": "rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))",
+            "legendFormat": "Cache Hit Rate"
+          },
+          {
+            "expr": "redis_memory_used_bytes / 1024 / 1024",
+            "legendFormat": "Memory Used (MB)"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "👥 User Activity & Business Metrics",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "radcase_active_sessions",
+            "legendFormat": "Active Sessions"
+          },
+          {
+            "expr": "rate(radcase_user_logins_total[5m]) * 60",
+            "legendFormat": "Logins/min"
+          },
+          {
+            "expr": "rate(radcase_quiz_attempts_total[5m]) * 60",
+            "legendFormat": "Quiz Attempts/min"
+          },
+          {
+            "expr": "rate(radcase_cases_viewed_total[5m]) * 60",
+            "legendFormat": "Cases Viewed/min"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "🛡️ Security & Error Monitoring",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(radcase_http_requests_total{status=~\"4..\"}[5m])",
+            "legendFormat": "4xx Errors/sec"
+          },
+          {
+            "expr": "rate(radcase_http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "5xx Errors/sec"
+          },
+          {
+            "expr": "rate(radcase_security_events_total[5m])",
+            "legendFormat": "Security Events/sec"
+          },
+          {
+            "expr": "rate(radcase_failed_logins_total[5m])",
+            "legendFormat": "Failed Logins/sec"
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [0.1], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "1m",
+          "frequency": "15s",
+          "handler": 1,
+          "name": "High Error Rate Alert",
+          "noDataState": "no_data"
+        }
+      },
+      {
+        "id": 8,
+        "title": "🖥️ System Resources",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage %"
+          },
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+            "legendFormat": "Memory Usage %"
+          },
+          {
+            "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100",
+            "legendFormat": "Disk Usage %"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "📡 Network & File Storage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]) / 1024 / 1024",
+            "legendFormat": "Network In (MB/s)"
+          },
+          {
+            "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]) / 1024 / 1024",
+            "legendFormat": "Network Out (MB/s)"
+          },
+          {
+            "expr": "radcase_storage_used_bytes{type=\"uploads\"} / 1024 / 1024 / 1024",
+            "legendFormat": "Upload Storage (GB)"
+          },
+          {
+            "expr": "radcase_storage_used_bytes{type=\"dicom\"} / 1024 / 1024 / 1024",
+            "legendFormat": "DICOM Storage (GB)"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "🏥 RadCase Production Dashboard",
+    "uid": "radcase-production",
+    "version": 1,
+    "weekStart": "",
+    "refresh": "30s",
+    "schemaVersion": 30,
+    "style": "dark",
+    "tags": ["radcase", "production", "sentinel"],
+    "templating": {
+      "list": [
+        {
+          "name": "environment",
+          "type": "constant",
+          "current": {
+            "selected": false,
+            "text": "production",
+            "value": "production"
+          },
+          "hide": 0,
+          "label": "Environment",
+          "query": "production"
+        },
+        {
+          "name": "instance",
+          "type": "query",
+          "current": {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          "definition": "label_values(up{job=\"radcase-app\"}, instance)",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Instance",
+          "multi": true,
+          "query": "label_values(up{job=\"radcase-app\"}, instance)",
+          "refresh": 1,
+          "regex": "",
+          "sort": 0,
+          "type": "query"
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        },
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertname!=\"\", instance=~\"$instance\"}",
+          "hide": false,
+          "iconColor": "red",
+          "name": "Alerts",
+          "showIn": 0,
+          "step": "60s",
+          "tagKeys": "alertname",
+          "titleFormat": "Alert: {{alertname}}",
+          "type": "tags"
+        }
+      ]
+    }
+  }
+}

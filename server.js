@@ -1,8 +1,12 @@
+// Load environment variables first
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const Database = require('better-sqlite3');
 const sharp = require('sharp');
@@ -12,10 +16,67 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-// JWT Secret (in production, use environment variable)
-const JWT_SECRET = process.env.JWT_SECRET || 'radcase-secret-key-change-in-production-' + Date.now();
+// ============ SECURITY UTILITIES ============
+
+// Allowed MIME types for medical imaging
+const ALLOWED_IMAGE_MIMES = [
+  'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
+  'image/tiff', 'image/x-tiff', 'image/svg+xml'
+];
+
+const ALLOWED_DICOM_MIMES = [
+  'application/dicom', 'application/octet-stream', 'image/dicom'
+];
+
+// Sanitize filename - remove dangerous characters and paths
+function sanitizeFilename(filename) {
+  if (!filename) return 'unnamed';
+  
+  // Remove directory traversal attempts and dangerous characters
+  return filename
+    .replace(/[\/\\?%*:|"<>]/g, '_')  // Replace dangerous chars
+    .replace(/\.\./g, '_')            // Remove ../ attempts
+    .replace(/^\.+/, '')              // Remove leading dots
+    .substring(0, 255)                // Limit length
+    || 'unnamed';
+}
+
+// Validate file type based on content (basic check)
+function validateFileType(mimetype, allowedTypes) {
+  return allowedTypes.includes(mimetype.toLowerCase());
+}
+
+// Generate secure filename
+function generateSecureFilename(originalName) {
+  const sanitized = sanitizeFilename(originalName);
+  const ext = path.extname(sanitized).toLowerCase();
+  const name = crypto.randomBytes(16).toString('hex');
+  return `${name}${ext}`;
+}
+
+// JWT Secret - SECURITY CRITICAL
+// Require secure JWT secret, fail fast if not provided
+if (!process.env.JWT_SECRET) {
+  console.error('🚨 SECURITY ERROR: JWT_SECRET environment variable is required!');
+  console.error('   Generate one with: openssl rand -hex 32');
+  console.error('   Add it to your .env file or environment variables');
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  } else {
+    console.warn('⚠️  Using development fallback - NOT for production!');
+  }
+}
+
+const JWT_SECRET = process.env.JWT_SECRET || (
+  process.env.NODE_ENV === 'development' 
+    ? 'dev-fallback-' + require('crypto').randomBytes(32).toString('hex')
+    : (() => { 
+        console.error('🚨 JWT_SECRET required in production!'); 
+        process.exit(1); 
+      })()
+);
 
 // Ensure directories exist
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
@@ -126,6 +187,57 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_user_progress ON user_case_progress(user_id, next_review);
+
+  -- Beta program signups
+  CREATE TABLE IF NOT EXISTS beta_signups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    role TEXT NOT NULL,
+    institution TEXT NOT NULL,
+    specialty TEXT,
+    study_time TEXT NOT NULL,
+    current_tools TEXT,
+    motivation TEXT NOT NULL,
+    wants_interview INTEGER DEFAULT 0,
+    can_refer INTEGER DEFAULT 0,
+    timestamp TEXT,
+    source TEXT DEFAULT 'beta-signup',
+    status TEXT DEFAULT 'pending',
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_beta_email ON beta_signups(email);
+  CREATE INDEX IF NOT EXISTS idx_beta_status ON beta_signups(status);
+  CREATE INDEX IF NOT EXISTS idx_beta_role ON beta_signups(role);
+
+  -- Interview requests for user research
+  CREATE TABLE IF NOT EXISTS interview_requests (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL,
+    institution TEXT NOT NULL,
+    timezone TEXT NOT NULL,
+    preferred_times TEXT NOT NULL,
+    platform_preference TEXT DEFAULT 'any',
+    study_habits TEXT NOT NULL,
+    main_challenge TEXT NOT NULL,
+    additional_notes TEXT,
+    timestamp TEXT,
+    source TEXT DEFAULT 'interview-scheduling',
+    status TEXT DEFAULT 'pending',
+    scheduled_time TEXT,
+    meeting_link TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_interview_email ON interview_requests(email);
+  CREATE INDEX IF NOT EXISTS idx_interview_status ON interview_requests(status);
 `);
 
 // Add user_id column to quiz_attempts if not exists
@@ -134,6 +246,22 @@ try {
 } catch (e) {
   // Column already exists
 }
+
+// ============ PERFORMANCE MIDDLEWARE ============
+const compression = require('compression');
+const { getCache, cacheMiddleware, CacheInvalidator } = require('./lib/cache');
+const { getMonitor } = require('./lib/monitor');
+
+const cache = getCache();
+const monitor = getMonitor();
+monitor.setCacheRef(cache);
+const cacheInvalidator = new CacheInvalidator(cache);
+
+// Compression (50-70% bandwidth reduction for DICOM and JSON)
+app.use(compression({ level: 6 }));
+
+// Performance monitoring
+app.use(monitor.middleware());
 
 // Middleware
 app.use(cors({ origin: true, credentials: true }));
@@ -312,25 +440,368 @@ app.get('/api/users', requireAuth, (req, res) => {
   
   res.json({ users });
 });
-app.use('/uploads', express.static(UPLOAD_DIR));
-app.use('/thumbnails', express.static(THUMB_DIR));
-app.use('/dicom', express.static(DICOM_DIR));
+
+// ============ BETA PROGRAM ENDPOINTS ============
+
+// Beta signup (no auth required)
+app.post('/api/beta-signup', async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      role,
+      institution,
+      specialty,
+      studyTime,
+      currentTools,
+      motivation,
+      interview,
+      referrals,
+      timestamp,
+      source
+    } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !role || !institution || !studyTime || !motivation) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields' 
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid email format' 
+      });
+    }
+    
+    // Check if email already exists
+    const existingSignup = db.prepare('SELECT id FROM beta_signups WHERE email = ?').get(email);
+    if (existingSignup) {
+      return res.json({ 
+        success: true, 
+        message: 'Already registered! We\'ll be in touch soon.',
+        existing: true 
+      });
+    }
+    
+    // Create beta signup record
+    const signupId = uuidv4();
+    const stmt = db.prepare(`
+      INSERT INTO beta_signups (
+        id, name, email, role, institution, specialty, study_time,
+        current_tools, motivation, wants_interview, can_refer,
+        timestamp, source, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      signupId,
+      name.trim(),
+      email.toLowerCase().trim(),
+      role,
+      institution.trim(),
+      specialty || null,
+      studyTime,
+      Array.isArray(currentTools) ? currentTools.join(',') : '',
+      motivation.trim(),
+      interview === 'yes' ? 1 : 0,
+      referrals === 'yes' ? 1 : 0,
+      timestamp || new Date().toISOString(),
+      source || 'beta-signup',
+      'pending'
+    );
+    
+    console.log(`✅ New beta signup: ${name} (${email}) - ${role} at ${institution}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Beta signup successful! Check your email for next steps.',
+      signupId: signupId 
+    });
+    
+  } catch (error) {
+    console.error('Beta signup error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+
+// Get beta signups (admin only)
+app.get('/api/beta-signups', requireAuth, (req, res) => {
+  try {
+    const signups = db.prepare(`
+      SELECT id, name, email, role, institution, specialty, study_time,
+             current_tools, motivation, wants_interview, can_refer,
+             timestamp, status, created_at
+      FROM beta_signups
+      ORDER BY created_at DESC
+    `).all();
+    
+    res.json({ success: true, signups });
+  } catch (error) {
+    console.error('Error fetching beta signups:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+
+// Update beta signup status (admin only)
+app.post('/api/beta-signups/:id/status', requireAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes } = req.body;
+    
+    const validStatuses = ['pending', 'contacted', 'interviewed', 'activated', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid status' 
+      });
+    }
+    
+    const stmt = db.prepare(`
+      UPDATE beta_signups 
+      SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `);
+    
+    const result = stmt.run(status, notes || null, id);
+    
+    if (result.changes === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Beta signup not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Status updated successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Error updating beta signup:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+
+// Interview request (no auth required)
+app.post('/api/interview-request', async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      role,
+      institution,
+      timezone,
+      selectedTimes,
+      platformPreference,
+      studyHabits,
+      mainChallenge,
+      additionalNotes,
+      timestamp,
+      source
+    } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !role || !institution || !timezone || !selectedTimes || !studyHabits || !mainChallenge) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields' 
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid email format' 
+      });
+    }
+    
+    // Create interview request record
+    const requestId = uuidv4();
+    const stmt = db.prepare(`
+      INSERT INTO interview_requests (
+        id, name, email, role, institution, timezone, preferred_times,
+        platform_preference, study_habits, main_challenge, additional_notes,
+        timestamp, source, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(
+      requestId,
+      name.trim(),
+      email.toLowerCase().trim(),
+      role,
+      institution.trim(),
+      timezone,
+      Array.isArray(selectedTimes) ? selectedTimes.join('; ') : selectedTimes,
+      platformPreference || 'any',
+      studyHabits.trim(),
+      mainChallenge.trim(),
+      additionalNotes ? additionalNotes.trim() : null,
+      timestamp || new Date().toISOString(),
+      source || 'interview-scheduling',
+      'pending'
+    );
+    
+    console.log(`🗣️ New interview request: ${name} (${email}) - ${role} at ${institution}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Interview request submitted successfully!',
+      requestId: requestId 
+    });
+    
+  } catch (error) {
+    console.error('Interview request error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+
+// Get interview requests (admin only)
+app.get('/api/interview-requests', requireAuth, (req, res) => {
+  try {
+    const requests = db.prepare(`
+      SELECT id, name, email, role, institution, timezone, preferred_times,
+             platform_preference, study_habits, main_challenge, additional_notes,
+             timestamp, status, created_at
+      FROM interview_requests
+      ORDER BY created_at DESC
+    `).all();
+    
+    res.json({ success: true, requests });
+  } catch (error) {
+    console.error('Error fetching interview requests:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+
+// ============ SECURE STATIC FILE SERVING ============
+
+// Secure static file serving with path validation
+function createSecureStatic(baseDir, routePath) {
+  return (req, res, next) => {
+    // Decode and sanitize the requested path
+    let requestedPath;
+    try {
+      requestedPath = decodeURIComponent(req.path);
+    } catch (e) {
+      return res.status(400).send('Invalid path encoding');
+    }
+    
+    // Remove route prefix and normalize path
+    const relativePath = requestedPath.replace(routePath, '');
+    const fullPath = path.join(baseDir, relativePath);
+    
+    // Ensure the resolved path is within the allowed directory
+    const resolvedPath = path.resolve(fullPath);
+    const resolvedBase = path.resolve(baseDir);
+    
+    if (!resolvedPath.startsWith(resolvedBase)) {
+      console.warn(`🚨 Directory traversal attempt blocked: ${requestedPath}`);
+      return res.status(403).send('Access denied');
+    }
+    
+    // Check if file exists
+    if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
+      return res.status(404).send('File not found');
+    }
+    
+    // Cache headers for immutable medical files
+    if (routePath === '/dicom') {
+      res.set({
+        'Cache-Control': 'public, max-age=2592000, immutable',
+        'Content-Type': 'application/dicom',
+      });
+    } else {
+      res.set('Cache-Control', 'public, max-age=86400');
+    }
+    
+    // Serve the file securely (dotfiles: allow needed since app may live under a dot-directory)
+    res.sendFile(resolvedPath, { dotfiles: 'allow' });
+  };
+}
+
+app.use('/uploads', createSecureStatic(UPLOAD_DIR, '/uploads'));
+app.use('/thumbnails', createSecureStatic(THUMB_DIR, '/thumbnails'));
+app.use('/dicom', createSecureStatic(DICOM_DIR, '/dicom'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Multer config
+// ============ SECURE MULTER CONFIG ============
+
+// Enhanced multer storage with security validation
 const storage = multer.diskStorage({
   destination: UPLOAD_DIR,
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
+    // Generate secure filename
+    const secureFilename = generateSecureFilename(file.originalname);
+    cb(null, secureFilename);
   }
 });
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+
+// File filter for uploads - validate MIME types
+const imageFileFilter = (req, file, cb) => {
+  console.log(`Upload attempt: ${file.originalname}, MIME: ${file.mimetype}`);
+  
+  if (validateFileType(file.mimetype, ALLOWED_IMAGE_MIMES)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Invalid file type. Allowed: ${ALLOWED_IMAGE_MIMES.join(', ')}`), false);
+  }
+};
+
+// Standard image upload with security
+const upload = multer({ 
+  storage, 
+  limits: { 
+    fileSize: (process.env.MAX_FILE_SIZE_MB || 50) * 1024 * 1024,
+    files: 20 
+  },
+  fileFilter: imageFileFilter
+});
 
 // ============ API Routes ============
 
+// Cache middleware for read-heavy endpoints
+const apiCache10m = cacheMiddleware(cache, { ttl: 10 * 60 * 1000 }); // 10 min
+const apiCache1h = cacheMiddleware(cache, { ttl: 60 * 60 * 1000 }); // 1 hour
+
+// Performance monitoring endpoints
+app.get('/api/admin/metrics', (req, res) => {
+  res.json(monitor.getMetrics());
+});
+
+app.get('/api/admin/health', (req, res) => {
+  const health = monitor.getHealth();
+  res.status(health.status === 'healthy' ? 200 : 503).json(health);
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Get all cases with filters
-app.get('/api/cases', (req, res) => {
+app.get('/api/cases', apiCache10m, (req, res) => {
   const { modality, body_part, difficulty, tag, search, limit = 50, offset = 0 } = req.query;
   
   let sql = `
@@ -392,7 +863,7 @@ app.get('/api/cases', (req, res) => {
 });
 
 // Get single case with all details
-app.get('/api/cases/:id', (req, res) => {
+app.get('/api/cases/:id', apiCache1h, (req, res) => {
   const caseData = db.prepare(`
     SELECT c.*, GROUP_CONCAT(DISTINCT t.name) as tags
     FROM cases c
@@ -434,6 +905,7 @@ app.post('/api/cases', (req, res) => {
     }
   }
   
+  cacheInvalidator.invalidateAllCases().catch(() => {});
   res.json({ id, message: 'Case created' });
 });
 
@@ -529,7 +1001,7 @@ app.delete('/api/images/:id', (req, res) => {
 });
 
 // Get all tags
-app.get('/api/tags', (req, res) => {
+app.get('/api/tags', apiCache1h, (req, res) => {
   const tags = db.prepare(`
     SELECT t.name, COUNT(ct.case_id) as count 
     FROM tags t 
@@ -554,24 +1026,46 @@ app.get('/api/filters', (req, res) => {
 
 // ============ DICOM Handling ============
 
-// DICOM upload configuration
+// ============ SECURE DICOM UPLOAD CONFIG ============
+
 const dicomStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const seriesId = req.params.seriesId || uuidv4();
-    const seriesDir = path.join(DICOM_DIR, seriesId);
+    if (!req.dicomSeriesId) {
+      req.dicomSeriesId = req.params.seriesId || uuidv4();
+    }
+    const seriesDir = path.join(DICOM_DIR, req.dicomSeriesId);
     fs.mkdirSync(seriesDir, { recursive: true });
-    req.dicomSeriesId = seriesId;
+    console.log(`DICOM destination: seriesId=${req.dicomSeriesId}, file=${file.originalname}`);
     cb(null, seriesDir);
   },
   filename: (req, file, cb) => {
-    // Preserve original filename or generate one
-    const filename = file.originalname || `${uuidv4()}.dcm`;
-    cb(null, filename);
+    // Generate secure filename for DICOM
+    const secureFilename = generateSecureFilename(file.originalname || 'dicom.dcm');
+    cb(null, secureFilename);
   }
 });
+
+// DICOM file filter
+const dicomFileFilter = (req, file, cb) => {
+  console.log(`DICOM upload: ${file.originalname}, MIME: ${file.mimetype}`);
+  
+  // For DICOM, we're more lenient with MIME types as they vary
+  if (validateFileType(file.mimetype, ALLOWED_DICOM_MIMES) || 
+      file.originalname.toLowerCase().endsWith('.dcm') ||
+      file.originalname.toLowerCase().includes('dicom')) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Invalid DICOM file type. MIME: ${file.mimetype}`), false);
+  }
+};
+
 const dicomUpload = multer({ 
   storage: dicomStorage, 
-  limits: { fileSize: 500 * 1024 * 1024 } // 500MB for large series
+  limits: { 
+    fileSize: (process.env.MAX_DICOM_FILE_SIZE_MB || 500) * 1024 * 1024,
+    files: 1000
+  },
+  fileFilter: dicomFileFilter
 });
 
 // Helper function to parse DICOM metadata
@@ -625,6 +1119,10 @@ app.get('/api/cases/:id/dicom', (req, res) => {
 
 // Upload DICOM series for a case
 app.post('/api/cases/:id/dicom', dicomUpload.array('files', 1000), async (req, res) => {
+  console.log(`DICOM upload: ${req.files?.length} files received, seriesId=${req.dicomSeriesId}`);
+  if (req.files) {
+    req.files.forEach((f, i) => console.log(`  file[${i}]: ${f.originalname} -> ${f.path}`));
+  }
   const caseId = req.params.id;
   const seriesId = req.dicomSeriesId || uuidv4();
   const seriesDir = path.join(DICOM_DIR, seriesId);
@@ -688,7 +1186,7 @@ app.post('/api/cases/:id/dicom', dicomUpload.array('files', 1000), async (req, r
 });
 
 // Get list of DICOM images in a series (for viewer)
-app.get('/api/dicom/series', (req, res) => {
+app.get('/api/dicom/series', apiCache1h, (req, res) => {
   const { path: seriesPath, seriesId } = req.query;
   const folder = seriesId || seriesPath;
   
@@ -748,14 +1246,33 @@ app.get('/api/dicom/:seriesId', (req, res) => {
   }
   
   const seriesDir = path.join(DICOM_DIR, series.folder_name);
-  const files = fs.existsSync(seriesDir) 
-    ? fs.readdirSync(seriesDir).filter(f => f.endsWith('.dcm') || !f.includes('.'))
-    : [];
+  if (!fs.existsSync(seriesDir)) {
+    return res.json({ ...series, files: 0, imageIds: [] });
+  }
+  
+  // Parse and sort by instance number / slice location
+  const files = fs.readdirSync(seriesDir)
+    .filter(f => f.endsWith('.dcm') || !f.includes('.'))
+    .map(filename => {
+      const metadata = parseDicomFile(path.join(seriesDir, filename));
+      return {
+        filename,
+        instanceNumber: metadata?.instanceNumber || 0,
+        sliceLocation: metadata?.sliceLocation
+      };
+    })
+    .sort((a, b) => {
+      if (a.sliceLocation !== null && b.sliceLocation !== null &&
+          a.sliceLocation !== undefined && b.sliceLocation !== undefined) {
+        return a.sliceLocation - b.sliceLocation;
+      }
+      return a.instanceNumber - b.instanceNumber;
+    });
   
   res.json({
     ...series,
     files: files.length,
-    imageIds: files.map(f => `wadouri:/dicom/${series.folder_name}/${f}`)
+    imageIds: files.map(f => `wadouri:/dicom/${series.folder_name}/${f.filename}`)
   });
 });
 
@@ -1359,11 +1876,27 @@ app.post('/api/import', express.json({ limit: '100mb' }), async (req, res) => {
   res.json({ imported, errors });
 });
 
+// Serve beta signup page
+app.get('/beta', (req, res) => {
+  res.sendFile(path.join(__dirname, 'beta-signup.html'));
+});
+
+// Serve interview scheduling page
+app.get('/interview', (req, res) => {
+  res.sendFile(path.join(__dirname, 'interview-scheduling.html'));
+});
+
 // Serve frontend for any non-API route
 app.get('/{*splat}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`🏥 RadCase server running at http://localhost:${PORT}`);
-});
+// Only start server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🏥 RadCase server running at http://localhost:${PORT}`);
+  });
+}
+
+// Export app for testing
+module.exports = app;

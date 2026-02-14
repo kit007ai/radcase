@@ -19,7 +19,7 @@
   <meta name="application-name" content="RadCase">
   
   <!-- Touch and gesture optimization -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0, minimum-scale=1.0">
   <meta name="HandheldFriendly" content="true">
   <meta name="MobileOptimized" content="320">
   <style>
@@ -27,12 +27,6 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Prevent double-tap zoom on mobile */
-    html {
-      touch-action: manipulation;
     }
 
     :root {
@@ -1422,39 +1416,6 @@
       outline: 2px solid var(--accent);
       outline-offset: 2px;
     }
-    /* Case navigation buttons */
-    .modal-nav-btn {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 1001;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      border: none;
-      font-size: 3rem;
-      width: 56px;
-      height: 80px;
-      cursor: pointer;
-      border-radius: 8px;
-      opacity: 0;
-      transition: opacity 0.2s, background 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      padding: 0;
-    }
-    .modal-nav-btn:hover { background: rgba(0,0,0,0.85); }
-    .modal-nav-prev { left: 12px; }
-    .modal-nav-next { right: 12px; }
-    .modal-overlay:hover .modal-nav-btn,
-    .modal-overlay.active .modal-nav-btn { opacity: 0.7; }
-    .modal-overlay:hover .modal-nav-btn:hover { opacity: 1; }
-    @media (max-width: 768px) {
-      .modal-nav-btn { opacity: 0.7; width: 40px; height: 60px; font-size: 2rem; }
-      .modal-nav-prev { left: 4px; }
-      .modal-nav-next { right: 4px; }
-    }
   </style>
   
   <!-- Cornerstone.js for DICOM viewing -->
@@ -1476,15 +1437,10 @@
     cornerstoneTools.init();
     
     // Configure WADO loader - use main thread decoding (more compatible)
-    // Initialize web workers for DICOM decoding
-    cornerstoneWADOImageLoader.webWorkerManager.initialize({
-      maxWebWorkers: navigator.hardwareConcurrency || 2,
-      startWebWorkersOnDemand: true,
-      taskConfiguration: {
-        decodeTask: {
-          initializeCodecsOnStartup: false,
-          strict: false
-        }
+    cornerstoneWADOImageLoader.configure({
+      useWebWorkers: false,
+      decodeConfig: {
+        convertFloatPixelDataToInt: false
       }
     });
   </script>
@@ -1858,8 +1814,6 @@
 
   <!-- Case View Modal -->
   <div class="modal-overlay" id="caseModal">
-    <button class="modal-nav-btn modal-nav-prev" onclick="navigateCase(-1)" title="Previous case (←)">‹</button>
-    <button class="modal-nav-btn modal-nav-next" onclick="navigateCase(1)" title="Next case (→)">›</button>
     <div class="modal" style="max-width: 1400px;">
       <div class="modal-header">
         <h2 id="modalTitle">Case Details</h2>
@@ -1894,12 +1848,8 @@
                 </summary>
                 <div style="margin-top: 12px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
                   <input type="file" id="dicomFileInput" multiple accept=".dcm,application/dicom" style="display: none;">
-                  <input type="file" id="dicomFolderInput" webkitdirectory directory multiple style="display: none;">
                   <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dicomFileInput').click()">
-                    Select Files
-                  </button>
-                  <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dicomFolderInput').click()" style="margin-left: 8px;">
-                    📁 Select Folder
+                    Select DICOM Files
                   </button>
                   <span id="dicomFileCount" style="margin-left: 12px; color: var(--text-muted);"></span>
                   <button class="btn btn-primary btn-sm" id="uploadDicomBtn" style="margin-left: 12px; display: none;" onclick="uploadDicomFiles()">
@@ -2495,11 +2445,10 @@
         return;
       }
 
-      caseIds = cases.map(c => c.id);
       grid.innerHTML = cases.map(c => `
         <div class="case-card" onclick="viewCase('${c.id}')">
           ${c.thumbnail 
-            ? `<img class="case-image" src="/thumbnails/${c.thumbnail}" alt="${c.title}" onerror="this.outerHTML='<div class=\\'case-image-placeholder\\'>🩻</div>'">`
+            ? `<img class="case-image" src="/thumbnails/${c.thumbnail}" alt="${c.title}">`
             : `<div class="case-image-placeholder">🩻</div>`
           }
           <div class="case-content">
@@ -2566,14 +2515,6 @@
 
     async function viewCase(id) {
       try {
-        // Reset DICOM viewer when switching cases
-        if (dicomViewer) {
-          dicomViewer.destroy();
-          dicomViewer = null;
-        }
-        currentDicomSeries = [];
-        
-        currentCaseIndex = caseIds.indexOf(id);
         const res = await fetch(`${API}/cases/${id}`);
         const caseData = await res.json();
         currentCase = caseData;
@@ -2600,10 +2541,9 @@
 
         if (caseData.images && caseData.images.length > 0) {
           mainImg.src = `/uploads/${caseData.images[0].filename}`;
-          mainImg.onerror = function() { this.style.display = 'none'; };
           thumbs.innerHTML = caseData.images.map((img, i) => `
             <div class="case-thumbnail ${i === 0 ? 'active' : ''}" onclick="selectImage('${img.filename}', this)">
-              <img src="/thumbnails/${img.filename}" alt="Thumbnail" onerror="this.style.display='none'">
+              <img src="/thumbnails/${img.filename}" alt="Thumbnail">
             </div>
           `).join('');
         } else {
@@ -2611,16 +2551,11 @@
           thumbs.innerHTML = '<p style="color: var(--text-muted); padding: 20px;">No images</p>';
         }
 
-        // Reset DICOM UI
-        document.getElementById('dicomViewerContainer').innerHTML = '';
-        switchViewerTab('images');
-        
         // Load DICOM series for this case
         await loadDicomSeries(id);
         
         // Setup DICOM file input listener
         document.getElementById('dicomFileInput').onchange = handleDicomFiles;
-        document.getElementById('dicomFolderInput').onchange = handleDicomFiles;
 
         document.getElementById('caseModal').classList.add('active');
       } catch (err) {
@@ -2758,8 +2693,7 @@
       if (!currentCase) return;
       
       const fileInput = document.getElementById('dicomFileInput');
-      const folderInput = document.getElementById('dicomFolderInput');
-      const files = fileInput.files.length > 0 ? fileInput.files : folderInput.files;
+      const files = fileInput.files;
       
       if (files.length === 0) {
         toast('No files selected', 'error');
@@ -2789,7 +2723,6 @@
         
         // Reset file input
         fileInput.value = '';
-        folderInput.value = '';
         document.getElementById('dicomFileCount').textContent = '';
         document.getElementById('uploadDicomBtn').style.display = 'none';
         
@@ -3033,51 +2966,9 @@
     }
 
     // Close modal on escape
-    // ============ Case Navigation ============
-    let caseIds = []; // populated by renderCases
-    let currentCaseIndex = -1;
-
-    function navigateCase(dir) {
-      if (caseIds.length === 0) return;
-      if (currentCaseIndex < 0) return;
-      const next = currentCaseIndex + dir;
-      if (next < 0 || next >= caseIds.length) return;
-      currentCaseIndex = next;
-      viewCase(caseIds[next]);
-    }
-
-    // Keyboard nav
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeModal();
-      if (!document.getElementById('caseModal').classList.contains('active')) return;
-      if (e.key === 'ArrowLeft') { e.preventDefault(); navigateCase(-1); }
-      if (e.key === 'ArrowRight') { e.preventDefault(); navigateCase(1); }
     });
-
-    // Touch swipe nav (disabled when DICOM viewer is active)
-    (function() {
-      let startX = 0, startY = 0, tracking = false;
-      const modal = document.getElementById('caseModal');
-      modal.addEventListener('touchstart', (e) => {
-        if (!modal.classList.contains('active')) return;
-        // Don't track swipes that start inside the DICOM viewer
-        if (e.target.closest('.dicom-viewer-wrapper') || e.target.closest('.dicom-element') || e.target.closest('.dicom-canvas-container')) return;
-        // Don't track swipes when DICOM tab is active
-        const dicomPanel = document.getElementById('dicomViewerPanel');
-        if (dicomPanel && dicomPanel.style.display !== 'none' && e.target.closest('.viewer-container')) return;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        tracking = true;
-      }, { passive: true });
-      modal.addEventListener('touchend', (e) => {
-        if (!tracking) return;
-        tracking = false;
-        const dx = e.changedTouches[0].clientX - startX;
-        const dy = e.changedTouches[0].clientY - startY;
-        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
-        navigateCase(dx < 0 ? 1 : -1);
-      }, { passive: true });
-    })();
 
     // Close modal on backdrop click
     document.getElementById('caseModal').addEventListener('click', (e) => {

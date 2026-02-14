@@ -1,0 +1,115 @@
+# RadCase Production Environment
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET=${S3_BUCKET}
+      - CLOUDFRONT_DOMAIN=${CLOUDFRONT_DOMAIN}
+    volumes:
+      - uploads_data:/app/uploads
+      - thumbnails_data:/app/thumbnails
+      - dicom_data:/app/dicom
+    networks:
+      - radcase-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radcase.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.radcase.tls=true"
+      - "traefik.http.routers.radcase.tls.certresolver=letsencrypt"
+      - "traefik.http.services.radcase.loadbalancer.server.port=3001"
+
+  # Reverse proxy with SSL termination
+  traefik:
+    image: traefik:v3.0
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/data
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml
+    environment:
+      - CF_API_EMAIL=${CF_API_EMAIL}
+      - CF_API_KEY=${CF_API_KEY}
+    networks:
+      - radcase-network
+
+  # WAF and Security
+  modsecurity:
+    image: owasp/modsecurity-crs:3.3-apache
+    restart: unless-stopped
+    environment:
+      - PARANOIA=1
+      - ANOMALY_INBOUND=5
+      - ANOMALY_OUTBOUND=4
+    networks:
+      - radcase-network
+
+  # Log aggregation
+  fluentd:
+    image: fluent/fluentd:v1.14-1
+    restart: unless-stopped
+    volumes:
+      - ./logging/fluentd.conf:/fluentd/etc/fluent.conf
+      - logs_data:/var/log
+    networks:
+      - radcase-network
+
+  # Backup service
+  backup:
+    image: postgres:15-alpine
+    restart: "no"
+    environment:
+      - PGPASSWORD=${DB_PASSWORD}
+    volumes:
+      - backup_data:/backup
+      - ./scripts/backup.sh:/backup.sh
+    entrypoint: ["sh", "/backup.sh"]
+    networks:
+      - radcase-network
+
+volumes:
+  uploads_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=${NFS_SERVER},nolock,soft,rw
+      device: ":${NFS_PATH}/uploads"
+  
+  thumbnails_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=${NFS_SERVER},nolock,soft,rw
+      device: ":${NFS_PATH}/thumbnails"
+      
+  dicom_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=${NFS_SERVER},nolock,soft,rw
+      device: ":${NFS_PATH}/dicom"
+
+  traefik_data:
+  logs_data:
+  backup_data:
+
+networks:
+  radcase-network:
+    driver: overlay
+    attachable: true

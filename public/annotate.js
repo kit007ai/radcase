@@ -116,6 +116,49 @@ class AnnotationCanvas {
         align-items: center;
         min-height: 400px;
       }
+
+      /* Mobile responsive annotations */
+      @media (max-width: 768px) {
+        .annotation-toolbar {
+          padding: 8px;
+          gap: 8px;
+        }
+        .tool-group {
+          gap: 6px;
+        }
+        .tool-btn {
+          padding: 10px 14px;
+          min-height: 44px;
+          min-width: 44px;
+          font-size: 1.1rem;
+        }
+        .save-btn {
+          width: 100%;
+          margin-top: 8px;
+        }
+        .tool-group:last-child {
+          width: 100%;
+        }
+        .canvas-container {
+          min-height: 300px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .annotation-toolbar {
+          flex-direction: column;
+          gap: 8px;
+        }
+        .tool-group {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .tool-btn {
+          flex: 1;
+          padding: 12px 8px;
+          font-size: 0.9rem;
+        }
+      }
     `;
     document.head.appendChild(style);
 

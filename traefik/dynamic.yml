@@ -1,0 +1,282 @@
+# RadCase Dynamic Configuration
+# Security middleware and routing rules
+
+# TLS configuration
+tls:
+  options:
+    default:
+      sslStrategies:
+        - "tls.SniStrict"
+      minVersion: "VersionTLS12"
+      maxVersion: "VersionTLS13"
+      cipherSuites:
+        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+        - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+        - "TLS_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+      curvePreferences:
+        - "CurveP521"
+        - "CurveP384"
+
+# Security headers middleware
+http:
+  middlewares:
+    # Security headers for production
+    security-headers:
+      headers:
+        # HTTPS enforcement
+        sslRedirect: true
+        sslTemporaryRedirect: true
+        sslHost: "${DOMAIN}"
+        sslForceHost: true
+        
+        # Security headers
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        
+        # Content security
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        
+        # Frame options
+        frameRule: "SAMEORIGIN"
+        
+        # Custom security headers
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          # HSTS
+          Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+          
+          # Content Security Policy for RadCase
+          Content-Security-Policy: >
+            default-src 'self';
+            script-src 'self' 'unsafe-inline' 'unsafe-eval';
+            style-src 'self' 'unsafe-inline';
+            img-src 'self' data: blob: https:;
+            font-src 'self' data:;
+            connect-src 'self' wss: ws:;
+            media-src 'self' blob:;
+            object-src 'none';
+            base-uri 'self';
+            form-action 'self';
+            frame-ancestors 'self';
+            upgrade-insecure-requests
+          
+          # Additional security headers
+          X-Content-Type-Options: "nosniff"
+          X-Frame-Options: "SAMEORIGIN"
+          X-XSS-Protection: "1; mode=block"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Permissions-Policy: >
+            geolocation=(),
+            microphone=(),
+            camera=(),
+            magnetometer=(),
+            gyroscope=(),
+            speaker=(),
+            vibrate=(),
+            fullscreen=(self),
+            payment=()
+
+    # Rate limiting middleware
+    rate-limit:
+      rateLimit:
+        average: 100  # requests per second
+        period: "1s"
+        burst: 200    # burst capacity
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+            excludedIPs:
+              - "127.0.0.1/8"
+              - "10.0.0.0/8"
+              - "192.168.0.0/16"
+              - "172.16.0.0/12"
+
+    # API rate limiting (stricter for API endpoints)
+    api-rate-limit:
+      rateLimit:
+        average: 50   # API requests per second
+        period: "1s"
+        burst: 100
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # Auth rate limiting (very strict for login attempts)
+    auth-rate-limit:
+      rateLimit:
+        average: 5    # login attempts per second
+        period: "1s"
+        burst: 10
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # Compression middleware
+    compression:
+      compress:
+        minResponseBodyBytes: 1024
+
+    # Request/Response logging
+    access-log:
+      accessLog:
+        format: json
+        fields:
+          defaultMode: keep
+          names:
+            ClientUsername: drop
+          headers:
+            defaultMode: keep
+            names:
+              User-Agent: keep
+              Authorization: drop
+              Cookie: drop
+
+    # Circuit breaker for resilience
+    circuit-breaker:
+      circuitBreaker:
+        expression: "NetworkErrorRatio() > 0.3"
+        checkPeriod: "3s"
+        fallbackDuration: "10s"
+        recoveryDuration: "30s"
+
+    # Retry middleware
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: "100ms"
+
+    # IP whitelist for admin endpoints
+    admin-whitelist:
+      ipWhiteList:
+        sourceRange:
+          - "127.0.0.1/32"
+          - "${ADMIN_IP_RANGE}"
+
+    # Maintenance mode middleware (can be activated via environment)
+    maintenance:
+      replacePathRegex:
+        regex: "^/.*"
+        replacement: "/maintenance.html"
+
+  # Service definitions
+  services:
+    radcase-app:
+      loadBalancer:
+        servers:
+          - url: "http://app:3001"
+        healthCheck:
+          path: "/health"
+          interval: "30s"
+          timeout: "10s"
+          retries: 3
+        passHostHeader: true
+        responseForwarding:
+          flushInterval: "100ms"
+
+    # Separate service for API with different load balancing
+    radcase-api:
+      loadBalancer:
+        servers:
+          - url: "http://app:3001"
+        healthCheck:
+          path: "/api/health"
+          interval: "15s"
+          timeout: "5s"
+          retries: 2
+        sticky:
+          cookie:
+            name: "radcase-session"
+            secure: true
+            httpOnly: true
+            sameSite: "Strict"
+
+  # Routing rules
+  routers:
+    # Main application router (HTTPS)
+    radcase-secure:
+      rule: "Host(`${DOMAIN}`)"
+      service: radcase-app
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - compression
+        - rate-limit
+        - circuit-breaker
+        - retry
+      tls:
+        certResolver: letsencrypt
+
+    # API router with stricter rate limiting
+    radcase-api:
+      rule: "Host(`${DOMAIN}`) && PathPrefix(`/api/`)"
+      service: radcase-api
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - compression
+        - api-rate-limit
+        - circuit-breaker
+        - retry
+      tls:
+        certResolver: letsencrypt
+      priority: 100  # Higher priority than main router
+
+    # Auth endpoints with very strict rate limiting
+    radcase-auth:
+      rule: "Host(`${DOMAIN}`) && PathPrefix(`/api/auth/`)"
+      service: radcase-api
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - auth-rate-limit
+        - circuit-breaker
+      tls:
+        certResolver: letsencrypt
+      priority: 200  # Highest priority
+
+    # Admin endpoints with IP restriction
+    radcase-admin:
+      rule: "Host(`${DOMAIN}`) && PathPrefix(`/admin/`)"
+      service: radcase-app
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+        - admin-whitelist
+        - auth-rate-limit
+      tls:
+        certResolver: letsencrypt
+      priority: 150
+
+    # Metrics endpoint (internal only)
+    radcase-metrics:
+      rule: "Host(`metrics.${DOMAIN}`)"
+      service: radcase-app
+      entryPoints:
+        - websecure
+      middlewares:
+        - admin-whitelist
+      tls:
+        certResolver: letsencrypt
+
+    # Maintenance mode router (can be activated)
+    radcase-maintenance:
+      rule: "Host(`${DOMAIN}`) && HeadersRegexp(`X-Maintenance`, `true`)"
+      service: radcase-app
+      entryPoints:
+        - websecure
+      middlewares:
+        - maintenance
+      tls:
+        certResolver: letsencrypt
+      priority: 300  # Highest priority when active

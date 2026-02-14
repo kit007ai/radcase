@@ -1,0 +1,506 @@
+// RadCase Micro-Learning System - Sprint 2 Advanced Mobile UX
+// 5-minute learning sessions optimized for mobile
+
+class MicroLearningSession {
+  constructor() {
+    this.sessionDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+    this.currentSession = null;
+    this.sessionStartTime = null;
+    this.completedSessions = this.loadCompletedSessions();
+    this.preferences = this.loadPreferences();
+    this.contextData = this.getContextData();
+  }
+
+  // Start a new micro-learning session
+  async startSession(specialty = null, difficulty = null) {
+    const sessionId = this.generateSessionId();
+    
+    this.currentSession = {
+      id: sessionId,
+      specialty: specialty || this.preferences.preferredSpecialty,
+      difficulty: difficulty || this.calculateOptimalDifficulty(),
+      startTime: Date.now(),
+      cases: [],
+      progress: {
+        casesViewed: 0,
+        questionsAnswered: 0,
+        correctAnswers: 0,
+        timeSpent: 0
+      },
+      contextAware: this.contextData
+    };
+
+    // Get optimized case selection for mobile session
+    const cases = await this.selectCasesForSession();
+    this.currentSession.cases = cases;
+
+    // Start session timer
+    this.sessionStartTime = Date.now();
+    this.startSessionTimer();
+
+    // Initialize mobile-optimized UI
+    this.renderMobileSession();
+
+    return this.currentSession;
+  }
+
+  // Context-aware case selection
+  async selectCasesForSession() {
+    const params = new URLSearchParams({
+      specialty: this.currentSession.specialty,
+      difficulty: this.currentSession.difficulty,
+      timeAvailable: Math.floor(this.sessionDuration / 60000), // minutes
+      mobileOptimized: 'true',
+      contextAware: 'true'
+    });
+
+    try {
+      const response = await fetch(`/api/cases/micro-learning?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch cases');
+      
+      const data = await response.json();
+      return data.cases || [];
+    } catch (error) {
+      console.error('Failed to load micro-learning cases:', error);
+      return this.getFallbackCases();
+    }
+  }
+
+  // Mobile-optimized session UI
+  renderMobileSession() {
+    const container = document.getElementById('micro-learning-container') || this.createContainer();
+    
+    container.innerHTML = `
+      <div class="micro-session-wrapper">
+        <div class="session-header">
+          <div class="session-progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <div class="session-info">
+            <span class="session-timer">5:00</span>
+            <span class="session-specialty">${this.currentSession.specialty}</span>
+          </div>
+          <button class="session-close-btn" onclick="microLearning.pauseSession()">⏸️</button>
+        </div>
+        
+        <div class="session-content" id="session-content">
+          ${this.renderCurrentCase()}
+        </div>
+        
+        <div class="session-controls">
+          <button class="session-btn secondary" onclick="microLearning.previousCase()">◀️ Previous</button>
+          <button class="session-btn primary" onclick="microLearning.nextCase()">Next ▶️</button>
+        </div>
+        
+        <div class="quick-actions">
+          <button class="quick-action-btn" onclick="microLearning.bookmarkCase()" title="Bookmark">
+            🔖
+          </button>
+          <button class="quick-action-btn" onclick="microLearning.flagDifficult()" title="Flag as Difficult">
+            🚩
+          </button>
+          <button class="quick-action-btn" onclick="microLearning.requestHint()" title="Get Hint">
+            💡
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Add mobile-specific event listeners
+    this.addMobileGestures(container);
+  }
+
+  // Add swipe gestures for mobile navigation
+  addMobileGestures(container) {
+    let startX, startY, startTime;
+    let isSwipingHorizontally = false;
+
+    const sessionContent = container.querySelector('#session-content');
+
+    sessionContent.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startTime = Date.now();
+      isSwipingHorizontally = false;
+    }, { passive: true });
+
+    sessionContent.addEventListener('touchmove', (e) => {
+      if (!startX || !startY) return;
+
+      const touch = e.touches[0];
+      const deltaX = Math.abs(touch.clientX - startX);
+      const deltaY = Math.abs(touch.clientY - startY);
+
+      // Determine if this is a horizontal swipe
+      if (deltaX > deltaY && deltaX > 30) {
+        isSwipingHorizontally = true;
+        e.preventDefault(); // Prevent scrolling
+      }
+    }, { passive: false });
+
+    sessionContent.addEventListener('touchend', (e) => {
+      if (!startX || !startY || !isSwipingHorizontally) return;
+
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaTime = Date.now() - startTime;
+
+      // Check for valid swipe (minimum distance and speed)
+      if (Math.abs(deltaX) > 100 && deltaTime < 300) {
+        if (deltaX > 0) {
+          // Swipe right - previous case
+          this.previousCase();
+        } else {
+          // Swipe left - next case
+          this.nextCase();
+        }
+      }
+
+      // Reset
+      startX = startY = null;
+      isSwipingHorizontally = false;
+    }, { passive: true });
+  }
+
+  // Session timer management
+  startSessionTimer() {
+    if (this.sessionTimer) clearInterval(this.sessionTimer);
+
+    this.sessionTimer = setInterval(() => {
+      const elapsed = Date.now() - this.sessionStartTime;
+      const remaining = Math.max(0, this.sessionDuration - elapsed);
+      
+      this.updateSessionTimer(remaining);
+      
+      if (remaining === 0) {
+        this.completeSession();
+      }
+    }, 1000);
+  }
+
+  updateSessionTimer(remainingMs) {
+    const minutes = Math.floor(remainingMs / 60000);
+    const seconds = Math.floor((remainingMs % 60000) / 1000);
+    const timerDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    const timerElement = document.querySelector('.session-timer');
+    if (timerElement) {
+      timerElement.textContent = timerDisplay;
+    }
+
+    // Update progress bar
+    const elapsed = this.sessionDuration - remainingMs;
+    const progressPercent = (elapsed / this.sessionDuration) * 100;
+    const progressBar = document.querySelector('.progress-fill');
+    if (progressBar) {
+      progressBar.style.width = `${progressPercent}%`;
+    }
+  }
+
+  // Case navigation
+  nextCase() {
+    if (!this.currentSession) return;
+    
+    const currentIndex = this.currentSession.currentCaseIndex || 0;
+    if (currentIndex < this.currentSession.cases.length - 1) {
+      this.currentSession.currentCaseIndex = currentIndex + 1;
+      this.renderCurrentCase();
+      this.trackProgress('case_viewed');
+    }
+  }
+
+  previousCase() {
+    if (!this.currentSession) return;
+    
+    const currentIndex = this.currentSession.currentCaseIndex || 0;
+    if (currentIndex > 0) {
+      this.currentSession.currentCaseIndex = currentIndex - 1;
+      this.renderCurrentCase();
+    }
+  }
+
+  // Render current case in mobile-optimized format
+  renderCurrentCase() {
+    if (!this.currentSession || !this.currentSession.cases.length) {
+      return '<div class="no-cases">No cases available for this session.</div>';
+    }
+
+    const currentIndex = this.currentSession.currentCaseIndex || 0;
+    const currentCase = this.currentSession.cases[currentIndex];
+
+    return `
+      <div class="case-container">
+        <div class="case-header">
+          <h3 class="case-title">${currentCase.title}</h3>
+          <div class="case-meta">
+            <span class="case-difficulty">${currentCase.difficulty}</span>
+            <span class="case-specialty">${currentCase.specialty}</span>
+          </div>
+        </div>
+        
+        <div class="case-image-container">
+          <img src="${currentCase.imageUrl}" alt="${currentCase.title}" 
+               class="case-image mobile-optimized"
+               loading="lazy">
+          <div class="zoom-hint">📱 Pinch to zoom</div>
+        </div>
+        
+        <div class="case-question">
+          <p>${currentCase.question}</p>
+        </div>
+        
+        <div class="case-options">
+          ${this.renderCaseOptions(currentCase)}
+        </div>
+        
+        <div class="case-navigation">
+          <span class="case-counter">
+            ${currentIndex + 1} of ${this.currentSession.cases.length}
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCaseOptions(case) {
+    if (!case.options) return '';
+
+    return case.options.map((option, index) => `
+      <button class="case-option-btn" 
+              onclick="microLearning.selectAnswer(${index})"
+              data-option="${index}">
+        ${option}
+      </button>
+    `).join('');
+  }
+
+  // Answer selection
+  selectAnswer(optionIndex) {
+    if (!this.currentSession) return;
+
+    const currentIndex = this.currentSession.currentCaseIndex || 0;
+    const currentCase = this.currentSession.cases[currentIndex];
+    
+    const isCorrect = optionIndex === currentCase.correctAnswer;
+    this.trackProgress('answer_submitted', { correct: isCorrect });
+
+    // Show immediate feedback
+    this.showAnswerFeedback(isCorrect, currentCase);
+
+    // Auto-advance after feedback
+    setTimeout(() => {
+      this.nextCase();
+    }, 2000);
+  }
+
+  showAnswerFeedback(isCorrect, case) {
+    const optionButtons = document.querySelectorAll('.case-option-btn');
+    optionButtons.forEach((btn, index) => {
+      btn.disabled = true;
+      if (index === case.correctAnswer) {
+        btn.classList.add('correct');
+      } else if (btn.classList.contains('selected')) {
+        btn.classList.add('incorrect');
+      }
+    });
+
+    // Show explanation if available
+    if (case.explanation) {
+      const explanationEl = document.createElement('div');
+      explanationEl.className = 'answer-explanation';
+      explanationEl.innerHTML = `
+        <div class="explanation-header ${isCorrect ? 'correct' : 'incorrect'}">
+          ${isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+        </div>
+        <div class="explanation-text">${case.explanation}</div>
+      `;
+      
+      const questionContainer = document.querySelector('.case-question');
+      if (questionContainer) {
+        questionContainer.appendChild(explanationEl);
+      }
+    }
+  }
+
+  // Session completion
+  completeSession() {
+    if (this.sessionTimer) {
+      clearInterval(this.sessionTimer);
+      this.sessionTimer = null;
+    }
+
+    if (!this.currentSession) return;
+
+    // Calculate session statistics
+    const sessionStats = this.calculateSessionStats();
+    
+    // Save to local storage and sync
+    this.saveCompletedSession(sessionStats);
+    
+    // Show completion screen
+    this.showCompletionScreen(sessionStats);
+    
+    // Schedule background sync if service worker available
+    this.scheduleSync('session-completed');
+  }
+
+  calculateSessionStats() {
+    if (!this.currentSession) return null;
+
+    const totalTime = Date.now() - this.sessionStartTime;
+    const progress = this.currentSession.progress;
+
+    return {
+      sessionId: this.currentSession.id,
+      completedAt: Date.now(),
+      duration: totalTime,
+      specialty: this.currentSession.specialty,
+      difficulty: this.currentSession.difficulty,
+      casesViewed: progress.casesViewed,
+      questionsAnswered: progress.questionsAnswered,
+      correctAnswers: progress.correctAnswers,
+      accuracy: progress.questionsAnswered > 0 ? 
+                (progress.correctAnswers / progress.questionsAnswered) * 100 : 0,
+      contextData: this.currentSession.contextAware
+    };
+  }
+
+  // Context awareness
+  getContextData() {
+    return {
+      timeOfDay: this.getTimeOfDay(),
+      deviceType: this.getDeviceType(),
+      connectionType: this.getConnectionType(),
+      availableTime: this.estimateAvailableTime(),
+      location: this.getLocationContext()
+    };
+  }
+
+  getTimeOfDay() {
+    const hour = new Date().getHours();
+    if (hour < 6) return 'early-morning';
+    if (hour < 12) return 'morning';
+    if (hour < 18) return 'afternoon';
+    if (hour < 22) return 'evening';
+    return 'night';
+  }
+
+  getDeviceType() {
+    const userAgent = navigator.userAgent;
+    if (/tablet|ipad/i.test(userAgent)) return 'tablet';
+    if (/mobile|iphone|android/i.test(userAgent)) return 'phone';
+    return 'desktop';
+  }
+
+  getConnectionType() {
+    if ('connection' in navigator) {
+      return navigator.connection.effectiveType || 'unknown';
+    }
+    return 'unknown';
+  }
+
+  // Utility methods
+  createContainer() {
+    const container = document.createElement('div');
+    container.id = 'micro-learning-container';
+    container.className = 'micro-learning-overlay';
+    document.body.appendChild(container);
+    return container;
+  }
+
+  generateSessionId() {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  trackProgress(event, data = {}) {
+    if (!this.currentSession) return;
+
+    switch (event) {
+      case 'case_viewed':
+        this.currentSession.progress.casesViewed++;
+        break;
+      case 'answer_submitted':
+        this.currentSession.progress.questionsAnswered++;
+        if (data.correct) {
+          this.currentSession.progress.correctAnswers++;
+        }
+        break;
+    }
+
+    // Store progress locally for sync
+    this.storeProgressUpdate({
+      sessionId: this.currentSession.id,
+      event,
+      data,
+      timestamp: Date.now()
+    });
+  }
+
+  // Storage methods
+  loadCompletedSessions() {
+    try {
+      return JSON.parse(localStorage.getItem('radcase_completed_sessions') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  saveCompletedSession(sessionStats) {
+    this.completedSessions.push(sessionStats);
+    localStorage.setItem('radcase_completed_sessions', JSON.stringify(this.completedSessions));
+  }
+
+  loadPreferences() {
+    try {
+      return JSON.parse(localStorage.getItem('radcase_learning_preferences') || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  storeProgressUpdate(update) {
+    const pending = JSON.parse(localStorage.getItem('radcase_pending_progress') || '[]');
+    pending.push(update);
+    localStorage.setItem('radcase_pending_progress', JSON.stringify(pending));
+  }
+
+  // Background sync
+  scheduleSync(tag) {
+    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+      navigator.serviceWorker.ready.then((swRegistration) => {
+        return swRegistration.sync.register(tag);
+      }).catch(console.error);
+    }
+  }
+
+  // Fallback cases for offline
+  getFallbackCases() {
+    return [
+      {
+        id: 'fallback_1',
+        title: 'Chest X-Ray - Pneumothorax',
+        imageUrl: '/dicom/sample-chest-1.jpg',
+        question: 'What abnormality do you observe in this chest X-ray?',
+        options: [
+          'Normal chest X-ray',
+          'Left pneumothorax',
+          'Right pneumothorax',
+          'Bilateral pleural effusion'
+        ],
+        correctAnswer: 2,
+        explanation: 'This shows a right-sided pneumothorax with visible pleural line and absent lung markings.',
+        difficulty: 'Intermediate',
+        specialty: 'Chest'
+      }
+    ];
+  }
+}
+
+// Global instance
+window.microLearning = new MicroLearningSession();
+
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = MicroLearningSession;
+}
