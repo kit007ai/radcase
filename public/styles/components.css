@@ -679,6 +679,57 @@
   background: var(--bg-secondary);
   color: var(--text-primary);
   min-width: 150px;
+  box-sizing: border-box;
+}
+
+/* Mobile: 2-column grid for filters, prevent overflow */
+@media (max-width: 768px) {
+  .search-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .search-input-wrapper {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .filter-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .filter-select {
+    min-width: 0;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  .bookmark-filter-btn {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .filter-group {
+    grid-template-columns: 1fr;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 /* Empty State */

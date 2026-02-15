@@ -264,6 +264,8 @@ export default function Layout({ children }) {
           minWidth: 0,
           paddingTop: isMobile ? '56px' : 0,
           paddingBottom: isMobile ? '64px' : 0,
+          overflowX: 'hidden',
+          maxWidth: '100%',
         }}
       >
         {children}

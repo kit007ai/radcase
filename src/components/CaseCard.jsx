@@ -23,6 +23,7 @@ const styles = {
     transition: `transform ${theme.transitions.normal}, box-shadow ${theme.transitions.normal}, border-color ${theme.transitions.normal}`,
     minWidth: 0,
     maxWidth: '100%',
+    boxSizing: 'border-box',
   },
   cardGridHover: {
     transform: 'translateY(-4px)',
@@ -40,6 +41,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    boxSizing: 'border-box',
   },
   // Gradient overlay on image area
   imageGradient: {
