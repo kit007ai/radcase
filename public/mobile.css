@@ -101,6 +101,24 @@
   color: var(--text-secondary);
 }
 
+/* On mobile, position install banner above bottom nav */
+@media (max-width: 1024px) {
+  .install-banner {
+    bottom: 76px !important;
+    left: 12px !important;
+    right: 12px !important;
+    padding: 12px !important;
+  }
+
+  .install-banner .install-content {
+    flex-wrap: wrap;
+  }
+
+  .install-banner .install-text p {
+    font-size: 0.8rem;
+  }
+}
+
 /* ============ Offline Indicator ============ */
 .offline-indicator {
   position: fixed;

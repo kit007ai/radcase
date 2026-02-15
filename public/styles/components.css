@@ -667,6 +667,11 @@
   border-color: var(--accent);
 }
 
+/* Remove visible focus ring from programmatically-focused headings */
+.page-header h2:focus {
+  outline: none;
+}
+
 .filter-group {
   display: flex;
   gap: 12px;
@@ -726,6 +731,76 @@
   .card-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+  }
+
+  /* Truncate long case card titles in 2-col layout */
+  .case-content {
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .case-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .case-image, .case-image-placeholder {
+    height: 140px;
+  }
+
+  /* Modal header: wrap on mobile */
+  .modal-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .modal-header h2 {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.1rem;
+  }
+
+  .modal-tabs {
+    order: 5;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .modal-bookmark-btn span {
+    display: none;
+  }
+
+  .modal-bookmark-btn {
+    padding: 6px 8px;
+    margin-right: 0;
+  }
+
+  /* Quiz answer row: stack on mobile */
+  .quiz-answer-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quiz-answer-row .btn {
+    width: 100%;
+  }
+
+  /* Form actions: stack on narrow screens */
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
