@@ -1,51 +1,24 @@
 // Test setup and utilities
-const fs = require('fs');
-const path = require('path');
+const crypto = require('crypto');
 
-// Create test database and directories
-const TEST_DB_PATH = path.join(__dirname, '..', 'test-radcase.db');
-const TEST_UPLOADS_DIR = path.join(__dirname, '..', 'test-uploads');
-const TEST_THUMBNAILS_DIR = path.join(__dirname, '..', 'test-thumbnails');
-const TEST_DICOM_DIR = path.join(__dirname, '..', 'test-dicom');
-
-// Set test environment
+// Set test environment before importing app
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-secret-key-for-testing-only';
-process.env.DATABASE_PATH = TEST_DB_PATH;
 
-// Clean up test files
-function cleanupTestFiles() {
-  const testFiles = [TEST_DB_PATH, TEST_UPLOADS_DIR, TEST_THUMBNAILS_DIR, TEST_DICOM_DIR];
-  
-  testFiles.forEach(filePath => {
-    if (fs.existsSync(filePath)) {
-      if (fs.statSync(filePath).isDirectory()) {
-        fs.rmSync(filePath, { recursive: true, force: true });
-      } else {
-        fs.unlinkSync(filePath);
-      }
-    }
-  });
-}
+// Generate unique suffix for this test run to avoid DB conflicts
+const TEST_RUN_ID = crypto.randomBytes(4).toString('hex');
 
-// Create test directories
-function setupTestDirs() {
-  [TEST_UPLOADS_DIR, TEST_THUMBNAILS_DIR, TEST_DICOM_DIR].forEach(dir => {
-    fs.mkdirSync(dir, { recursive: true });
-  });
-}
-
-// Test user data
+// Test user data — unique per test run
 const TEST_USERS = {
   resident: {
-    username: 'testuser',
-    email: 'test@example.com',
+    username: `testuser_${TEST_RUN_ID}`,
+    email: `test_${TEST_RUN_ID}@example.com`,
     password: 'testpass123',
     displayName: 'Test User'
   },
   admin: {
-    username: 'adminuser',
-    email: 'admin@example.com',
+    username: `adminuser_${TEST_RUN_ID}`,
+    email: `admin_${TEST_RUN_ID}@example.com`,
     password: 'adminpass123',
     displayName: 'Admin User'
   }
@@ -63,13 +36,27 @@ const TEST_CASE = {
   findings: 'Test findings'
 };
 
+// Helper to register a user and return the cookie
+async function registerUser(app, userData) {
+  const request = require('supertest');
+  const res = await request(app)
+    .post('/api/auth/register')
+    .send(userData);
+
+  if (res.status === 200 && res.headers['set-cookie']) {
+    return res.headers['set-cookie'];
+  }
+  // If registration failed (user exists), try login
+  const loginRes = await request(app)
+    .post('/api/auth/login')
+    .send({ username: userData.username, password: userData.password });
+
+  return loginRes.headers['set-cookie'];
+}
+
 module.exports = {
-  cleanupTestFiles,
-  setupTestDirs,
   TEST_USERS,
   TEST_CASE,
-  TEST_DB_PATH,
-  TEST_UPLOADS_DIR,
-  TEST_THUMBNAILS_DIR,
-  TEST_DICOM_DIR
+  TEST_RUN_ID,
+  registerUser
 };

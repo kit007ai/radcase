@@ -14,6 +14,8 @@ const dicomParser = require('dicom-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const { WebSocketServer } = require('ws');
+const webpush = require('web-push');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -76,6 +78,27 @@ const JWT_SECRET = process.env.JWT_SECRET || (
         console.error('🚨 JWT_SECRET required in production!'); 
         process.exit(1); 
       })()
+);
+
+// ============ VAPID / Web Push Setup ============
+let VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+let VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  const generated = webpush.generateVAPIDKeys();
+  VAPID_PUBLIC_KEY = generated.publicKey;
+  VAPID_PRIVATE_KEY = generated.privateKey;
+  console.log('=== VAPID Keys Generated ===');
+  console.log('Add these to your .env file to persist across restarts:');
+  console.log(`VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}`);
+  console.log(`VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}`);
+  console.log('============================');
+}
+
+webpush.setVapidDetails(
+  'mailto:admin@radcase.app',
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY
 );
 
 // Ensure directories exist
@@ -238,6 +261,33 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_interview_email ON interview_requests(email);
   CREATE INDEX IF NOT EXISTS idx_interview_status ON interview_requests(status);
+
+  -- Cross-device sync events
+  CREATE TABLE IF NOT EXISTS sync_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    device_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sync_user ON sync_events(user_id, created_at);
+  CREATE INDEX IF NOT EXISTS idx_sync_type ON sync_events(user_id, event_type);
+
+  -- Push notification subscriptions
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    endpoint TEXT NOT NULL UNIQUE,
+    keys_p256dh TEXT NOT NULL,
+    keys_auth TEXT NOT NULL,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
 `);
 
 // Add user_id column to quiz_attempts if not exists
@@ -743,9 +793,66 @@ function createSecureStatic(baseDir, routePath) {
 }
 
 app.use('/uploads', createSecureStatic(UPLOAD_DIR, '/uploads'));
+
+// WebP content-negotiation for thumbnails
+app.use('/thumbnails', (req, res, next) => {
+  const acceptsWebP = req.headers.accept && req.headers.accept.includes('image/webp');
+  if (!acceptsWebP) return next();
+
+  let requestedPath;
+  try {
+    requestedPath = decodeURIComponent(req.path);
+  } catch (e) {
+    return next();
+  }
+
+  // Build the WebP variant path
+  const webpPath = requestedPath.replace(/\.[^.]+$/, '.webp');
+  const fullWebpPath = path.join(THUMB_DIR, webpPath);
+  const resolvedWebp = path.resolve(fullWebpPath);
+
+  // Security: ensure within THUMB_DIR
+  if (!resolvedWebp.startsWith(path.resolve(THUMB_DIR))) return next();
+
+  if (fs.existsSync(resolvedWebp) && fs.statSync(resolvedWebp).isFile()) {
+    res.set({
+      'Content-Type': 'image/webp',
+      'Cache-Control': 'public, max-age=86400',
+      'Vary': 'Accept'
+    });
+    return res.sendFile(resolvedWebp, { dotfiles: 'allow' });
+  }
+
+  next();
+});
+
 app.use('/thumbnails', createSecureStatic(THUMB_DIR, '/thumbnails'));
 app.use('/dicom', createSecureStatic(DICOM_DIR, '/dicom'));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  setHeaders: (res, filePath) => {
+    // Service worker must not be cached aggressively
+    if (filePath.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+    // HTML pages - short cache
+    else if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 min
+    }
+    // JS/CSS - cache for 1 day
+    else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
+    // Icons/images - cache for 7 days
+    else if (filePath.endsWith('.png') || filePath.endsWith('.jpg') || filePath.endsWith('.svg')) {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
+    // manifest.json - short cache (important for PWA updates)
+    else if (filePath.endsWith('manifest.json')) {
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour
+    }
+  }
+}));
 
 // ============ SECURE MULTER CONFIG ============
 
@@ -862,6 +969,190 @@ app.get('/api/cases', apiCache10m, (req, res) => {
   res.json({ cases, total, limit: parseInt(limit), offset: parseInt(offset) });
 });
 
+// Micro-learning case selection (must be before /api/cases/:id)
+app.get('/api/cases/micro-learning', (req, res) => {
+  const { specialty, difficulty, timeAvailable, lastReviewed, limit = 10 } = req.query;
+  const userId = req.user?.id;
+  const caseLimit = parseInt(limit);
+
+  // Fetch a larger pool of candidates for weighted selection
+  const poolSize = Math.max(caseLimit * 5, 50);
+
+  let sql = `
+    SELECT c.*,
+           GROUP_CONCAT(DISTINCT t.name) as tags,
+           (SELECT filename FROM images WHERE case_id = c.id ORDER BY sequence LIMIT 1) as thumbnail
+    FROM cases c
+    LEFT JOIN case_tags ct ON c.id = ct.case_id
+    LEFT JOIN tags t ON ct.tag_id = t.id
+  `;
+
+  const conditions = [];
+  const params = [];
+
+  if (specialty && specialty !== 'undefined') {
+    conditions.push('(c.body_part = ? OR c.modality = ?)');
+    params.push(specialty, specialty);
+  }
+  if (difficulty && difficulty !== 'undefined') {
+    conditions.push('c.difficulty = ?');
+    params.push(parseInt(difficulty) || 2);
+  }
+  conditions.push("c.diagnosis IS NOT NULL AND c.diagnosis != ''");
+
+  if (conditions.length > 0) {
+    sql += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  sql += ' GROUP BY c.id LIMIT ?';
+  params.push(poolSize);
+
+  try {
+    const cases = db.prepare(sql).all(...params);
+
+    // Build performance and review data for weighted selection
+    let performanceMap = {};
+    let reviewMap = {};
+
+    if (userId) {
+      // Get quiz performance per case: accuracy ratio
+      const quizStats = db.prepare(`
+        SELECT case_id,
+               COUNT(*) as attempts,
+               SUM(correct) as correct_count
+        FROM quiz_attempts
+        WHERE user_id = ?
+        GROUP BY case_id
+      `).all(userId);
+
+      for (const stat of quizStats) {
+        performanceMap[stat.case_id] = {
+          attempts: stat.attempts,
+          accuracy: stat.correct_count / stat.attempts
+        };
+      }
+
+      // Get last reviewed timestamps from user_case_progress
+      const progressRows = db.prepare(`
+        SELECT case_id, last_reviewed
+        FROM user_case_progress
+        WHERE user_id = ?
+      `).all(userId);
+
+      for (const row of progressRows) {
+        reviewMap[row.case_id] = row.last_reviewed;
+      }
+    }
+
+    const now = Date.now();
+    const lastReviewedTs = lastReviewed ? parseInt(lastReviewed) : 0;
+
+    // Calculate weight for each case
+    const weighted = cases.map(c => {
+      let weight = 1.0;
+
+      // 1. Performance weight: prioritize cases the user got wrong or hasn't attempted
+      const perf = performanceMap[c.id];
+      if (perf) {
+        // Lower accuracy = higher weight (focus on weak areas)
+        weight *= 1.0 + (1.0 - perf.accuracy) * 2.0;
+      } else {
+        // Never attempted: moderate boost to introduce new cases
+        weight *= 1.5;
+      }
+
+      // 2. Time since last review: prefer cases not seen recently
+      const lastReview = reviewMap[c.id];
+      if (lastReview) {
+        const daysSinceReview = (now - new Date(lastReview).getTime()) / (1000 * 60 * 60 * 24);
+        // More days since review = higher weight
+        weight *= Math.min(1.0 + daysSinceReview * 0.3, 5.0);
+      } else {
+        // Never reviewed: boost
+        weight *= 2.0;
+      }
+
+      // 3. Difficulty weight: slightly prefer cases matching the user's target difficulty
+      const targetDiff = parseInt(difficulty) || 2;
+      const diffDelta = Math.abs((c.difficulty || 2) - targetDiff);
+      weight *= 1.0 / (1.0 + diffDelta * 0.3);
+
+      return { caseData: c, weight };
+    });
+
+    // Weighted random selection
+    const selected = [];
+    const pool = [...weighted];
+
+    while (selected.length < caseLimit && pool.length > 0) {
+      const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
+      let rand = Math.random() * totalWeight;
+
+      for (let i = 0; i < pool.length; i++) {
+        rand -= pool[i].weight;
+        if (rand <= 0) {
+          selected.push(pool[i].caseData);
+          pool.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    const microCases = selected.map(c => ({
+      id: c.id,
+      title: c.title,
+      imageUrl: c.thumbnail ? `/thumbnails/${c.thumbnail}` : '',
+      question: `What is the diagnosis for this ${c.modality || 'imaging'} study?`,
+      options: generateOptions(c, selected),
+      correctAnswer: 0,
+      explanation: c.teaching_points || c.findings || '',
+      difficulty: c.difficulty,
+      specialty: c.body_part || c.modality || 'General',
+      clinical_history: c.clinical_history
+    }));
+
+    microCases.forEach(mc => {
+      const correctOption = mc.options[0];
+      for (let i = mc.options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [mc.options[i], mc.options[j]] = [mc.options[j], mc.options[i]];
+      }
+      mc.correctAnswer = mc.options.indexOf(correctOption);
+    });
+
+    res.json({ cases: microCases });
+  } catch (err) {
+    console.error('Micro-learning error:', err);
+    res.status(500).json({ error: 'Failed to load micro-learning cases', cases: [] });
+  }
+});
+
+function generateOptions(targetCase, allCases) {
+  const correctDiagnosis = targetCase.diagnosis;
+  const otherDiagnoses = allCases
+    .filter(c => c.id !== targetCase.id && c.diagnosis)
+    .map(c => c.diagnosis);
+
+  const wrongAnswers = [];
+  const shuffled = [...otherDiagnoses].sort(() => Math.random() - 0.5);
+  for (const d of shuffled) {
+    if (!wrongAnswers.includes(d) && d !== correctDiagnosis) {
+      wrongAnswers.push(d);
+      if (wrongAnswers.length >= 3) break;
+    }
+  }
+
+  const fallbacks = ['Normal study', 'Artifact', 'Incidental finding'];
+  while (wrongAnswers.length < 3) {
+    const f = fallbacks[wrongAnswers.length];
+    if (f && !wrongAnswers.includes(f) && f !== correctDiagnosis) {
+      wrongAnswers.push(f);
+    } else break;
+  }
+
+  return [correctDiagnosis, ...wrongAnswers];
+}
+
 // Get single case with all details
 app.get('/api/cases/:id', apiCache1h, (req, res) => {
   const caseData = db.prepare(`
@@ -964,17 +1255,23 @@ app.post('/api/cases/:id/images', upload.array('images', 20), async (req, res) =
   const uploaded = [];
   for (const file of req.files) {
     const imageId = uuidv4();
-    
+
     // Create thumbnail
     try {
       await sharp(file.path)
         .resize(400, 400, { fit: 'inside' })
         .toFile(path.join(THUMB_DIR, file.filename));
+      // Also generate WebP version
+      const webpName = file.filename.replace(/\.[^.]+$/, '.webp');
+      await sharp(file.path)
+        .resize(400, 400, { fit: 'inside' })
+        .webp({ quality: 80 })
+        .toFile(path.join(THUMB_DIR, webpName));
     } catch (e) {
       // If sharp fails (e.g., not an image), just copy the file
       fs.copyFileSync(file.path, path.join(THUMB_DIR, file.filename));
     }
-    
+
     insertImage.run(imageId, caseId, file.filename, file.originalname, seq++);
     uploaded.push({ id: imageId, filename: file.filename });
   }
@@ -1855,6 +2152,12 @@ app.post('/api/import', express.json({ limit: '100mb' }), async (req, res) => {
               await sharp(buffer)
                 .resize(400, 400, { fit: 'inside' })
                 .toFile(path.join(THUMB_DIR, filename));
+              // Also generate WebP version
+              const webpName = filename.replace(/\.[^.]+$/, '.webp');
+              await sharp(buffer)
+                .resize(400, 400, { fit: 'inside' })
+                .webp({ quality: 80 })
+                .toFile(path.join(THUMB_DIR, webpName));
             } catch (e) {
               fs.copyFileSync(path.join(UPLOAD_DIR, filename), path.join(THUMB_DIR, filename));
             }
@@ -1876,6 +2179,131 @@ app.post('/api/import', express.json({ limit: '100mb' }), async (req, res) => {
   res.json({ imported, errors });
 });
 
+// ============ Sprint 2: Missing API Endpoints ============
+
+// VAPID public key endpoint (no auth required for subscription flow)
+app.get('/api/push/vapid-key', (req, res) => {
+  res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+// Push notification subscription (PWA) - persist to database
+app.post('/api/push-subscription', requireAuth, (req, res) => {
+  const { subscription, userAgent } = req.body;
+  if (!subscription || !subscription.endpoint || !subscription.keys) {
+    return res.status(400).json({ error: 'Valid subscription data required' });
+  }
+
+  const { endpoint, keys } = subscription;
+  if (!keys.p256dh || !keys.auth) {
+    return res.status(400).json({ error: 'Subscription keys (p256dh, auth) required' });
+  }
+
+  try {
+    db.prepare(`
+      INSERT INTO push_subscriptions (user_id, endpoint, keys_p256dh, keys_auth, user_agent)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(endpoint) DO UPDATE SET
+        user_id = excluded.user_id,
+        keys_p256dh = excluded.keys_p256dh,
+        keys_auth = excluded.keys_auth,
+        user_agent = excluded.user_agent,
+        created_at = CURRENT_TIMESTAMP
+    `).run(req.user.id, endpoint, keys.p256dh, keys.auth, userAgent || null);
+
+    console.log(`Push subscription saved for user ${req.user.username}: ${endpoint.substring(0, 50)}...`);
+    res.json({ success: true, message: 'Subscription saved' });
+  } catch (err) {
+    console.error('Push subscription error:', err);
+    res.status(500).json({ error: 'Failed to save subscription' });
+  }
+});
+
+// Annotations sync endpoint (used by service worker background sync)
+app.post('/api/annotations', (req, res) => {
+  const { image_id, case_id, annotations } = req.body;
+  if (!image_id || !annotations) {
+    return res.status(400).json({ error: 'image_id and annotations required' });
+  }
+  try {
+    db.prepare('UPDATE images SET annotations = ? WHERE id = ?').run(
+      typeof annotations === 'string' ? annotations : JSON.stringify(annotations),
+      image_id
+    );
+    res.json({ success: true, message: 'Annotations saved' });
+  } catch (err) {
+    console.error('Annotation save error:', err);
+    res.status(500).json({ error: 'Failed to save annotations' });
+  }
+});
+
+// Progress sync endpoint (used by service worker background sync)
+app.post('/api/progress', (req, res) => {
+  const userId = req.user?.id;
+  const { case_id, event, data, sessionId } = req.body;
+
+  if (!case_id && !sessionId) {
+    return res.status(400).json({ error: 'case_id or sessionId required' });
+  }
+
+  // If it's a quiz attempt, record it
+  if (event === 'answer_submitted' && case_id) {
+    db.prepare(`
+      INSERT INTO quiz_attempts (case_id, correct, time_spent_ms, user_id)
+      VALUES (?, ?, ?, ?)
+    `).run(case_id, data?.correct ? 1 : 0, data?.time_spent_ms || 0, userId);
+
+    if (userId) {
+      updateSpacedRepetition(userId, case_id, data?.correct ? 1 : 0);
+    }
+  }
+
+  res.json({ success: true, message: 'Progress synced' });
+});
+
+// Bookmarks API
+db.exec(`
+  CREATE TABLE IF NOT EXISTS bookmarks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, case_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id);
+`);
+
+app.get('/api/bookmarks', requireAuth, (req, res) => {
+  const bookmarks = db.prepare(`
+    SELECT b.*, c.title, c.modality, c.body_part, c.diagnosis, c.difficulty,
+           (SELECT filename FROM images WHERE case_id = c.id ORDER BY sequence LIMIT 1) as thumbnail
+    FROM bookmarks b
+    JOIN cases c ON b.case_id = c.id
+    WHERE b.user_id = ?
+    ORDER BY b.created_at DESC
+  `).all(req.user.id);
+  res.json({ bookmarks });
+});
+
+app.post('/api/bookmarks', requireAuth, (req, res) => {
+  const { case_id } = req.body;
+  if (!case_id) {
+    return res.status(400).json({ error: 'case_id required' });
+  }
+  try {
+    db.prepare('INSERT OR IGNORE INTO bookmarks (user_id, case_id) VALUES (?, ?)').run(req.user.id, case_id);
+    res.json({ success: true, message: 'Bookmarked' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to bookmark' });
+  }
+});
+
+app.delete('/api/bookmarks/:caseId', requireAuth, (req, res) => {
+  db.prepare('DELETE FROM bookmarks WHERE user_id = ? AND case_id = ?').run(req.user.id, req.params.caseId);
+  res.json({ success: true, message: 'Bookmark removed' });
+});
+
 // Serve beta signup page
 app.get('/beta', (req, res) => {
   res.sendFile(path.join(__dirname, 'beta-signup.html'));
@@ -1886,16 +2314,242 @@ app.get('/interview', (req, res) => {
   res.sendFile(path.join(__dirname, 'interview-scheduling.html'));
 });
 
+// Issue a short-lived token for WebSocket auth (since JWT is httpOnly)
+app.get('/api/sync/token', requireAuth, (req, res) => {
+  const token = jwt.sign(
+    { id: req.user.id, username: req.user.username, displayName: req.user.displayName },
+    JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+  res.json({ token });
+});
+
+// REST endpoint to get sync history
+app.get('/api/sync/events', requireAuth, (req, res) => {
+  const { since, type, limit = 50 } = req.query;
+  const params = [req.user.id];
+  let sql = 'SELECT event_type, payload, device_id, created_at FROM sync_events WHERE user_id = ?';
+
+  if (since) {
+    sql += ' AND created_at > ?';
+    params.push(since);
+  }
+  if (type) {
+    sql += ' AND event_type = ?';
+    params.push(type);
+  }
+
+  sql += ' ORDER BY created_at DESC LIMIT ?';
+  params.push(parseInt(limit));
+
+  const events = db.prepare(sql).all(...params);
+  res.json({
+    events: events.map(e => ({
+      type: e.event_type,
+      payload: JSON.parse(e.payload),
+      deviceId: e.device_id,
+      timestamp: e.created_at
+    }))
+  });
+});
+
 // Serve frontend for any non-API route
 app.get('/{*splat}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// ============ WebSocket Cross-Device Sync ============
+
+// Track connected clients per user: Map<userId, Set<ws>>
+const syncClients = new Map();
+
+function setupWebSocket(server) {
+  const wss = new WebSocketServer({ server });
+
+  wss.on('connection', (ws, req) => {
+    // Extract token from query params
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const token = url.searchParams.get('token');
+
+    if (!token) {
+      ws.close(4001, 'Authentication required');
+      return;
+    }
+
+    let user;
+    try {
+      user = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+      ws.close(4001, 'Invalid token');
+      return;
+    }
+
+    ws.userId = user.id;
+    ws.deviceId = url.searchParams.get('deviceId') || 'unknown';
+
+    // Register this connection
+    if (!syncClients.has(user.id)) {
+      syncClients.set(user.id, new Set());
+    }
+    syncClients.get(user.id).add(ws);
+
+    console.log(`🔄 Sync: ${user.username} connected (device: ${ws.deviceId}, total: ${syncClients.get(user.id).size})`);
+
+    // Send recent sync events so the device can catch up
+    try {
+      const recent = db.prepare(`
+        SELECT event_type, payload, device_id, created_at
+        FROM sync_events
+        WHERE user_id = ? AND device_id != ?
+        ORDER BY created_at DESC
+        LIMIT 50
+      `).all(user.id, ws.deviceId);
+
+      if (recent.length > 0) {
+        ws.send(JSON.stringify({
+          type: 'sync:catchup',
+          events: recent.reverse().map(e => ({
+            type: e.event_type,
+            payload: JSON.parse(e.payload),
+            deviceId: e.device_id,
+            timestamp: e.created_at
+          }))
+        }));
+      }
+    } catch (e) {
+      console.error('Sync catchup error:', e.message);
+    }
+
+    ws.on('message', (data) => {
+      let msg;
+      try {
+        msg = JSON.parse(data);
+      } catch (e) {
+        return;
+      }
+
+      const validTypes = ['sync:progress', 'sync:bookmarks', 'sync:annotations', 'sync:preferences'];
+      if (!validTypes.includes(msg.type)) return;
+
+      // Store sync event
+      try {
+        db.prepare(`
+          INSERT INTO sync_events (user_id, event_type, payload, device_id)
+          VALUES (?, ?, ?, ?)
+        `).run(user.id, msg.type, JSON.stringify(msg.payload), ws.deviceId);
+      } catch (e) {
+        console.error('Sync store error:', e.message);
+      }
+
+      // Broadcast to other devices of same user
+      const clients = syncClients.get(user.id);
+      if (clients) {
+        const outgoing = JSON.stringify({
+          type: msg.type,
+          payload: msg.payload,
+          deviceId: ws.deviceId,
+          timestamp: new Date().toISOString()
+        });
+        for (const client of clients) {
+          if (client !== ws && client.readyState === 1) {
+            client.send(outgoing);
+          }
+        }
+      }
+    });
+
+    ws.on('close', () => {
+      const clients = syncClients.get(user.id);
+      if (clients) {
+        clients.delete(ws);
+        if (clients.size === 0) {
+          syncClients.delete(user.id);
+        }
+      }
+      console.log(`🔄 Sync: ${user.username} disconnected (device: ${ws.deviceId})`);
+    });
+
+    ws.on('error', (err) => {
+      console.error(`Sync WebSocket error for ${user.username}:`, err.message);
+    });
+  });
+
+  return wss;
+}
+
+// ============ Push Notification Study Reminders ============
+
+async function sendStudyReminders() {
+  try {
+    // Find users who haven't studied in 24 hours and have push subscriptions
+    const users = db.prepare(`
+      SELECT DISTINCT u.id, u.username FROM users u
+      WHERE u.id NOT IN (
+        SELECT DISTINCT user_id FROM quiz_attempts
+        WHERE attempted_at > datetime('now', '-24 hours')
+        AND user_id IS NOT NULL
+      )
+      AND u.id IN (SELECT DISTINCT user_id FROM push_subscriptions)
+    `).all();
+
+    if (users.length === 0) {
+      console.log('Study reminders: No users need reminding.');
+      return;
+    }
+
+    console.log(`Study reminders: Sending to ${users.length} user(s)...`);
+
+    const payload = JSON.stringify({
+      body: "You haven't studied in 24 hours! A quick 5-minute session keeps knowledge fresh.",
+      data: { url: '/' }
+    });
+
+    for (const user of users) {
+      const subscriptions = db.prepare(
+        'SELECT id, endpoint, keys_p256dh, keys_auth FROM push_subscriptions WHERE user_id = ?'
+      ).all(user.id);
+
+      for (const sub of subscriptions) {
+        const pushSubscription = {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.keys_p256dh,
+            auth: sub.keys_auth
+          }
+        };
+
+        try {
+          await webpush.sendNotification(pushSubscription, payload);
+          console.log(`Study reminder sent to ${user.username} (sub ${sub.id})`);
+        } catch (err) {
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            // Subscription expired or invalid - remove it
+            console.log(`Removing expired subscription ${sub.id} for ${user.username}`);
+            db.prepare('DELETE FROM push_subscriptions WHERE id = ?').run(sub.id);
+          } else {
+            console.error(`Failed to send push to ${user.username} (sub ${sub.id}):`, err.message);
+          }
+        }
+      }
+    }
+
+    console.log('Study reminders: Done.');
+  } catch (err) {
+    console.error('sendStudyReminders error:', err);
+  }
+}
+
 // Only start server if not in test environment
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🏥 RadCase server running at http://localhost:${PORT}`);
   });
+  setupWebSocket(server);
+
+  // Schedule study reminder push notifications every 6 hours
+  setInterval(sendStudyReminders, 6 * 60 * 60 * 1000);
+  // Run once on startup after a 60-second delay
+  setTimeout(sendStudyReminders, 60 * 1000);
 }
 
 // Export app for testing

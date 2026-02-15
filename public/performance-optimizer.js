@@ -168,17 +168,17 @@ class PerformanceOptimizer {
     const criticalResources = [
       // Core JavaScript files
       { href: '/touch-gestures.js', as: 'script', priority: 'high' },
-      { href: '/mobile-dicom-controls.js', as: 'script', priority: 'high' },
       { href: '/dicom-viewer.js', as: 'script', priority: 'high' },
-      
-      // Critical CSS (if separated)
-      { href: '/critical.css', as: 'style', priority: 'high' },
-      
+      { href: '/swipe-quiz.js', as: 'script', priority: 'high' },
+
+      // Mobile CSS
+      { href: '/mobile.css', as: 'style', priority: 'high' },
+
       // Essential fonts
-      { 
-        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap', 
-        as: 'style', 
-        priority: 'high' 
+      {
+        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+        as: 'style',
+        priority: 'high'
       }
     ];
 

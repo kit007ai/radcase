@@ -1,5 +1,6 @@
 // RadCase Annotation Engine
-// Canvas-based image annotation with arrows, circles, rectangles, and text
+// Canvas-based image annotation with arrows, circles, rectangles, text, and highlighter
+// Supports pressure-sensitive input (Apple Pencil / stylus) via PointerEvents
 
 class AnnotationCanvas {
   constructor(container, imageUrl) {
@@ -14,7 +15,9 @@ class AnnotationCanvas {
     this.lineWidth = 3;
     this.history = [];
     this.historyIndex = -1;
-    
+    this.activeTextInput = null;
+    this.drawingEnabled = true; // Can be disabled by touch gesture handler
+
     this.init();
   }
 
@@ -23,13 +26,31 @@ class AnnotationCanvas {
     this.container.innerHTML = `
       <div class="annotation-wrapper" style="position: relative; width: 100%; height: 100%;">
         <div class="annotation-toolbar">
+          <div class="ann-toolbar-drag-handle" title="Drag to reposition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
+          </div>
           <div class="tool-group">
-            <button class="tool-btn active" data-tool="arrow" title="Arrow (A)">➡️</button>
-            <button class="tool-btn" data-tool="circle" title="Circle (C)">⭕</button>
-            <button class="tool-btn" data-tool="rect" title="Rectangle (R)">⬜</button>
-            <button class="tool-btn" data-tool="line" title="Line (L)">📏</button>
-            <button class="tool-btn" data-tool="freehand" title="Freehand (F)">✏️</button>
-            <button class="tool-btn" data-tool="text" title="Text (T)">💬</button>
+            <button class="tool-btn active" data-tool="arrow" title="Arrow (A)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button class="tool-btn" data-tool="circle" title="Circle (C)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+            </button>
+            <button class="tool-btn" data-tool="rect" title="Rectangle (R)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </button>
+            <button class="tool-btn" data-tool="line" title="Line (L)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg>
+            </button>
+            <button class="tool-btn" data-tool="freehand" title="Freehand (F)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+            </button>
+            <button class="tool-btn" data-tool="highlighter" title="Highlighter (H)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+            <button class="tool-btn" data-tool="text" title="Text (T)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+            </button>
           </div>
           <div class="tool-group">
             <input type="color" class="color-picker" value="#ef4444" title="Color">
@@ -41,17 +62,26 @@ class AnnotationCanvas {
             </select>
           </div>
           <div class="tool-group">
-            <button class="tool-btn" data-action="undo" title="Undo (Ctrl+Z)">↩️</button>
-            <button class="tool-btn" data-action="redo" title="Redo (Ctrl+Y)">↪️</button>
-            <button class="tool-btn" data-action="clear" title="Clear All">🗑️</button>
+            <button class="tool-btn" data-action="undo" title="Undo (Ctrl+Z)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            </button>
+            <button class="tool-btn" data-action="redo" title="Redo (Ctrl+Y)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+            </button>
+            <button class="tool-btn" data-action="clear" title="Clear All">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
           </div>
           <div class="tool-group">
-            <button class="tool-btn save-btn" data-action="save" title="Save">💾 Save</button>
+            <button class="tool-btn save-btn" data-action="save" title="Save">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Save</span>
+            </button>
           </div>
         </div>
         <div class="canvas-container" style="position: relative; overflow: hidden;">
           <img class="annotation-image" style="max-width: 100%; display: block;">
-          <canvas class="annotation-canvas" style="position: absolute; top: 0; left: 0; cursor: crosshair;"></canvas>
+          <canvas class="annotation-canvas" style="position: absolute; top: 0; left: 0; cursor: crosshair; touch-action: none;"></canvas>
         </div>
       </div>
     `;
@@ -72,26 +102,41 @@ class AnnotationCanvas {
         gap: 4px;
         align-items: center;
       }
+      .ann-toolbar-drag-handle {
+        display: none;
+      }
       .tool-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
         padding: 8px 12px;
-        border-radius: 8px;
+        min-width: 48px;
+        min-height: 48px;
+        border-radius: 10px;
         border: 1px solid var(--border, rgba(255,255,255,0.1));
-        background: var(--bg-tertiary, #1a1a25);
-        color: var(--text-primary, #f4f4f5);
+        background: rgba(255, 255, 255, 0.05);
+        color: #a1a1aa;
         cursor: pointer;
         font-size: 1rem;
         transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .tool-btn:active {
+        transform: scale(0.95);
       }
       .tool-btn:hover {
-        border-color: var(--accent, #6366f1);
+        border-color: #6366f1;
       }
       .tool-btn.active {
-        background: var(--accent, #6366f1);
-        border-color: var(--accent, #6366f1);
+        background: rgba(99, 102, 241, 0.3);
+        border-color: #6366f1;
+        color: #818cf8;
       }
       .save-btn {
         background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
         border: none !important;
+        color: #fff !important;
         padding: 8px 16px !important;
       }
       .color-picker {
@@ -116,47 +161,25 @@ class AnnotationCanvas {
         align-items: center;
         min-height: 400px;
       }
-
-      /* Mobile responsive annotations */
-      @media (max-width: 768px) {
-        .annotation-toolbar {
-          padding: 8px;
-          gap: 8px;
-        }
-        .tool-group {
-          gap: 6px;
-        }
-        .tool-btn {
-          padding: 10px 14px;
-          min-height: 44px;
-          min-width: 44px;
-          font-size: 1.1rem;
-        }
-        .save-btn {
-          width: 100%;
-          margin-top: 8px;
-        }
-        .tool-group:last-child {
-          width: 100%;
-        }
-        .canvas-container {
-          min-height: 300px;
-        }
+      .annotation-text-input {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.85);
+        border: 2px solid var(--accent, #6366f1);
+        border-radius: 4px;
+        color: #fff;
+        font-family: Inter, sans-serif;
+        font-weight: bold;
+        font-size: 16px;
+        padding: 4px 8px;
+        min-width: 100px;
+        outline: none;
+        z-index: 10;
       }
 
-      @media (max-width: 480px) {
-        .annotation-toolbar {
-          flex-direction: column;
-          gap: 8px;
-        }
-        .tool-group {
-          width: 100%;
-          justify-content: space-between;
-        }
-        .tool-btn {
-          flex: 1;
-          padding: 12px 8px;
-          font-size: 0.9rem;
+      /* Mobile responsive annotations — floating toolbar handled in mobile.css */
+      @media (max-width: 768px) {
+        .canvas-container {
+          min-height: 300px;
         }
       }
     `;
@@ -219,21 +242,17 @@ class AnnotationCanvas {
       this.lineWidth = parseInt(e.target.value);
     });
 
-    // Canvas events
-    this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-    this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-    this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
-    this.canvas.addEventListener('mouseleave', (e) => this.onMouseUp(e));
-
-    // Touch events
-    this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
-    this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
-    this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
+    // Pointer events (unified mouse + touch + stylus)
+    this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+    this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
+    this.canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
+    this.canvas.addEventListener('pointerleave', (e) => this.onPointerUp(e));
+    this.canvas.addEventListener('pointercancel', (e) => this.onPointerUp(e));
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      
+
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'z') { e.preventDefault(); this.undo(); }
         if (e.key === 'y') { e.preventDefault(); this.redo(); }
@@ -244,6 +263,7 @@ class AnnotationCanvas {
           case 'r': this.setTool('rect'); break;
           case 'l': this.setTool('line'); break;
           case 'f': this.setTool('freehand'); break;
+          case 'h': this.setTool('highlighter'); break;
           case 't': this.setTool('text'); break;
         }
       }
@@ -255,6 +275,52 @@ class AnnotationCanvas {
       this.canvas.style.width = rect.width + 'px';
       this.canvas.style.height = rect.height + 'px';
     });
+
+    // Mobile: make toolbar draggable via the drag handle
+    this.setupToolbarDrag();
+  }
+
+  setupToolbarDrag() {
+    const handle = this.toolbar.querySelector('.ann-toolbar-drag-handle');
+    if (!handle) return;
+
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let origLeft = 0, origTop = 0;
+
+    const onStart = (e) => {
+      // Only enable drag on mobile (floating toolbar)
+      if (!window.matchMedia('(max-width: 768px)').matches) return;
+      isDragging = true;
+      const touch = e.touches ? e.touches[0] : e;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      const rect = this.toolbar.getBoundingClientRect();
+      origLeft = rect.left;
+      origTop = rect.top;
+      e.preventDefault();
+    };
+
+    const onMove = (e) => {
+      if (!isDragging) return;
+      const touch = e.touches ? e.touches[0] : e;
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      this.toolbar.style.left = Math.max(0, origLeft + dx) + 'px';
+      this.toolbar.style.top = Math.max(0, origTop + dy) + 'px';
+      this.toolbar.style.right = 'auto';
+      this.toolbar.style.bottom = 'auto';
+      e.preventDefault();
+    };
+
+    const onEnd = () => { isDragging = false; };
+
+    handle.addEventListener('mousedown', onStart);
+    handle.addEventListener('touchstart', onStart, { passive: false });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
   }
 
   setTool(tool) {
@@ -274,44 +340,67 @@ class AnnotationCanvas {
     };
   }
 
-  onMouseDown(e) {
+  // Compute effective lineWidth from pointer pressure.
+  // For mouse (pointerType "mouse"), pressure is typically 0 or 0.5 — use default lineWidth.
+  // For pen/touch with real pressure data, scale from 1px (at pressure 0.1) to lineWidth*2 (at pressure 1.0).
+  getPressureWidth(e, baseWidth) {
+    if (e.pointerType !== 'pen') {
+      return baseWidth;
+    }
+    const pressure = e.pressure;
+    if (pressure <= 0) return baseWidth;
+    const clamped = Math.max(0.1, Math.min(1.0, pressure));
+    // Linear interpolation: 0.1 -> 1px, 1.0 -> baseWidth * 2
+    return 1 + ((clamped - 0.1) / 0.9) * (baseWidth * 2 - 1);
+  }
+
+  onPointerDown(e) {
+    // Ignore multi-touch — let touch-gestures.js handle pinch/pan
+    if (e.pointerType === 'touch' && this._activePointerId != null) return;
+    if (!this.drawingEnabled && e.pointerType === 'touch') return;
+
+    e.preventDefault();
+    // Capture the pointer so we get events even if it leaves the canvas
+    this.canvas.setPointerCapture(e.pointerId);
+    this._activePointerId = e.pointerId;
+
     const coords = this.getCoords(e);
     this.isDrawing = true;
     this.startX = coords.x;
     this.startY = coords.y;
 
     if (this.currentTool === 'text') {
-      const text = prompt('Enter text:');
-      if (text) {
-        this.addAnnotation({
-          type: 'text',
-          x: coords.x,
-          y: coords.y,
-          text,
-          color: this.color,
-          fontSize: this.lineWidth * 6
-        });
-      }
       this.isDrawing = false;
+      this.showTextInput(e, coords);
     } else if (this.currentTool === 'freehand') {
-      this.currentPath = [{ x: coords.x, y: coords.y }];
+      const pw = this.getPressureWidth(e, this.lineWidth);
+      this.currentPath = [{ x: coords.x, y: coords.y, width: pw }];
+    } else if (this.currentTool === 'highlighter') {
+      const pw = this.getPressureWidth(e, this.lineWidth * 3);
+      this.currentPath = [{ x: coords.x, y: coords.y, width: pw }];
     }
   }
 
-  onMouseMove(e) {
-    if (!this.isDrawing) return;
+  onPointerMove(e) {
+    if (!this.isDrawing || e.pointerId !== this._activePointerId) return;
+    e.preventDefault();
     const coords = this.getCoords(e);
 
     if (this.currentTool === 'freehand') {
-      this.currentPath.push({ x: coords.x, y: coords.y });
+      const pw = this.getPressureWidth(e, this.lineWidth);
+      this.currentPath.push({ x: coords.x, y: coords.y, width: pw });
+    } else if (this.currentTool === 'highlighter') {
+      const pw = this.getPressureWidth(e, this.lineWidth * 3);
+      this.currentPath.push({ x: coords.x, y: coords.y, width: pw });
     }
 
     this.redraw();
-    this.drawPreview(coords.x, coords.y);
+    this.drawPreview(coords.x, coords.y, e);
   }
 
-  onMouseUp(e) {
-    if (!this.isDrawing) return;
+  onPointerUp(e) {
+    if (!this.isDrawing || e.pointerId !== this._activePointerId) return;
+    this._activePointerId = null;
     const coords = this.getCoords(e);
     this.isDrawing = false;
 
@@ -321,6 +410,14 @@ class AnnotationCanvas {
         path: this.currentPath,
         color: this.color,
         lineWidth: this.lineWidth
+      });
+      this.currentPath = null;
+    } else if (this.currentTool === 'highlighter' && this.currentPath) {
+      this.addAnnotation({
+        type: 'highlighter',
+        path: this.currentPath,
+        color: '#facc15', // yellow default for highlighter
+        lineWidth: this.lineWidth * 3
       });
       this.currentPath = null;
     } else if (this.currentTool !== 'text') {
@@ -336,21 +433,71 @@ class AnnotationCanvas {
     }
   }
 
-  onTouchStart(e) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    this.onMouseDown({ clientX: touch.clientX, clientY: touch.clientY });
+  // Text tool: show an inline input overlay instead of prompt()
+  showTextInput(pointerEvent, coords) {
+    if (this.activeTextInput) {
+      this.commitTextInput();
+    }
+
+    const canvasRect = this.canvas.getBoundingClientRect();
+    const scaleX = canvasRect.width / this.canvas.width;
+    const scaleY = canvasRect.height / this.canvas.height;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'annotation-text-input';
+    input.style.left = (canvasRect.left - this.canvasContainer.getBoundingClientRect().left + (coords.x / this.canvas.width) * canvasRect.width) + 'px';
+    input.style.top = (canvasRect.top - this.canvasContainer.getBoundingClientRect().top + (coords.y / this.canvas.height) * canvasRect.height) + 'px';
+    input.style.color = this.color;
+
+    this.canvasContainer.appendChild(input);
+    this.activeTextInput = { input, coords, color: this.color };
+
+    // Focus after a microtask so the pointerdown doesn't steal it
+    requestAnimationFrame(() => input.focus());
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.commitTextInput();
+      } else if (e.key === 'Escape') {
+        this.cancelTextInput();
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      // Slight delay to allow Enter keydown to fire first
+      setTimeout(() => {
+        if (this.activeTextInput && this.activeTextInput.input === input) {
+          this.commitTextInput();
+        }
+      }, 100);
+    });
   }
 
-  onTouchMove(e) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    this.onMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+  commitTextInput() {
+    if (!this.activeTextInput) return;
+    const { input, coords, color } = this.activeTextInput;
+    const text = input.value.trim();
+    if (text) {
+      const fontSize = Math.max(16, Math.min(20, this.lineWidth * 5));
+      this.addAnnotation({
+        type: 'text',
+        x: coords.x,
+        y: coords.y,
+        text,
+        color,
+        fontSize
+      });
+    }
+    input.remove();
+    this.activeTextInput = null;
   }
 
-  onTouchEnd(e) {
-    e.preventDefault();
-    this.onMouseUp(e);
+  cancelTextInput() {
+    if (!this.activeTextInput) return;
+    this.activeTextInput.input.remove();
+    this.activeTextInput = null;
   }
 
   addAnnotation(annotation) {
@@ -385,10 +532,64 @@ class AnnotationCanvas {
 
   save() {
     const data = this.annotations.slice(0, this.historyIndex + 1);
-    if (this.onSave) {
-      this.onSave(data);
+    if (navigator.onLine) {
+      if (this.onSave) {
+        this.onSave(data);
+      }
+    } else {
+      this.saveOffline(data);
     }
     return data;
+  }
+
+  async saveOffline(data) {
+    const record = {
+      id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      image_id: this.imageId || null,
+      case_id: this.caseId || null,
+      annotations: data,
+      timestamp: Date.now()
+    };
+    try {
+      const db = await this.openOfflineDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('pending-annotations', 'readwrite');
+        const store = tx.objectStore('pending-annotations');
+        const req = store.put(record);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+        tx.oncomplete = () => db.close();
+      });
+      // Register background sync
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.sync.register('sync-annotations');
+      }
+      if (typeof toast === 'function') {
+        toast('Annotations saved offline — will sync when online', 'info');
+      }
+    } catch (err) {
+      console.error('Failed to save annotations offline:', err);
+      if (typeof toast === 'function') {
+        toast('Failed to save annotations offline', 'error');
+      }
+    }
+  }
+
+  openOfflineDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('radcase-offline', 1);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        for (const name of ['pending-progress', 'pending-annotations', 'offline-cases']) {
+          if (!db.objectStoreNames.contains(name)) {
+            db.createObjectStore(name, { keyPath: 'id' });
+          }
+        }
+      };
+      request.onsuccess = (e) => resolve(e.target.result);
+      request.onerror = (e) => reject(e.target.error);
+    });
   }
 
   load(annotations) {
@@ -399,15 +600,17 @@ class AnnotationCanvas {
 
   redraw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
+
     for (let i = 0; i <= this.historyIndex; i++) {
       this.drawAnnotation(this.annotations[i]);
     }
   }
 
-  drawPreview(endX, endY) {
+  drawPreview(endX, endY, pointerEvent) {
     if (this.currentTool === 'freehand' && this.currentPath) {
       this.drawFreehand(this.currentPath, this.color, this.lineWidth);
+    } else if (this.currentTool === 'highlighter' && this.currentPath) {
+      this.drawHighlighter(this.currentPath, '#facc15', this.lineWidth * 3);
     } else {
       this.drawAnnotation({
         type: this.currentTool,
@@ -427,6 +630,7 @@ class AnnotationCanvas {
     this.ctx.lineWidth = ann.lineWidth;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
+    this.ctx.globalAlpha = 1.0;
 
     switch (ann.type) {
       case 'arrow':
@@ -444,10 +648,16 @@ class AnnotationCanvas {
       case 'freehand':
         this.drawFreehand(ann.path, ann.color, ann.lineWidth);
         break;
+      case 'highlighter':
+        this.drawHighlighter(ann.path, ann.color, ann.lineWidth);
+        break;
       case 'text':
-        this.drawText(ann.x, ann.y, ann.text, ann.fontSize);
+        this.drawText(ann.x, ann.y, ann.text, ann.fontSize, ann.color);
         break;
     }
+
+    // Reset alpha after drawing
+    this.ctx.globalAlpha = 1.0;
   }
 
   drawArrow(fromX, fromY, toX, toY) {
@@ -492,21 +702,71 @@ class AnnotationCanvas {
 
   drawFreehand(path, color, lineWidth) {
     if (path.length < 2) return;
-    
+
     this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = lineWidth;
-    this.ctx.beginPath();
-    this.ctx.moveTo(path[0].x, path[0].y);
-    
-    for (let i = 1; i < path.length; i++) {
-      this.ctx.lineTo(path[i].x, path[i].y);
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+
+    // If path points have per-point width data (pressure-sensitive),
+    // draw segment by segment with varying width.
+    const hasPressure = path[0].width !== undefined;
+
+    if (hasPressure) {
+      for (let i = 1; i < path.length; i++) {
+        this.ctx.beginPath();
+        this.ctx.lineWidth = path[i].width;
+        this.ctx.moveTo(path[i - 1].x, path[i - 1].y);
+        this.ctx.lineTo(path[i].x, path[i].y);
+        this.ctx.stroke();
+      }
+    } else {
+      // Legacy path without pressure data
+      this.ctx.lineWidth = lineWidth;
+      this.ctx.beginPath();
+      this.ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        this.ctx.lineTo(path[i].x, path[i].y);
+      }
+      this.ctx.stroke();
     }
-    this.ctx.stroke();
   }
 
-  drawText(x, y, text, fontSize) {
+  drawHighlighter(path, color, lineWidth) {
+    if (path.length < 2) return;
+
+    this.ctx.save();
+    this.ctx.globalAlpha = 0.3;
+    this.ctx.globalCompositeOperation = 'source-over';
+    this.ctx.strokeStyle = color;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+
+    const hasPressure = path[0].width !== undefined;
+
+    if (hasPressure) {
+      for (let i = 1; i < path.length; i++) {
+        this.ctx.beginPath();
+        this.ctx.lineWidth = path[i].width;
+        this.ctx.moveTo(path[i - 1].x, path[i - 1].y);
+        this.ctx.lineTo(path[i].x, path[i].y);
+        this.ctx.stroke();
+      }
+    } else {
+      this.ctx.lineWidth = lineWidth;
+      this.ctx.beginPath();
+      this.ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        this.ctx.lineTo(path[i].x, path[i].y);
+      }
+      this.ctx.stroke();
+    }
+
+    this.ctx.restore();
+  }
+
+  drawText(x, y, text, fontSize, color) {
     this.ctx.font = `bold ${fontSize}px Inter, sans-serif`;
-    
+
     // Draw background
     const metrics = this.ctx.measureText(text);
     const padding = 6;
@@ -517,9 +777,9 @@ class AnnotationCanvas {
       metrics.width + padding * 2,
       fontSize + padding * 2
     );
-    
+
     // Draw text
-    this.ctx.fillStyle = this.color;
+    this.ctx.fillStyle = color || this.color;
     this.ctx.fillText(text, x, y);
   }
 
@@ -529,13 +789,13 @@ class AnnotationCanvas {
     exportCanvas.width = this.canvas.width;
     exportCanvas.height = this.canvas.height;
     const exportCtx = exportCanvas.getContext('2d');
-    
+
     // Draw original image
     exportCtx.drawImage(this.image, 0, 0);
-    
+
     // Draw annotations
     exportCtx.drawImage(this.canvas, 0, 0);
-    
+
     return exportCanvas.toDataURL('image/png');
   }
 }

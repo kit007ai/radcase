@@ -54,16 +54,31 @@ class MicroLearningSession {
       contextAware: 'true'
     });
 
+    // Pass last reviewed timestamp for spaced repetition weighting
+    const lastReviewed = this.getLastReviewedTimestamp();
+    if (lastReviewed) {
+      params.append('lastReviewed', lastReviewed.toString());
+    }
+
     try {
-      const response = await fetch(`/api/cases/micro-learning?${params}`);
+      const response = await fetch(`/api/cases/micro-learning?${params}`, {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch cases');
-      
+
       const data = await response.json();
       return data.cases || [];
     } catch (error) {
       console.error('Failed to load micro-learning cases:', error);
       return this.getFallbackCases();
     }
+  }
+
+  getLastReviewedTimestamp() {
+    const sessions = this.completedSessions;
+    if (sessions.length === 0) return null;
+    const lastSession = sessions[sessions.length - 1];
+    return lastSession.completedAt || null;
   }
 
   // Mobile-optimized session UI
@@ -263,11 +278,11 @@ class MicroLearningSession {
     `;
   }
 
-  renderCaseOptions(case) {
-    if (!case.options) return '';
+  renderCaseOptions(caseData) {
+    if (!caseData.options) return '';
 
-    return case.options.map((option, index) => `
-      <button class="case-option-btn" 
+    return caseData.options.map((option, index) => `
+      <button class="case-option-btn"
               onclick="microLearning.selectAnswer(${index})"
               data-option="${index}">
         ${option}
@@ -294,11 +309,11 @@ class MicroLearningSession {
     }, 2000);
   }
 
-  showAnswerFeedback(isCorrect, case) {
+  showAnswerFeedback(isCorrect, caseData) {
     const optionButtons = document.querySelectorAll('.case-option-btn');
     optionButtons.forEach((btn, index) => {
       btn.disabled = true;
-      if (index === case.correctAnswer) {
+      if (index === caseData.correctAnswer) {
         btn.classList.add('correct');
       } else if (btn.classList.contains('selected')) {
         btn.classList.add('incorrect');
@@ -306,16 +321,16 @@ class MicroLearningSession {
     });
 
     // Show explanation if available
-    if (case.explanation) {
+    if (caseData.explanation) {
       const explanationEl = document.createElement('div');
       explanationEl.className = 'answer-explanation';
       explanationEl.innerHTML = `
         <div class="explanation-header ${isCorrect ? 'correct' : 'incorrect'}">
-          ${isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+          ${isCorrect ? 'Correct!' : 'Incorrect'}
         </div>
-        <div class="explanation-text">${case.explanation}</div>
+        <div class="explanation-text">${caseData.explanation}</div>
       `;
-      
+
       const questionContainer = document.querySelector('.case-question');
       if (questionContainer) {
         questionContainer.appendChild(explanationEl);
@@ -398,6 +413,41 @@ class MicroLearningSession {
       return navigator.connection.effectiveType || 'unknown';
     }
     return 'unknown';
+  }
+
+  estimateAvailableTime() {
+    // Default to 5 minutes for mobile micro-learning sessions
+    return 5;
+  }
+
+  getLocationContext() {
+    return 'unknown';
+  }
+
+  pauseSession() {
+    if (this.sessionTimer) {
+      clearInterval(this.sessionTimer);
+      this.sessionTimer = null;
+    }
+  }
+
+  showCompletionScreen(sessionStats) {
+    if (!sessionStats) return;
+    const container = document.getElementById('micro-learning-container');
+    if (!container) return;
+
+    const accuracy = sessionStats.accuracy ? Math.round(sessionStats.accuracy) : 0;
+    container.innerHTML = `
+      <div class="micro-session-wrapper" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:32px;">
+        <h2 style="color:#818cf8;margin-bottom:16px;">Session Complete!</h2>
+        <p style="color:#a1a1aa;margin-bottom:24px;">Cases: ${sessionStats.casesViewed} | Accuracy: ${accuracy}%</p>
+        <button class="btn btn-primary" onclick="document.getElementById('micro-learning-container')?.remove()">Close</button>
+      </div>
+    `;
+  }
+
+  calculateOptimalDifficulty() {
+    return this.preferences.lastDifficulty || 'Intermediate';
   }
 
   // Utility methods

@@ -353,6 +353,189 @@
       background: var(--warning);
     }
 
+    /* Bookmark Heart */
+    .bookmark-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 2;
+      padding: 0;
+    }
+
+    .bookmark-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      transform: scale(1.1);
+    }
+
+    .bookmark-btn svg {
+      width: 20px;
+      height: 20px;
+      transition: all 0.2s;
+    }
+
+    .bookmark-btn .heart-outline {
+      stroke: #a1a1aa;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .bookmark-btn.bookmarked .heart-outline {
+      stroke: #d946ef;
+      fill: #d946ef;
+    }
+
+    .bookmark-btn:hover .heart-outline {
+      stroke: #d946ef;
+    }
+
+    .bookmark-btn.bookmarked:hover .heart-outline {
+      fill: #f0abfc;
+      stroke: #f0abfc;
+    }
+
+    .case-card {
+      position: relative;
+    }
+
+    /* Offline download button */
+    .offline-download-btn {
+      position: absolute;
+      top: 12px;
+      right: 52px;
+      background: rgba(0, 0, 0, 0.5);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 2;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+
+    .offline-download-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    /* Offline available badge */
+    .offline-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: var(--success);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .modal-bookmark-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      margin-right: auto;
+    }
+
+    .modal-bookmark-btn:hover {
+      border-color: #d946ef;
+      color: #d946ef;
+    }
+
+    .modal-bookmark-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .modal-bookmark-btn .heart-outline {
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .modal-bookmark-btn.bookmarked {
+      border-color: #d946ef;
+      color: #d946ef;
+    }
+
+    .modal-bookmark-btn.bookmarked .heart-outline {
+      fill: #d946ef;
+      stroke: #d946ef;
+    }
+
+    .bookmark-filter-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .bookmark-filter-btn:hover {
+      border-color: #d946ef;
+      color: #d946ef;
+    }
+
+    .bookmark-filter-btn.active {
+      background: rgba(217, 70, 239, 0.15);
+      border-color: #d946ef;
+      color: #d946ef;
+    }
+
+    .bookmark-filter-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .bookmark-filter-btn .heart-outline {
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .bookmark-filter-btn.active .heart-outline {
+      fill: #d946ef;
+      stroke: #d946ef;
+    }
+
     /* Forms */
     .form-group {
       margin-bottom: 20px;
@@ -533,6 +716,40 @@
 
     .modal-close:hover {
       color: var(--text-primary);
+    }
+
+    .voice-narrate-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
+
+    .voice-narrate-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-hover);
+    }
+
+    .voice-narrate-btn.active {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--accent);
+      color: var(--accent-hover);
+      animation: voice-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes voice-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3); }
+      50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
     }
 
     .modal-body {
@@ -1455,8 +1672,179 @@
       .modal-nav-prev { left: 4px; }
       .modal-nav-next { right: 4px; }
     }
+
+    /* ============ Preferences ============ */
+    .nav-item-preferences {
+      margin-top: auto;
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+
+    .preferences-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+    .preferences-overlay.active {
+      display: flex;
+    }
+
+    .preferences-modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    }
+
+    .preferences-modal .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .preferences-modal .modal-header h2 {
+      font-size: 1.2rem;
+      margin: 0;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .preferences-modal .modal-body {
+      padding: 24px;
+    }
+
+    .preferences-modal .form-group {
+      margin-bottom: 20px;
+    }
+
+    .preferences-modal .form-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .preferences-modal .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a1a1aa' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .preferences-modal .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+    }
+
+    .pref-color-swatches {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pref-color-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+      position: relative;
+    }
+
+    .pref-color-swatch:hover {
+      transform: scale(1.15);
+    }
+
+    .pref-color-swatch.selected {
+      border-color: var(--text-primary);
+    }
+
+    .pref-color-swatch.selected::after {
+      content: '\2713';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .preferences-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* List view mode */
+    .card-grid.view-list {
+      grid-template-columns: 1fr;
+    }
+
+    .card-grid.view-list .case-card {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 0;
+    }
+
+    .card-grid.view-list .case-card .card-image {
+      height: 100%;
+      border-radius: 12px 0 0 12px;
+    }
+
+    .card-grid.view-list .case-card .card-content {
+      padding: 16px;
+    }
+
+    /* Font size overrides */
+    html.font-small { font-size: 14px; }
+    html.font-medium { font-size: 16px; }
+    html.font-large { font-size: 18px; }
+
+    @media (max-width: 768px) {
+      .preferences-modal {
+        margin: 16px;
+        max-width: calc(100% - 32px);
+      }
+      .card-grid.view-list .case-card {
+        grid-template-columns: 100px 1fr;
+      }
+    }
   </style>
-  
+
+  <!-- Mobile CSS -->
+  <link rel="stylesheet" href="/mobile.css">
+
   <!-- Cornerstone.js for DICOM viewing -->
   <script src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
   <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
@@ -1531,6 +1919,10 @@
         <button class="nav-item" data-page="analytics" aria-label="View analytics">
           <span class="icon" aria-hidden="true">📊</span>
           Analytics
+        </button>
+        <button class="nav-item nav-item-preferences" onclick="openPreferencesModal()" aria-label="Preferences">
+          <span class="icon" aria-hidden="true">&#x2699;&#xFE0F;</span>
+          Preferences
         </button>
       </nav>
 
@@ -1621,6 +2013,11 @@
               <option value="4">⭐⭐⭐⭐ Expert</option>
               <option value="5">⭐⭐⭐⭐⭐ Master</option>
             </select>
+            <button class="bookmark-filter-btn" id="bookmarkFilterBtn"
+                    onclick="toggleBookmarkFilter()" aria-label="Show bookmarked cases only">
+              <svg viewBox="0 0 24 24"><path class="heart-outline" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              Bookmarks
+            </button>
           </div>
         </div>
 
@@ -1863,6 +2260,15 @@
     <div class="modal" style="max-width: 1400px;">
       <div class="modal-header">
         <h2 id="modalTitle">Case Details</h2>
+        <button class="modal-bookmark-btn" id="modalBookmarkBtn"
+                onclick="toggleModalBookmark()"
+                aria-label="Bookmark this case" title="Bookmark">
+          <svg viewBox="0 0 24 24"><path class="heart-outline" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span id="modalBookmarkLabel">Bookmark</span>
+        </button>
+        <button class="voice-narrate-btn" id="voiceNarrateBtn" onclick="toggleVoiceNarration()" title="Read case aloud" aria-label="Read case aloud">
+          <span class="voice-narrate-icon">&#x1F50A;</span>
+        </button>
         <div class="modal-tabs" id="viewerTabs" style="display: none;">
           <button class="tab-btn active" data-tab="images" onclick="switchViewerTab('images')">📷 Images</button>
           <button class="tab-btn" data-tab="dicom" onclick="switchViewerTab('dicom')">🔬 DICOM</button>
@@ -2024,11 +2430,107 @@
     </div>
   </div>
 
+  <!-- Preferences Modal -->
+  <div class="preferences-overlay" id="preferencesOverlay">
+    <div class="preferences-modal">
+      <div class="modal-header">
+        <h2>Preferences</h2>
+        <button class="modal-close" onclick="closePreferencesModal()" aria-label="Close preferences">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="prefViewMode">Default View Mode</label>
+          <select class="form-select" id="prefViewMode">
+            <option value="grid">Grid</option>
+            <option value="list">List</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="prefFontSize">Font Size</label>
+          <select class="form-select" id="prefFontSize">
+            <option value="small">Small</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Annotation Default Color</label>
+          <div class="pref-color-swatches" id="prefColorSwatches">
+            <button type="button" class="pref-color-swatch selected" data-color="#ff3b30" style="background:#ff3b30;" aria-label="Red" title="Red"></button>
+            <button type="button" class="pref-color-swatch" data-color="#ff9500" style="background:#ff9500;" aria-label="Orange" title="Orange"></button>
+            <button type="button" class="pref-color-swatch" data-color="#ffcc00" style="background:#ffcc00;" aria-label="Yellow" title="Yellow"></button>
+            <button type="button" class="pref-color-swatch" data-color="#34c759" style="background:#34c759;" aria-label="Green" title="Green"></button>
+            <button type="button" class="pref-color-swatch" data-color="#007aff" style="background:#007aff;" aria-label="Blue" title="Blue"></button>
+            <button type="button" class="pref-color-swatch" data-color="#af52de" style="background:#af52de;" aria-label="Purple" title="Purple"></button>
+            <button type="button" class="pref-color-swatch" data-color="#ffffff" style="background:#ffffff;" aria-label="White" title="White"></button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="prefTheme">Theme</label>
+          <select class="form-select" id="prefTheme">
+            <option value="auto">Auto</option>
+            <option value="dark" selected>Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+
+        <div class="preferences-actions">
+          <button class="btn btn-secondary btn-sm" onclick="resetPreferences()">Reset Defaults</button>
+          <button class="btn btn-primary btn-sm" onclick="savePreferencesAndClose()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offline Indicator -->
+  <div class="offline-indicator" id="offlineIndicator">You are offline - some features may be limited</div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
+    <div class="bottom-nav-items">
+      <button class="bottom-nav-item active" data-page="library" aria-label="Case Library">
+        <span class="nav-icon" aria-hidden="true">&#x1F4DA;</span>
+        Library
+      </button>
+      <button class="bottom-nav-item" data-page="add" aria-label="Add Case">
+        <span class="nav-icon" aria-hidden="true">&#x2795;</span>
+        Add
+      </button>
+      <button class="bottom-nav-item" data-page="quiz" aria-label="Quiz Mode">
+        <span class="nav-icon" aria-hidden="true">&#x1F3AF;</span>
+        Quiz
+      </button>
+      <button class="bottom-nav-item" onclick="swipeQuiz.start()" aria-label="Quick Study">
+        <span class="nav-icon" aria-hidden="true">&#x1F4F1;</span>
+        Swipe
+      </button>
+      <button class="bottom-nav-item" data-page="analytics" aria-label="Analytics">
+        <span class="nav-icon" aria-hidden="true">&#x1F4CA;</span>
+        Stats
+      </button>
+    </div>
+  </nav>
+
+  <!-- Micro-Learning FAB -->
+  <button class="micro-learning-fab" id="microLearningFab" onclick="microLearning.startSession()" aria-label="Quick Study" title="Start 5-min Learning Session">
+    &#x26A1;
+  </button>
+
   <!-- Load modules -->
   <script src="/annotate.js"></script>
   <script src="/presentation.js"></script>
   <script src="/spaced-repetition.js"></script>
   <script src="/dicom-viewer.js"></script>
+  <script src="/touch-gestures.js"></script>
+  <script src="/swipe-quiz.js"></script>
+  <script src="/pwa-manager.js"></script>
+  <script src="/micro-learning.js"></script>
+  <script src="/performance-optimizer.js"></script>
+  <script src="/sync-manager.js"></script>
+  <script src="/voice-narrator.js"></script>
 
   <script>
     const API = '/api';
@@ -2039,6 +2541,8 @@
     let dicomViewer = null;
     let currentDicomSeries = [];
     let currentUser = null;
+    let bookmarkedCaseIds = new Set();
+    let bookmarkFilterActive = false;
 
     // ============ Mobile Navigation & Accessibility ============
     
@@ -2171,6 +2675,11 @@
         updateAuthUI();
         if (currentUser) {
           loadUserProgress();
+          loadBookmarks().then(() => loadCases());
+          // Initialize cross-device sync
+          if (window.syncManager) {
+            window.syncManager._checkAuthAndConnect();
+          }
         }
       } catch (err) {
         console.error('Auth check failed:', err);
@@ -2301,6 +2810,11 @@
         loadUserProgress();
         loadStats();
         loadAnalytics();
+        // Start cross-device sync
+        if (window.syncManager) {
+          window.syncManager.disconnect();
+          window.syncManager._checkAuthAndConnect();
+        }
       } catch (err) {
         showAuthError('Connection failed. Please try again.');
       }
@@ -2334,6 +2848,11 @@
         closeAuthModal();
         toast(`Welcome to RadCase, ${currentUser.displayName || currentUser.username}! 🎉`, 'success');
         loadUserProgress();
+        // Start cross-device sync
+        if (window.syncManager) {
+          window.syncManager.disconnect();
+          window.syncManager._checkAuthAndConnect();
+        }
       } catch (err) {
         showAuthError('Connection failed. Please try again.');
       }
@@ -2350,6 +2869,8 @@
         toast('Signed out', 'success');
         loadStats();
         loadAnalytics();
+        // Disconnect sync
+        if (window.syncManager) window.syncManager.disconnect();
       } catch (err) {
         console.error('Logout failed:', err);
       }
@@ -2472,7 +2993,13 @@
       try {
         const res = await fetch(`${API}/cases?${params}`);
         const data = await res.json();
-        renderCases(data.cases);
+        let cases = data.cases;
+        if (bookmarkFilterActive && bookmarkedCaseIds.size > 0) {
+          cases = cases.filter(c => bookmarkedCaseIds.has(c.id));
+        } else if (bookmarkFilterActive) {
+          cases = [];
+        }
+        renderCases(cases);
       } catch (err) {
         console.error('Failed to load cases:', err);
       }
@@ -2497,8 +3024,20 @@
 
       caseIds = cases.map(c => c.id);
       grid.innerHTML = cases.map(c => `
-        <div class="case-card" onclick="viewCase('${c.id}')">
-          ${c.thumbnail 
+        <div class="case-card" data-case-id="${c.id}" onclick="viewCase('${c.id}')">
+          <button class="bookmark-btn ${bookmarkedCaseIds.has(c.id) ? 'bookmarked' : ''}"
+                  onclick="event.stopPropagation(); toggleBookmark('${c.id}', this)"
+                  aria-label="${bookmarkedCaseIds.has(c.id) ? 'Remove bookmark' : 'Bookmark this case'}"
+                  title="${bookmarkedCaseIds.has(c.id) ? 'Remove bookmark' : 'Bookmark'}">
+            <svg viewBox="0 0 24 24"><path class="heart-outline" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
+          <button class="offline-download-btn"
+                  onclick="event.stopPropagation(); pwaManager.toggleOfflineCase('${c.id}', event)"
+                  aria-label="Save for offline"
+                  title="Save for offline">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          </button>
+          ${c.thumbnail
             ? `<img class="case-image" src="/thumbnails/${c.thumbnail}" alt="${c.title}" onerror="this.outerHTML='<div class=\\'case-image-placeholder\\'>🩻</div>'">`
             : `<div class="case-image-placeholder">🩻</div>`
           }
@@ -2514,6 +3053,104 @@
           </div>
         </div>
       `).join('');
+
+      // Update offline indicators for visible cards
+      if (window.pwaManager) {
+        pwaManager.getOfflineCaseIds().then(offlineIds => {
+          for (const id of offlineIds) {
+            pwaManager.updateOfflineIndicator(id, true);
+          }
+        });
+      }
+    }
+
+    // ============ Bookmarks ============
+
+    async function loadBookmarks() {
+      if (!currentUser) return;
+      try {
+        const res = await fetch(`${API}/bookmarks`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        bookmarkedCaseIds = new Set((data.bookmarks || []).map(b => b.case_id));
+        // Update any visible card bookmark buttons
+        document.querySelectorAll('.case-card[data-case-id]').forEach(card => {
+          const caseId = card.dataset.caseId;
+          const btn = card.querySelector('.bookmark-btn');
+          if (btn) {
+            btn.classList.toggle('bookmarked', bookmarkedCaseIds.has(caseId));
+            btn.setAttribute('aria-label', bookmarkedCaseIds.has(caseId) ? 'Remove bookmark' : 'Bookmark this case');
+          }
+        });
+      } catch (err) {
+        console.error('Failed to load bookmarks:', err);
+      }
+    }
+
+    async function toggleBookmark(caseId, btnElement) {
+      if (!currentUser) return;
+      const isBookmarked = bookmarkedCaseIds.has(caseId);
+      try {
+        if (isBookmarked) {
+          await fetch(`${API}/bookmarks/${caseId}`, { method: 'DELETE', credentials: 'include' });
+          bookmarkedCaseIds.delete(caseId);
+        } else {
+          await fetch(`${API}/bookmarks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ case_id: caseId })
+          });
+          bookmarkedCaseIds.add(caseId);
+        }
+        // Update the clicked card button
+        if (btnElement) {
+          btnElement.classList.toggle('bookmarked', !isBookmarked);
+          btnElement.setAttribute('aria-label', !isBookmarked ? 'Remove bookmark' : 'Bookmark this case');
+        }
+        // Also update modal bookmark button if open
+        updateModalBookmarkState(caseId);
+        // If bookmark filter is active and we un-bookmarked, reload
+        if (bookmarkFilterActive && isBookmarked) {
+          loadCases();
+        }
+      } catch (err) {
+        console.error('Failed to toggle bookmark:', err);
+      }
+    }
+
+    function toggleModalBookmark() {
+      if (!currentCase) return;
+      const btn = document.getElementById('modalBookmarkBtn');
+      toggleBookmark(currentCase.id, null);
+      // Immediately toggle visual state
+      const isNowBookmarked = !bookmarkedCaseIds.has(currentCase.id);
+      // Note: toggleBookmark will have already toggled the set by the time this runs
+      btn.classList.toggle('bookmarked', bookmarkedCaseIds.has(currentCase.id));
+      document.getElementById('modalBookmarkLabel').textContent =
+        bookmarkedCaseIds.has(currentCase.id) ? 'Bookmarked' : 'Bookmark';
+      // Update the corresponding card button
+      const card = document.querySelector(`.case-card[data-case-id="${currentCase.id}"] .bookmark-btn`);
+      if (card) {
+        card.classList.toggle('bookmarked', bookmarkedCaseIds.has(currentCase.id));
+      }
+    }
+
+    function updateModalBookmarkState(caseId) {
+      if (!currentCase || currentCase.id !== caseId) return;
+      const btn = document.getElementById('modalBookmarkBtn');
+      if (!btn) return;
+      const isBookmarked = bookmarkedCaseIds.has(caseId);
+      btn.classList.toggle('bookmarked', isBookmarked);
+      document.getElementById('modalBookmarkLabel').textContent =
+        isBookmarked ? 'Bookmarked' : 'Bookmark';
+    }
+
+    function toggleBookmarkFilter() {
+      bookmarkFilterActive = !bookmarkFilterActive;
+      const btn = document.getElementById('bookmarkFilterBtn');
+      btn.classList.toggle('active', bookmarkFilterActive);
+      loadCases();
     }
 
     async function loadFilters(prefix = '') {
@@ -2622,6 +3259,9 @@
         document.getElementById('dicomFileInput').onchange = handleDicomFiles;
         document.getElementById('dicomFolderInput').onchange = handleDicomFiles;
 
+        // Update modal bookmark state
+        updateModalBookmarkState(id);
+
         document.getElementById('caseModal').classList.add('active');
       } catch (err) {
         toast('Failed to load case', 'error');
@@ -2634,17 +3274,38 @@
       thumb.classList.add('active');
     }
 
+    function toggleVoiceNarration() {
+      const btn = document.getElementById('voiceNarrateBtn');
+      if (typeof voiceNarrator === 'undefined') return;
+
+      if (btn.classList.contains('active')) {
+        voiceNarrator.stop();
+        btn.classList.remove('active');
+      } else if (currentCase) {
+        btn.classList.add('active');
+        voiceNarrator.onEnd = () => btn.classList.remove('active');
+        voiceNarrator.onError = () => btn.classList.remove('active');
+        voiceNarrator.readCase(currentCase);
+      }
+    }
+
     function closeModal() {
       document.getElementById('caseModal').classList.remove('active');
       currentCase = null;
-      
+
+      // Stop voice narration
+      if (typeof voiceNarrator !== 'undefined') {
+        voiceNarrator.stop();
+        document.getElementById('voiceNarrateBtn').classList.remove('active');
+      }
+
       // Cleanup DICOM viewer
       if (dicomViewer) {
         dicomViewer.destroy();
         dicomViewer = null;
       }
       currentDicomSeries = [];
-      
+
       // Reset viewer tabs
       document.getElementById('viewerTabs').style.display = 'none';
       switchViewerTab('images');
@@ -3097,6 +3758,8 @@
       const imageUrl = `/uploads/${currentCase.images[0].filename}`;
       
       annotationCanvas = new AnnotationCanvas(container, imageUrl);
+      annotationCanvas.imageId = currentCase.images[0].id;
+      annotationCanvas.caseId = currentCase.id;
       annotationCanvas.onSave = async (annotations) => {
         try {
           await fetch(`/api/images/${currentCase.images[0].id}/annotations`, {
@@ -3192,6 +3855,268 @@
     // Periodically update SR stats
     setInterval(updateSRStats, 30000);
     setTimeout(updateSRStats, 1000);
+
+    // ============ Mobile Bottom Nav ============
+    document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
+      item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        showPage(page);
+        // Update both sidebar and bottom nav active states
+        document.querySelectorAll('.nav-item').forEach(i => {
+          i.classList.toggle('active', i.dataset.page === page);
+        });
+        document.querySelectorAll('.bottom-nav-item').forEach(i => {
+          i.classList.toggle('active', i.dataset.page === page);
+        });
+      });
+    });
+
+    // Sync bottom nav when sidebar nav is clicked
+    const origShowPage = showPage;
+    // Keep bottom nav in sync when showPage is called from sidebar
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        document.querySelectorAll('.bottom-nav-item').forEach(i => {
+          i.classList.toggle('active', i.dataset.page === page);
+        });
+      });
+    });
+
+    // ============ Touch Gesture Integration ============
+    // Integrate touch gestures with DICOM viewer when it's initialized
+    let touchGestureHandler = null;
+    const origInitDicom = initDicomViewer;
+    initDicomViewer = function() {
+      origInitDicom();
+      // Attach touch gestures after DICOM viewer initializes
+      if (dicomViewer && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+        if (touchGestureHandler) touchGestureHandler.destroy();
+        touchGestureHandler = integrateTouchGestures(dicomViewer);
+      }
+    };
+
+    // ============ Touch Gesture <-> Annotation Canvas Bridge ============
+    (function setupTouchAnnotationBridge() {
+      const annModal = document.getElementById('annotationModal');
+      if (!annModal) return;
+
+      let bridgeHandler = null;
+
+      const observer = new MutationObserver(() => {
+        if (annModal.classList.contains('active') && annotationCanvas) {
+          attachBridge();
+        } else {
+          detachBridge();
+        }
+      });
+      observer.observe(annModal, { attributes: true, attributeFilter: ['class'] });
+
+      function attachBridge() {
+        const ac = annotationCanvas;
+        if (!ac || !ac.canvas) return;
+        if (bridgeHandler) bridgeHandler.destroy();
+
+        bridgeHandler = new TouchGestureHandler(ac.canvas, {
+          onDrawStart: (x, y) => {
+            if (!annotationCanvas || !annotationCanvas.drawingEnabled) return;
+            const r = ac.canvas.getBoundingClientRect();
+            const sx = ac.canvas.width / r.width;
+            const sy = ac.canvas.height / r.height;
+            ac.isDrawing = true;
+            ac.startX = (x - r.left) * sx;
+            ac.startY = (y - r.top) * sy;
+            if (ac.currentTool === 'freehand') {
+              ac.currentPath = [{ x: ac.startX, y: ac.startY }];
+            } else if (ac.currentTool === 'highlighter') {
+              ac.currentPath = [{ x: ac.startX, y: ac.startY }];
+            }
+          },
+          onDrawMove: (x, y) => {
+            if (!annotationCanvas || !ac.isDrawing) return;
+            const r = ac.canvas.getBoundingClientRect();
+            const sx = ac.canvas.width / r.width;
+            const sy = ac.canvas.height / r.height;
+            const cx = (x - r.left) * sx;
+            const cy = (y - r.top) * sy;
+            if (ac.currentTool === 'freehand' && ac.currentPath) {
+              ac.currentPath.push({ x: cx, y: cy });
+            } else if (ac.currentTool === 'highlighter' && ac.currentPath) {
+              ac.currentPath.push({ x: cx, y: cy });
+            }
+            ac.redraw();
+            ac.drawPreview(cx, cy, {});
+          },
+          onDrawEnd: (path) => {
+            if (!annotationCanvas || !ac.isDrawing) return;
+            const r = ac.canvas.getBoundingClientRect();
+            const sx = ac.canvas.width / r.width;
+            const sy = ac.canvas.height / r.height;
+            const last = path[path.length - 1];
+            const cx = (last.x - r.left) * sx;
+            const cy = (last.y - r.top) * sy;
+            ac.isDrawing = false;
+            if ((ac.currentTool === 'freehand' || ac.currentTool === 'highlighter') && ac.currentPath) {
+              ac.addAnnotation({
+                type: ac.currentTool,
+                path: ac.currentPath,
+                color: ac.currentTool === 'highlighter' ? '#facc15' : ac.color,
+                lineWidth: ac.currentTool === 'highlighter' ? ac.lineWidth * 3 : ac.lineWidth
+              });
+              ac.currentPath = null;
+            } else if (ac.currentTool !== 'text') {
+              ac.addAnnotation({
+                type: ac.currentTool,
+                startX: ac.startX,
+                startY: ac.startY,
+                endX: cx, endY: cy,
+                color: ac.color,
+                lineWidth: ac.lineWidth
+              });
+            }
+          },
+          onGestureChange: (mode) => {
+            if (!annotationCanvas) return;
+            annotationCanvas.drawingEnabled = (mode === 'annotate');
+          }
+        });
+
+        // Start in annotate mode with drawing enabled
+        bridgeHandler.setMode('annotate');
+        ac.drawingEnabled = true;
+      }
+
+      function detachBridge() {
+        if (bridgeHandler) {
+          bridgeHandler.destroy();
+          bridgeHandler = null;
+        }
+      }
+    })();
+
+    // ============ Device-Specific UI Preferences ============
+    const PREFS_KEY = 'radcase-preferences';
+
+    const DEFAULT_PREFS = {
+      viewMode: 'grid',
+      fontSize: 'medium',
+      annotationColor: '#ff3b30',
+      theme: 'dark'
+    };
+
+    function loadPreferences() {
+      let prefs;
+      try {
+        const stored = localStorage.getItem(PREFS_KEY);
+        prefs = stored ? JSON.parse(stored) : { ...DEFAULT_PREFS };
+      } catch (e) {
+        prefs = { ...DEFAULT_PREFS };
+      }
+      applyPreferences(prefs);
+      return prefs;
+    }
+
+    function applyPreferences(prefs) {
+      // Apply font size
+      const html = document.documentElement;
+      html.classList.remove('font-small', 'font-medium', 'font-large');
+      html.classList.add('font-' + (prefs.fontSize || 'medium'));
+
+      // Apply view mode
+      const grid = document.getElementById('caseGrid');
+      if (grid) {
+        grid.classList.remove('view-list');
+        if (prefs.viewMode === 'list') {
+          grid.classList.add('view-list');
+        }
+      }
+
+      // Store annotation color globally for annotation tools
+      window.radcaseAnnotationColor = prefs.annotationColor || '#ff3b30';
+
+      // Apply theme data attribute (for future light theme support)
+      html.setAttribute('data-theme', prefs.theme || 'dark');
+
+      // Update modal controls to reflect current prefs
+      const viewSelect = document.getElementById('prefViewMode');
+      const fontSelect = document.getElementById('prefFontSize');
+      const themeSelect = document.getElementById('prefTheme');
+
+      if (viewSelect) viewSelect.value = prefs.viewMode || 'grid';
+      if (fontSelect) fontSelect.value = prefs.fontSize || 'medium';
+      if (themeSelect) themeSelect.value = prefs.theme || 'dark';
+
+      // Update color swatches
+      const swatches = document.querySelectorAll('.pref-color-swatch');
+      swatches.forEach(s => {
+        s.classList.toggle('selected', s.dataset.color === (prefs.annotationColor || '#ff3b30'));
+      });
+    }
+
+    function getPreferencesFromModal() {
+      const selectedSwatch = document.querySelector('.pref-color-swatch.selected');
+      return {
+        viewMode: document.getElementById('prefViewMode').value,
+        fontSize: document.getElementById('prefFontSize').value,
+        annotationColor: selectedSwatch ? selectedSwatch.dataset.color : '#ff3b30',
+        theme: document.getElementById('prefTheme').value
+      };
+    }
+
+    function savePreferences(prefs) {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+      applyPreferences(prefs);
+
+      // Sync via syncManager if available
+      if (window.syncManager && typeof window.syncManager.syncPreferences === 'function') {
+        window.syncManager.syncPreferences(prefs);
+      }
+    }
+
+    function savePreferencesAndClose() {
+      const prefs = getPreferencesFromModal();
+      savePreferences(prefs);
+      closePreferencesModal();
+      toast('Preferences saved', 'success');
+    }
+
+    function resetPreferences() {
+      savePreferences({ ...DEFAULT_PREFS });
+      toast('Preferences reset to defaults', 'info');
+    }
+
+    function openPreferencesModal() {
+      const prefs = loadPreferences();
+      applyPreferences(prefs); // ensure modal reflects current state
+      document.getElementById('preferencesOverlay').classList.add('active');
+    }
+
+    function closePreferencesModal() {
+      document.getElementById('preferencesOverlay').classList.remove('active');
+    }
+
+    // Close preferences on overlay click
+    document.getElementById('preferencesOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closePreferencesModal();
+    });
+
+    // Close preferences on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('preferencesOverlay').classList.contains('active')) {
+        closePreferencesModal();
+      }
+    });
+
+    // Color swatch selection
+    document.getElementById('prefColorSwatches').addEventListener('click', function(e) {
+      const swatch = e.target.closest('.pref-color-swatch');
+      if (!swatch) return;
+      this.querySelectorAll('.pref-color-swatch').forEach(s => s.classList.remove('selected'));
+      swatch.classList.add('selected');
+    });
+
+    // Load preferences on page load
+    loadPreferences();
   </script>
 </body>
 </html>

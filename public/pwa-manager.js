@@ -420,6 +420,166 @@ class PWAManager {
     localStorage.setItem('push-subscription', JSON.stringify(subscription.toJSON()));
   }
 
+  // ============ Offline Case Storage (IndexedDB) ============
+
+  async openOfflineDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('radcase-offline', 1);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        for (const name of ['pending-progress', 'pending-annotations', 'offline-cases']) {
+          if (!db.objectStoreNames.contains(name)) {
+            db.createObjectStore(name, { keyPath: 'id' });
+          }
+        }
+      };
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
+  }
+
+  async downloadCaseForOffline(caseId) {
+    try {
+      // Fetch case data with images
+      const res = await fetch(`/api/cases/${encodeURIComponent(caseId)}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch case');
+      const caseData = await res.json();
+
+      // Fetch and store thumbnail/image blobs
+      const imageBlobs = {};
+      if (caseData.images && caseData.images.length > 0) {
+        for (const img of caseData.images) {
+          try {
+            const imgRes = await fetch(`/thumbnails/${img.filename}`);
+            if (imgRes.ok) {
+              const blob = await imgRes.blob();
+              // Convert blob to base64 for IndexedDB storage
+              imageBlobs[img.filename] = await this.blobToBase64(blob);
+            }
+          } catch (e) {
+            console.warn(`Failed to cache image ${img.filename}:`, e);
+          }
+        }
+      }
+
+      // Store in IndexedDB
+      const db = await this.openOfflineDB();
+      const tx = db.transaction('offline-cases', 'readwrite');
+      const store = tx.objectStore('offline-cases');
+      store.put({
+        id: caseId,
+        data: caseData,
+        imageBlobs,
+        savedAt: Date.now()
+      });
+
+      await new Promise((resolve, reject) => {
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      });
+
+      // Update UI indicator
+      this.updateOfflineIndicator(caseId, true);
+      this.showToast('Case saved for offline viewing', 'success');
+      this.trackEvent('case_downloaded_offline', { caseId });
+    } catch (err) {
+      console.error('Failed to download case for offline:', err);
+      this.showToast('Failed to save case offline', 'error');
+      throw err;
+    }
+  }
+
+  async removeCaseFromOffline(caseId) {
+    try {
+      const db = await this.openOfflineDB();
+      const tx = db.transaction('offline-cases', 'readwrite');
+      tx.objectStore('offline-cases').delete(caseId);
+      await new Promise((resolve, reject) => {
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      });
+      this.updateOfflineIndicator(caseId, false);
+      this.showToast('Removed offline case', 'info');
+    } catch (err) {
+      console.error('Failed to remove offline case:', err);
+    }
+  }
+
+  async isOfflineAvailable(caseId) {
+    try {
+      const db = await this.openOfflineDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('offline-cases', 'readonly');
+        const request = tx.objectStore('offline-cases').get(caseId);
+        request.onsuccess = () => { db.close(); resolve(!!request.result); };
+        request.onerror = () => { db.close(); resolve(false); };
+      });
+    } catch {
+      return false;
+    }
+  }
+
+  async getOfflineCaseIds() {
+    try {
+      const db = await this.openOfflineDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('offline-cases', 'readonly');
+        const request = tx.objectStore('offline-cases').getAllKeys();
+        request.onsuccess = () => { db.close(); resolve(request.result || []); };
+        request.onerror = () => { db.close(); resolve([]); };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  updateOfflineIndicator(caseId, available) {
+    const card = document.querySelector(`.case-card[data-case-id="${caseId}"]`);
+    if (!card) return;
+
+    let badge = card.querySelector('.offline-badge');
+    const btn = card.querySelector('.offline-download-btn');
+
+    if (available) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'offline-badge';
+        badge.title = 'Available offline';
+        badge.textContent = '\u2713';
+        card.appendChild(badge);
+      }
+      if (btn) {
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
+        btn.title = 'Remove offline copy';
+      }
+    } else {
+      if (badge) badge.remove();
+      if (btn) {
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>';
+        btn.title = 'Save for offline';
+      }
+    }
+  }
+
+  async toggleOfflineCase(caseId, event) {
+    if (event) event.stopPropagation();
+    const available = await this.isOfflineAvailable(caseId);
+    if (available) {
+      await this.removeCaseFromOffline(caseId);
+    } else {
+      await this.downloadCaseForOffline(caseId);
+    }
+  }
+
+  blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
   // Offline functionality
   setupOfflineHandling() {
     // Listen for online/offline events

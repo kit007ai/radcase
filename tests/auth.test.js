@@ -1,29 +1,29 @@
 // Authentication endpoint tests
 const request = require('supertest');
-const { cleanupTestFiles, setupTestDirs, TEST_USERS } = require('./setup');
+const crypto = require('crypto');
+const { TEST_USERS, registerUser } = require('./setup');
 
 // Import app after setting up environment
 const app = require('../server');
 
 describe('Authentication Endpoints', () => {
-  beforeAll(() => {
-    cleanupTestFiles();
-    setupTestDirs();
-  });
-
-  afterAll(() => {
-    cleanupTestFiles();
-  });
-
   describe('POST /api/auth/register', () => {
     test('should register a new user successfully', async () => {
+      // Use a unique username to guarantee fresh registration
+      const uniqueUser = {
+        username: `newuser_${crypto.randomBytes(4).toString('hex')}`,
+        email: `new_${crypto.randomBytes(4).toString('hex')}@example.com`,
+        password: 'testpass123',
+        displayName: 'New User'
+      };
+
       const response = await request(app)
         .post('/api/auth/register')
-        .send(TEST_USERS.resident);
+        .send(uniqueUser);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.user.username).toBe(TEST_USERS.resident.username);
+      expect(response.body.user.username).toBe(uniqueUser.username.toLowerCase());
       expect(response.headers['set-cookie']).toBeDefined();
     });
 
@@ -43,7 +43,7 @@ describe('Authentication Endpoints', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'testuser3',
+          username: `testuser3_${crypto.randomBytes(4).toString('hex')}`,
           password: '123'
         });
 
@@ -52,11 +52,13 @@ describe('Authentication Endpoints', () => {
     });
 
     test('should reject duplicate username', async () => {
+      const uniqueName = `dup_${crypto.randomBytes(4).toString('hex')}`;
+
       // First registration
       await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'duplicate',
+          username: uniqueName,
           password: 'password123'
         });
 
@@ -64,7 +66,7 @@ describe('Authentication Endpoints', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'duplicate',
+          username: uniqueName,
           password: 'password456'
         });
 
@@ -74,24 +76,31 @@ describe('Authentication Endpoints', () => {
   });
 
   describe('POST /api/auth/login', () => {
-    beforeEach(async () => {
-      // Register a test user
+    let loginUser;
+
+    beforeAll(async () => {
+      // Register a unique user for login tests
+      loginUser = {
+        username: `login_${crypto.randomBytes(4).toString('hex')}`,
+        password: 'loginpass123',
+        displayName: 'Login Test User'
+      };
       await request(app)
         .post('/api/auth/register')
-        .send(TEST_USERS.admin);
+        .send(loginUser);
     });
 
     test('should login successfully with valid credentials', async () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({
-          username: TEST_USERS.admin.username,
-          password: TEST_USERS.admin.password
+          username: loginUser.username,
+          password: loginUser.password
         });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.user.username).toBe(TEST_USERS.admin.username);
+      expect(response.body.user.username).toBe(loginUser.username.toLowerCase());
       expect(response.headers['set-cookie']).toBeDefined();
     });
 
@@ -99,7 +108,7 @@ describe('Authentication Endpoints', () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({
-          username: TEST_USERS.admin.username,
+          username: loginUser.username,
           password: 'wrongpassword'
         });
 
@@ -132,13 +141,8 @@ describe('Authentication Endpoints', () => {
   describe('GET /api/auth/me', () => {
     let userCookie;
 
-    beforeEach(async () => {
-      // Register and login to get auth cookie
-      const registerRes = await request(app)
-        .post('/api/auth/register')
-        .send(TEST_USERS.resident);
-      
-      userCookie = registerRes.headers['set-cookie'];
+    beforeAll(async () => {
+      userCookie = await registerUser(app, TEST_USERS.resident);
     });
 
     test('should return user info when authenticated', async () => {
@@ -148,7 +152,7 @@ describe('Authentication Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.user).toBeDefined();
-      expect(response.body.user.username).toBe(TEST_USERS.resident.username);
+      expect(response.body.user.username).toBe(TEST_USERS.resident.username.toLowerCase());
     });
 
     test('should return null user when not authenticated', async () => {

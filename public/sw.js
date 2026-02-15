@@ -1,26 +1,29 @@
 // RadCase Service Worker - PWA Offline Functionality
 // Version 1.0.0 - Sprint 2 Advanced Mobile UX
 
-const CACHE_NAME = 'radcase-v1.0.0';
-const STATIC_CACHE = 'radcase-static-v1';
-const API_CACHE = 'radcase-api-v1';
-const DICOM_CACHE = 'radcase-dicom-v1';
+const CACHE_NAME = 'radcase-v2.0.0';
+const STATIC_CACHE = 'radcase-static-v2';
+const API_CACHE = 'radcase-api-v2';
+const DICOM_CACHE = 'radcase-dicom-v2';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/mobile.css',
   '/annotate.js',
   '/dicom-viewer.js',
   '/presentation.js',
   '/spaced-repetition.js',
-  '/ai-tutor.js',
-  // Add touch gesture files when created by Claude Code
   '/touch-gestures.js',
-  '/mobile-dicom-controls.js',
-  '/annotation-engine.js',
-  '/pwa-manager.js'
+  '/swipe-quiz.js',
+  '/pwa-manager.js',
+  '/micro-learning.js',
+  '/performance-optimizer.js',
+  '/sync-manager.js',
+  '/voice-narrator.js',
+  '/ai-tutor.js'
 ];
 
 // Install event - cache static resources
@@ -31,7 +34,7 @@ self.addEventListener('install', (event) => {
     caches.open(STATIC_CACHE)
       .then((cache) => {
         console.log('RadCase SW: Caching static files');
-        return cache.addAll(STATIC_FILES.filter(file => file !== '/touch-gestures.js' && file !== '/mobile-dicom-controls.js' && file !== '/annotation-engine.js' && file !== '/pwa-manager.js'));
+        return cache.addAll(STATIC_FILES);
       })
       .then(() => {
         // Force activation of new service worker
@@ -78,6 +81,47 @@ self.addEventListener('fetch', (event) => {
 
   // API requests - network first with cache fallback
   if (url.pathname.startsWith('/api/')) {
+    // Intercept /api/cases/:id - serve from IndexedDB if offline
+    const caseMatch = url.pathname.match(/^\/api\/cases\/([^/]+)$/);
+    if (caseMatch) {
+      event.respondWith(
+        fetch(request)
+          .then(response => {
+            if (response.ok) {
+              const clone = response.clone();
+              caches.open(API_CACHE).then(cache => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(async () => {
+            // Try API cache first
+            const cache = await caches.open(API_CACHE);
+            const cached = await cache.match(request);
+            if (cached) return cached;
+
+            // Fall back to IndexedDB offline-cases store
+            const caseId = decodeURIComponent(caseMatch[1]);
+            try {
+              const offlineCase = await getStoredCaseById(caseId);
+              if (offlineCase) {
+                return new Response(JSON.stringify(offlineCase.data), {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' }
+                });
+              }
+            } catch (e) {
+              console.error('RadCase SW: IndexedDB lookup failed:', e);
+            }
+
+            return new Response(JSON.stringify({ error: 'Offline - case not available' }), {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          })
+      );
+      return;
+    }
+
     event.respondWith(networkFirstStrategy(request, API_CACHE));
     return;
   }
@@ -85,6 +129,31 @@ self.addEventListener('fetch', (event) => {
   // DICOM files - cache first (large files, rarely change)
   if (url.pathname.includes('/dicom/') || url.pathname.includes('.dcm')) {
     event.respondWith(cacheFirstStrategy(request, DICOM_CACHE));
+    return;
+  }
+
+  // Navigation requests (SPA routes) - network first, offline fallback to cached index.html
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // Cache successful navigation responses
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          // Offline: serve cached index.html as fallback for all navigation
+          const cache = await caches.open(STATIC_CACHE);
+          const cached = await cache.match('/index.html');
+          return cached || new Response('Offline - RadCase', {
+            status: 503,
+            headers: { 'Content-Type': 'text/html' }
+          });
+        })
+    );
     return;
   }
 
@@ -279,15 +348,79 @@ async function syncAnnotations() {
   }
 }
 
-// Helper functions for IndexedDB (to be implemented)
-async function getStoredData(store) {
-  // TODO: Implement IndexedDB read
-  return [];
+// IndexedDB helpers for offline data persistence
+const DB_NAME = 'radcase-offline';
+const DB_VERSION = 1;
+const STORE_NAMES = ['pending-progress', 'pending-annotations', 'offline-cases'];
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      for (const name of STORE_NAMES) {
+        if (!db.objectStoreNames.contains(name)) {
+          db.createObjectStore(name, { keyPath: 'id' });
+        }
+      }
+    };
+
+    request.onsuccess = (event) => resolve(event.target.result);
+    request.onerror = (event) => reject(event.target.error);
+  });
 }
 
-async function removeStoredData(store, id) {
-  // TODO: Implement IndexedDB delete
-  return true;
+async function getStoredData(storeName) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const request = store.getAll();
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+
+async function removeStoredData(storeName, key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const request = store.delete(key);
+
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => reject(request.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+
+async function storeData(storeName, data) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const request = store.put(data);
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+
+async function getStoredCaseById(caseId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('offline-cases', 'readonly');
+    const store = tx.objectStore('offline-cases');
+    const request = store.get(caseId);
+
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+    tx.oncomplete = () => db.close();
+  });
 }
 
 console.log('RadCase SW: Service worker loaded');
