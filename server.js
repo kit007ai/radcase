@@ -2428,7 +2428,7 @@ function setupWebSocket(server) {
         return;
       }
 
-      const validTypes = ['sync:progress', 'sync:bookmarks', 'sync:annotations', 'sync:preferences'];
+      const validTypes = ['sync:progress', 'sync:bookmarks', 'sync:annotations', 'sync:preferences', 'sync:session'];
       if (!validTypes.includes(msg.type)) return;
 
       // Store sync event

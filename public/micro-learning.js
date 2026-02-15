@@ -9,12 +9,22 @@ class MicroLearningSession {
     this.completedSessions = this.loadCompletedSessions();
     this.preferences = this.loadPreferences();
     this.contextData = this.getContextData();
+
+    // Listen for session sync events from other devices
+    this.setupSyncListener();
   }
 
   // Start a new micro-learning session
   async startSession(specialty = null, difficulty = null) {
+    // Check for a resumable session from this or another device
+    const resumable = this.checkForResumableSession();
+    if (resumable && !this.currentSession) {
+      this.showResumePrompt(resumable);
+      return;
+    }
+
     const sessionId = this.generateSessionId();
-    
+
     this.currentSession = {
       id: sessionId,
       specialty: specialty || this.preferences.preferredSpecialty,
@@ -40,6 +50,9 @@ class MicroLearningSession {
 
     // Initialize mobile-optimized UI
     this.renderMobileSession();
+
+    // Persist session state for cross-device resumption
+    this.persistActiveSession();
 
     return this.currentSession;
   }
@@ -216,22 +229,24 @@ class MicroLearningSession {
   // Case navigation
   nextCase() {
     if (!this.currentSession) return;
-    
+
     const currentIndex = this.currentSession.currentCaseIndex || 0;
     if (currentIndex < this.currentSession.cases.length - 1) {
       this.currentSession.currentCaseIndex = currentIndex + 1;
       this.renderCurrentCase();
       this.trackProgress('case_viewed');
+      this.persistActiveSession();
     }
   }
 
   previousCase() {
     if (!this.currentSession) return;
-    
+
     const currentIndex = this.currentSession.currentCaseIndex || 0;
     if (currentIndex > 0) {
       this.currentSession.currentCaseIndex = currentIndex - 1;
       this.renderCurrentCase();
+      this.persistActiveSession();
     }
   }
 
@@ -347,6 +362,9 @@ class MicroLearningSession {
 
     if (!this.currentSession) return;
 
+    // Clear persisted active session (it's now complete)
+    this.clearPersistedSession();
+
     // Calculate session statistics
     const sessionStats = this.calculateSessionStats();
     
@@ -429,6 +447,116 @@ class MicroLearningSession {
       clearInterval(this.sessionTimer);
       this.sessionTimer = null;
     }
+    this.persistActiveSession();
+  }
+
+  // ============ Cross-Device Session Resumption ============
+
+  persistActiveSession() {
+    if (!this.currentSession) {
+      localStorage.removeItem('radcase_active_session');
+      return;
+    }
+    const state = {
+      session: this.currentSession,
+      sessionStartTime: this.sessionStartTime,
+      savedAt: Date.now()
+    };
+    localStorage.setItem('radcase_active_session', JSON.stringify(state));
+
+    // Sync to other devices via SyncManager
+    if (window.syncManager && typeof window.syncManager.send === 'function') {
+      window.syncManager.send('sync:session', state);
+    }
+  }
+
+  clearPersistedSession() {
+    localStorage.removeItem('radcase_active_session');
+    if (window.syncManager && typeof window.syncManager.send === 'function') {
+      window.syncManager.send('sync:session', { session: null });
+    }
+  }
+
+  checkForResumableSession() {
+    try {
+      const saved = localStorage.getItem('radcase_active_session');
+      if (!saved) return null;
+      const state = JSON.parse(saved);
+
+      // Only resume if session is less than 30 minutes old
+      if (!state.session || !state.savedAt) return null;
+      if (Date.now() - state.savedAt > 30 * 60 * 1000) {
+        localStorage.removeItem('radcase_active_session');
+        return null;
+      }
+
+      // Check remaining time
+      const elapsed = state.savedAt - state.sessionStartTime;
+      const remaining = this.sessionDuration - elapsed;
+      if (remaining <= 0) {
+        localStorage.removeItem('radcase_active_session');
+        return null;
+      }
+
+      return state;
+    } catch {
+      return null;
+    }
+  }
+
+  async resumeSession(state) {
+    this.currentSession = state.session;
+    // Adjust session start so the remaining time is accurate
+    const elapsed = state.savedAt - state.sessionStartTime;
+    this.sessionStartTime = Date.now() - elapsed;
+
+    this.renderMobileSession();
+    this.startSessionTimer();
+  }
+
+  showResumePrompt(state) {
+    const container = this.createContainer();
+    const session = state.session;
+    const elapsed = state.savedAt - state.sessionStartTime;
+    const remainingSec = Math.max(0, Math.floor((this.sessionDuration - elapsed) / 1000));
+    const mins = Math.floor(remainingSec / 60);
+    const secs = remainingSec % 60;
+
+    container.innerHTML = `
+      <div class="micro-session-wrapper" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:32px;">
+        <h2 style="color:#818cf8;margin-bottom:8px;">Resume Session?</h2>
+        <p style="color:#a1a1aa;margin-bottom:8px;">${session.specialty || 'General'} &middot; ${session.progress.casesViewed} cases viewed</p>
+        <p style="color:#71717a;margin-bottom:24px;">${mins}:${secs.toString().padStart(2, '0')} remaining</p>
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-primary" id="resumeSessionBtn">Resume</button>
+          <button class="btn btn-secondary" id="newSessionBtn">New Session</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('resumeSessionBtn').addEventListener('click', () => {
+      container.innerHTML = '';
+      this.resumeSession(state);
+    });
+
+    document.getElementById('newSessionBtn').addEventListener('click', () => {
+      this.clearPersistedSession();
+      container.remove();
+      this.startSession();
+    });
+  }
+
+  setupSyncListener() {
+    if (!window.syncManager) return;
+    window.syncManager.on('sync:session', (payload) => {
+      if (!payload) return;
+      // Another device sent a session update
+      if (payload.session) {
+        localStorage.setItem('radcase_active_session', JSON.stringify(payload));
+      } else {
+        localStorage.removeItem('radcase_active_session');
+      }
+    });
   }
 
   showCompletionScreen(sessionStats) {
