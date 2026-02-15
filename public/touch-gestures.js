@@ -586,6 +586,33 @@ function integrateTouchGestures(dicomViewerInstance) {
   return handler;
 }
 
+// Wire a TouchGestureHandler to an AnnotationCanvas so modes don't conflict.
+// When the touch toolbar is in 'annotate' mode, the annotation canvas receives
+// drawing events. In all other modes, annotation drawing is disabled and
+// gestures (zoom, pan, window/level) are handled by the touch handler.
+function integrateAnnotationCanvas(touchHandler, annotationCanvas) {
+  if (!touchHandler || !annotationCanvas) return;
+
+  // Listen for mode changes on the touch handler
+  const origOnGestureChange = touchHandler.onGestureChange;
+  touchHandler.onGestureChange = (mode) => {
+    annotationCanvas.drawingEnabled = (mode === 'annotate');
+
+    // When entering annotate mode, show the annotation toolbar
+    const toolbar = annotationCanvas.toolbar;
+    if (toolbar) {
+      toolbar.style.display = (mode === 'annotate') ? '' : 'none';
+    }
+
+    // Chain the original callback
+    if (origOnGestureChange) origOnGestureChange(mode);
+  };
+
+  // Set initial state based on current mode
+  annotationCanvas.drawingEnabled = (touchHandler.currentMode === 'annotate');
+}
+
 // Export
 window.TouchGestureHandler = TouchGestureHandler;
 window.integrateTouchGestures = integrateTouchGestures;
+window.integrateAnnotationCanvas = integrateAnnotationCanvas;
