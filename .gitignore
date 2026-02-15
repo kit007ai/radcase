@@ -6,3 +6,4 @@ uploads/
 thumbnails/
 .env
 .github/workflows/
+dist/
