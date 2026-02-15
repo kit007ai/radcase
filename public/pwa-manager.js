@@ -354,9 +354,14 @@ class PWAManager {
       
       if (!subscription) {
         // Create new subscription
+        const vapidKey = await this.getVapidPublicKey();
+        if (!vapidKey) {
+          console.warn('No VAPID key available, skipping push subscription');
+          return;
+        }
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: this.urlBase64ToUint8Array(this.getVapidPublicKey())
+          applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
         });
       }
       
@@ -371,10 +376,23 @@ class PWAManager {
     }
   }
 
-  getVapidPublicKey() {
-    // This should be your VAPID public key
-    // For demo purposes, using a placeholder
-    return 'BEl62iUYgUivxIkv69yViEuiBIa40HI6YUKBxaE2X-NjSUR-d2GZVnl3Ga8RGC6V3Ye_6HZ_sNaNVYLxW2hE2dA';
+  async getVapidPublicKey() {
+    // Fetch the VAPID public key from the server so it matches the server's key pair
+    if (this._vapidKey) return this._vapidKey;
+    try {
+      const res = await fetch('/api/push/vapid-key');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.publicKey) {
+          this._vapidKey = data.publicKey;
+          return data.publicKey;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch VAPID key from server:', e);
+    }
+    // Fallback: won't work for push but avoids breaking the flow
+    return '';
   }
 
   urlBase64ToUint8Array(base64String) {
