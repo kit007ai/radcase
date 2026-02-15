@@ -250,7 +250,8 @@
   }
 
   .main {
-    padding: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   /* Touch-friendly nav items */
@@ -270,7 +271,8 @@
 /* Mobile breakpoint */
 @media (max-width: 480px) {
   .main {
-    padding: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
   .page-header h2 {

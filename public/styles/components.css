@@ -682,6 +682,14 @@
   box-sizing: border-box;
 }
 
+/* Mobile/Tablet: ensure main content clears the fixed bottom nav */
+@media (max-width: 1024px) {
+  .main {
+    padding-top: 68px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0));
+  }
+}
+
 /* Mobile: 2-column grid for filters, prevent overflow */
 @media (max-width: 768px) {
   .search-bar {
