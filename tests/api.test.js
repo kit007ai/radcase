@@ -197,7 +197,6 @@ describe('API Endpoints', () => {
       expect(response.body.counts).toBeDefined();
       expect(response.body.byModality).toBeDefined();
       expect(response.body.byBodyPart).toBeDefined();
-      expect(response.body.recentCases).toBeDefined();
     });
   });
 

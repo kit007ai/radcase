@@ -95,10 +95,19 @@ module.exports = function(db) {
     const { case_id, correct, time_spent_ms } = req.body;
     const userId = req.user?.id || null;
 
+    if (!case_id) {
+      return res.status(400).json({ error: 'case_id is required' });
+    }
+
+    const caseExists = db.prepare('SELECT id FROM cases WHERE id = ?').get(case_id);
+    if (!caseExists) {
+      return res.status(404).json({ error: 'Case not found' });
+    }
+
     db.prepare(`
       INSERT INTO quiz_attempts (case_id, correct, time_spent_ms, user_id)
       VALUES (?, ?, ?, ?)
-    `).run(case_id, correct ? 1 : 0, time_spent_ms, userId);
+    `).run(case_id, correct ? 1 : 0, time_spent_ms || 0, userId);
 
     // Update spaced repetition progress if user is logged in
     if (userId) {
@@ -131,7 +140,7 @@ module.exports = function(db) {
         AVG(qa.time_spent_ms) as avg_time_ms
       FROM quiz_attempts qa
       JOIN cases c ON qa.case_id = c.id
-      ${userFilter ? userFilter.replace('WHERE', userFilter.includes('JOIN') ? 'AND' : 'WHERE') : ''}
+      ${userId ? 'WHERE qa.user_id = ?' : ''}
       GROUP BY c.difficulty
       ORDER BY c.difficulty
     `).all(...userParams);

@@ -2,25 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { SidebarNav, BottomNav } from './Navbar';
+import useIsMobile from '../hooks/useIsMobile';
 
 const SIDEBAR_WIDTH = '260px';
-const MOBILE_BREAKPOINT = 768;
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
-  );
-
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const handler = (e) => setIsMobile(e.matches);
-    mq.addEventListener('change', handler);
-    setIsMobile(mq.matches);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  return isMobile;
-}
+// Hamburger bar base style
+const hamburgerBar = {
+  display: 'block',
+  width: '20px',
+  height: '2px',
+  borderRadius: '1px',
+  transition: 'transform 250ms ease, opacity 250ms ease',
+};
 
 export default function Layout({ children }) {
   const theme = useTheme();
@@ -42,6 +35,9 @@ export default function Layout({ children }) {
       background: theme.colors.bgPrimary,
       fontFamily: theme.typography.fontFamily,
       color: theme.colors.textPrimary,
+      width: '100%',
+      maxWidth: '100vw',
+      overflowX: 'hidden',
     }}>
       {/* Mobile header */}
       {isMobile && (
@@ -54,29 +50,46 @@ export default function Layout({ children }) {
           display: 'flex',
           alignItems: 'center',
           padding: `0 ${theme.spacing.md}`,
-          background: theme.colors.bgSecondary,
+          background: `linear-gradient(180deg, ${theme.colors.bgSecondary} 0%, ${theme.colors.bgPrimary} 100%)`,
           borderBottom: `1px solid ${theme.colors.border}`,
           zIndex: 999,
           gap: theme.spacing.sm,
         }}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle menu"
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
             style={{
               background: 'none',
               border: 'none',
               color: theme.colors.textPrimary,
-              fontSize: '24px',
               cursor: 'pointer',
               padding: theme.spacing.xs,
               minWidth: '44px',
               minHeight: '44px',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              gap: '5px',
             }}
           >
-            &#x2630;
+            {/* Animated hamburger to X */}
+            <span style={{
+              ...hamburgerBar,
+              backgroundColor: sidebarOpen ? theme.colors.accent : theme.colors.textPrimary,
+              transform: sidebarOpen ? 'translateY(7px) rotate(45deg)' : 'none',
+            }} />
+            <span style={{
+              ...hamburgerBar,
+              backgroundColor: sidebarOpen ? theme.colors.accent : theme.colors.textPrimary,
+              opacity: sidebarOpen ? 0 : 1,
+              transform: sidebarOpen ? 'scaleX(0)' : 'scaleX(1)',
+            }} />
+            <span style={{
+              ...hamburgerBar,
+              backgroundColor: sidebarOpen ? theme.colors.accent : theme.colors.textPrimary,
+              transform: sidebarOpen ? 'translateY(-7px) rotate(-45deg)' : 'none',
+            }} />
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
             <span style={{ fontSize: '20px' }}>&#x1F3E5;</span>
@@ -95,7 +108,7 @@ export default function Layout({ children }) {
       )}
 
       {/* Overlay (mobile) */}
-      {isMobile && sidebarOpen && (
+      {isMobile && (
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions
         <div
           onClick={closeSidebar}
@@ -104,7 +117,12 @@ export default function Layout({ children }) {
             position: 'fixed',
             inset: 0,
             background: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             zIndex: 1000,
+            opacity: sidebarOpen ? 1 : 0,
+            pointerEvents: sidebarOpen ? 'auto' : 'none',
+            transition: 'opacity 250ms ease',
           }}
         />
       )}
@@ -121,13 +139,14 @@ export default function Layout({ children }) {
           width: SIDEBAR_WIDTH,
           background: theme.colors.bgSecondary,
           borderRight: `1px solid ${theme.colors.border}`,
-          display: 'flex',
+          display: isMobile && !sidebarOpen ? 'flex' : 'flex',
           flexDirection: 'column',
           zIndex: 1001,
           transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
-          transition: `transform ${theme.transitions.normal}`,
+          transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
           overflowY: 'auto',
           flexShrink: 0,
+          visibility: isMobile && !sidebarOpen ? 'hidden' : 'visible',
         }}
       >
         {/* Logo */}

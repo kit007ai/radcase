@@ -40,7 +40,7 @@ function CaseLibraryPage() {
           caseId={selectedCaseId}
           caseIds={caseIds}
           onClose={handleCloseDetail}
-          onNavigate={handleNavigateCase}
+          onNavigateCase={handleNavigateCase}
         />
       )}
     </>
@@ -52,9 +52,9 @@ function CaseDetailPage() {
   const navigate = useNavigate();
   return (
     <CaseDetail
-      caseId={Number(id)}
+      caseId={id}
       onClose={() => navigate('/')}
-      onNavigate={(newId) => navigate(`/case/${newId}`)}
+      onNavigateCase={(newId) => navigate(`/case/${newId}`)}
     />
   );
 }

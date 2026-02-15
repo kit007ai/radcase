@@ -3,13 +3,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { requireAuth } = require('../middleware/auth');
+const { createRateLimiter } = require('../middleware/rate-limit');
 const JWT_SECRET = require('../lib/jwt-secret');
 
 const router = express.Router();
 
+const authRateLimit = createRateLimiter({ maxRequests: 10, windowMs: 60 * 1000 });
+
 module.exports = function(db) {
   // Register new user
-  router.post('/register', async (req, res) => {
+  router.post('/register', authRateLimit, async (req, res) => {
     const { username, email, password, displayName } = req.body;
 
     if (!username || !password) {
@@ -59,7 +62,7 @@ module.exports = function(db) {
   });
 
   // Login
-  router.post('/login', async (req, res) => {
+  router.post('/login', authRateLimit, async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {

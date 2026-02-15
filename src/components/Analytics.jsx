@@ -1,20 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import theme from '../theme';
 import useApi from '../hooks/useApi';
+import useIsMobile from '../hooks/useIsMobile';
 
-const styles = {
+const analyticsCSS = `
+@keyframes analyticsBarGrow {
+  from { width: 0%; }
+}
+@keyframes analyticsFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+`;
+
+const getStyles = (mobile) => ({
   container: {
     minHeight: '100vh',
     background: theme.colors.bgPrimary,
     color: theme.colors.textPrimary,
     fontFamily: theme.typography.fontFamily,
-    padding: theme.spacing.lg,
+    padding: mobile ? theme.spacing.md : theme.spacing.lg,
   },
   pageHeader: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: mobile ? theme.spacing.md : theme.spacing.xl,
   },
   title: {
-    fontSize: theme.typography.sizes['3xl'],
+    fontSize: mobile ? theme.typography.sizes['2xl'] : theme.typography.sizes['3xl'],
     fontWeight: theme.typography.fontWeights.bold,
     color: theme.colors.textPrimary,
     margin: 0,
@@ -26,8 +37,8 @@ const styles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: theme.spacing.lg,
+    gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: mobile ? theme.spacing.md : theme.spacing.lg,
   },
   card: {
     background: theme.colors.glassBg,
@@ -35,7 +46,7 @@ const styles = {
     WebkitBackdropFilter: theme.colors.glassBackdrop,
     border: `1px solid ${theme.colors.glassBorder}`,
     borderRadius: theme.radii.lg,
-    padding: theme.spacing.lg,
+    padding: mobile ? theme.spacing.md : theme.spacing.lg,
     overflow: 'hidden',
     transition: `box-shadow ${theme.transitions.normal}`,
   },
@@ -80,8 +91,8 @@ const styles = {
     marginBottom: theme.spacing.sm,
   },
   barLabel: {
-    minWidth: '80px',
-    fontSize: theme.typography.sizes.sm,
+    minWidth: mobile ? '60px' : '80px',
+    fontSize: mobile ? theme.typography.sizes.xs : theme.typography.sizes.sm,
     color: theme.colors.textSecondary,
     textAlign: 'right',
     flexShrink: 0,
@@ -137,8 +148,8 @@ const styles = {
   // Summary stats (top row)
   summaryGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-    gap: theme.spacing.md,
+    gridTemplateColumns: mobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(140px, 1fr))',
+    gap: mobile ? theme.spacing.sm : theme.spacing.md,
     marginBottom: theme.spacing.lg,
   },
   summaryCard: {
@@ -147,6 +158,7 @@ const styles = {
     borderRadius: theme.radii.lg,
     padding: theme.spacing.md,
     textAlign: 'center',
+    animation: 'analyticsFadeIn 400ms ease-out backwards',
   },
   summaryValue: {
     fontSize: theme.typography.sizes['2xl'],
@@ -159,16 +171,27 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
   },
-};
+});
 
 export default function Analytics() {
   const api = useApi();
+  const mobile = useIsMobile();
+  const styles = getStyles(mobile);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [quizData, setQuizData] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     loadAnalytics();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Trigger bar animation after data loads
+  useEffect(() => {
+    if (analyticsData || quizData) {
+      const timer = setTimeout(() => setMounted(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [analyticsData, quizData]);
 
   async function loadAnalytics() {
     try {
@@ -204,8 +227,12 @@ export default function Analytics() {
   const maxModality = Math.max(1, ...byModality.map((m) => m.count));
   const maxBodyPart = Math.max(1, ...byBodyPart.map((b) => b.count));
 
+  // Calculate streak (consecutive correct answers from recent data)
+  const streak = quizData?.streak || 0;
+
   return (
     <div style={styles.container}>
+      <style>{analyticsCSS}</style>
       <div style={styles.pageHeader}>
         <h2 style={styles.title}>Analytics</h2>
         <p style={styles.subtitle}>Track your learning progress</p>
@@ -213,31 +240,61 @@ export default function Analytics() {
 
       {/* Summary stats */}
       <div style={styles.summaryGrid}>
-        <div style={styles.summaryCard}>
+        <div style={{ ...styles.summaryCard, borderTop: `3px solid ${theme.colors.accent}`, animationDelay: '0ms' }}>
           <div style={{ ...styles.summaryValue, color: theme.colors.accent }}>
             {totalAttempts}
           </div>
           <div style={styles.summaryLabel}>Total Attempts</div>
         </div>
-        <div style={styles.summaryCard}>
+        <div style={{ ...styles.summaryCard, borderTop: `3px solid ${theme.colors.success}`, animationDelay: '80ms' }}>
           <div style={{ ...styles.summaryValue, color: theme.colors.success }}>
             {correctCount}
           </div>
           <div style={styles.summaryLabel}>Correct</div>
         </div>
-        <div style={styles.summaryCard}>
+        <div style={{ ...styles.summaryCard, borderTop: `3px solid ${theme.colors.warning}`, animationDelay: '160ms' }}>
           <div style={{ ...styles.summaryValue, color: theme.colors.warning }}>
             {accuracy}
           </div>
           <div style={styles.summaryLabel}>Accuracy</div>
         </div>
-        <div style={styles.summaryCard}>
+        <div style={{ ...styles.summaryCard, borderTop: `3px solid ${theme.colors.info}`, animationDelay: '240ms' }}>
           <div style={{ ...styles.summaryValue, color: theme.colors.info }}>
             {avgTime}
           </div>
           <div style={styles.summaryLabel}>Avg Time</div>
         </div>
       </div>
+
+      {/* Streak visualization */}
+      {streak > 0 && (
+        <div style={{
+          ...styles.summaryCard,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: theme.spacing.md,
+          marginBottom: theme.spacing.lg,
+          borderLeft: `3px solid ${theme.colors.warning}`,
+        }}>
+          <div style={{ fontSize: '1.5rem' }}>&#x1F525;</div>
+          <div>
+            <div style={{ ...styles.summaryValue, color: theme.colors.warning }}>{streak}</div>
+            <div style={styles.summaryLabel}>Current Streak</div>
+          </div>
+          <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+            {Array.from({ length: Math.min(streak, 10) }, (_, i) => (
+              <div key={i} style={{
+                width: '8px',
+                height: `${12 + i * 2}px`,
+                borderRadius: '2px',
+                background: `linear-gradient(to top, ${theme.colors.warning}, ${theme.colors.error})`,
+                opacity: 0.5 + (i / 10) * 0.5,
+              }} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Detail cards */}
       <div style={styles.grid}>
@@ -267,14 +324,15 @@ export default function Analytics() {
           <h3 style={styles.cardTitle}>Cases by Modality</h3>
           {byModality.length > 0 ? (
             <div style={styles.barContainer}>
-              {byModality.map((m) => (
+              {byModality.map((m, idx) => (
                 <div key={m.modality} style={styles.barRow}>
                   <span style={styles.barLabel}>{m.modality}</span>
                   <div style={styles.barTrack}>
                     <div
                       style={{
                         ...styles.barFill,
-                        width: `${(m.count / maxModality) * 100}%`,
+                        width: mounted ? `${(m.count / maxModality) * 100}%` : '0%',
+                        transition: `width 600ms ${idx * 100}ms ease-out`,
                       }}
                     >
                       <span style={styles.barCount}>{m.count}</span>
@@ -293,14 +351,15 @@ export default function Analytics() {
           <h3 style={styles.cardTitle}>Cases by Body Part</h3>
           {byBodyPart.length > 0 ? (
             <div style={styles.barContainer}>
-              {byBodyPart.map((b) => (
+              {byBodyPart.map((b, idx) => (
                 <div key={b.body_part} style={styles.barRow}>
                   <span style={styles.barLabel}>{b.body_part}</span>
                   <div style={styles.barTrack}>
                     <div
                       style={{
                         ...styles.barFill,
-                        width: `${(b.count / maxBodyPart) * 100}%`,
+                        width: mounted ? `${(b.count / maxBodyPart) * 100}%` : '0%',
+                        transition: `width 600ms ${idx * 100}ms ease-out`,
                         background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
                       }}
                     >

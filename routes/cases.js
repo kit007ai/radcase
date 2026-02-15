@@ -248,6 +248,18 @@ module.exports = function(db, cache, cacheInvalidator) {
   // Create new case
   router.post('/', (req, res) => {
     const { title, modality, body_part, diagnosis, difficulty, clinical_history, teaching_points, findings, tags } = req.body;
+
+    // Input validation
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ error: 'Title is required and must be a non-empty string' });
+    }
+    if (difficulty !== undefined && difficulty !== null) {
+      const diff = Number(difficulty);
+      if (!Number.isInteger(diff) || diff < 1 || diff > 5) {
+        return res.status(400).json({ error: 'Difficulty must be an integer between 1 and 5' });
+      }
+    }
+
     const id = uuidv4();
 
     db.prepare(`

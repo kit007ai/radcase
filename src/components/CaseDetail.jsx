@@ -2,43 +2,49 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import theme from '../theme';
 import useApi from '../hooks/useApi';
 import { useAuth } from '../context/AuthContext';
+import useIsMobile from '../hooks/useIsMobile';
 
-const styles = {
+const getStyles = (mobile) => ({
   overlay: {
     position: 'fixed',
     inset: 0,
     zIndex: 1000,
     background: 'rgba(0, 0, 0, 0.85)',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: mobile ? 'stretch' : 'center',
     justifyContent: 'center',
-    padding: theme.spacing.md,
+    padding: mobile ? 0 : theme.spacing.md,
+    animation: 'caseDetailFadeIn 200ms ease-out',
   },
   modal: {
     position: 'relative',
     background: theme.colors.bgSecondary,
-    borderRadius: theme.radii.xl,
-    border: `1px solid ${theme.colors.border}`,
+    borderRadius: mobile ? 0 : theme.radii.xl,
+    border: mobile ? 'none' : `1px solid ${theme.colors.border}`,
     width: '100%',
-    maxWidth: '1100px',
-    maxHeight: '90vh',
+    maxWidth: mobile ? '100%' : '1100px',
+    maxHeight: mobile ? '100vh' : '90vh',
+    height: mobile ? '100vh' : undefined,
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    boxShadow: theme.shadows.lg,
+    boxShadow: mobile ? 'none' : `${theme.shadows.lg}, 0 0 60px rgba(99, 102, 241, 0.1)`,
+    animation: mobile ? 'caseDetailSlideUp 300ms ease-out' : 'caseDetailScaleIn 250ms ease-out',
   },
   header: {
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+    gap: mobile ? theme.spacing.xs : theme.spacing.sm,
+    padding: mobile ? `${theme.spacing.sm} ${theme.spacing.md}` : `${theme.spacing.md} ${theme.spacing.lg}`,
     borderBottom: `1px solid ${theme.colors.border}`,
     flexWrap: 'wrap',
   },
   title: {
     flex: 1,
     margin: 0,
-    fontSize: theme.typography.sizes.xl,
+    fontSize: mobile ? theme.typography.sizes.base : theme.typography.sizes.xl,
     fontWeight: theme.typography.fontWeights.bold,
     color: theme.colors.textPrimary,
     fontFamily: theme.typography.fontFamily,
@@ -101,7 +107,7 @@ const styles = {
   body: {
     flex: 1,
     overflowY: 'auto',
-    padding: theme.spacing.lg,
+    padding: mobile ? theme.spacing.md : theme.spacing.lg,
   },
   caseView: {
     display: 'grid',
@@ -205,6 +211,7 @@ const styles = {
     borderRadius: theme.radii.md,
     padding: theme.spacing.md,
     border: `1px solid ${theme.colors.glassBorder}`,
+    borderLeft: `3px solid ${theme.colors.accent}`,
   },
   sectionTitle: {
     margin: `0 0 ${theme.spacing.xs}`,
@@ -229,16 +236,17 @@ const styles = {
   },
   footer: {
     display: 'flex',
-    gap: theme.spacing.sm,
-    padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+    gap: mobile ? theme.spacing.xs : theme.spacing.sm,
+    padding: mobile ? `${theme.spacing.sm} ${theme.spacing.md}` : `${theme.spacing.md} ${theme.spacing.lg}`,
     borderTop: `1px solid ${theme.colors.border}`,
     flexWrap: 'wrap',
+    paddingBottom: mobile ? 'calc(8px + env(safe-area-inset-bottom, 0))' : undefined,
   },
   btn: {
-    padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+    padding: mobile ? `10px 12px` : `${theme.spacing.sm} ${theme.spacing.md}`,
     borderRadius: theme.radii.md,
     border: 'none',
-    fontSize: theme.typography.sizes.sm,
+    fontSize: mobile ? theme.typography.sizes.xs : theme.typography.sizes.sm,
     fontFamily: theme.typography.fontFamily,
     fontWeight: theme.typography.fontWeights.medium,
     cursor: 'pointer',
@@ -246,6 +254,9 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '4px',
+    minHeight: mobile ? '44px' : undefined,
+    flex: mobile ? 1 : undefined,
+    justifyContent: mobile ? 'center' : undefined,
   },
   btnDanger: {
     background: 'rgba(239, 68, 68, 0.15)',
@@ -270,7 +281,7 @@ const styles = {
     borderRadius: '50%',
     width: '44px',
     height: '44px',
-    display: 'flex',
+    display: mobile ? 'none' : 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: theme.colors.textPrimary,
@@ -319,6 +330,28 @@ const styles = {
     borderRadius: theme.radii.md,
     border: `1px solid ${theme.colors.glassBorder}`,
   },
+  imageCounter: {
+    position: 'absolute',
+    bottom: mobile ? '8px' : '12px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: 'rgba(0, 0, 0, 0.7)',
+    color: '#e2e8f0',
+    padding: '3px 10px',
+    borderRadius: theme.radii.full,
+    fontSize: theme.typography.sizes.xs,
+    fontFamily: theme.typography.fontFamily,
+    fontWeight: theme.typography.fontWeights.medium,
+    zIndex: 2,
+    backdropFilter: 'blur(4px)',
+  },
+  pinchHint: {
+    textAlign: 'center',
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.textMuted,
+    padding: `${theme.spacing.xs} 0`,
+    fontStyle: 'italic',
+  },
   dicomUploadInner: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -341,7 +374,7 @@ const styles = {
     fontSize: theme.typography.sizes.sm,
     fontFamily: theme.typography.fontFamily,
   },
-};
+});
 
 export default function CaseDetail({
   caseId,
@@ -352,6 +385,8 @@ export default function CaseDetail({
 }) {
   const api = useApi();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const styles = getStyles(isMobile);
   const dicomContainerRef = useRef(null);
   const dicomViewerRef = useRef(null);
 
@@ -364,14 +399,6 @@ export default function CaseDetail({
   const [dicomSeries, setDicomSeries] = useState([]);
   const [activeDicomSeriesId, setActiveDicomSeriesId] = useState(null);
   const [dicomFiles, setDicomFiles] = useState([]);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  // Responsive check
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Load case data
   useEffect(() => {
@@ -603,6 +630,21 @@ export default function CaseDetail({
       aria-modal="true"
       aria-label={caseData ? `Case: ${caseData.title}` : 'Case Detail'}
     >
+      {/* Animation keyframes */}
+      <style>{`
+        @keyframes caseDetailFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes caseDetailScaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes caseDetailSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       {/* Navigation arrows */}
       {canPrev && (
         <button
@@ -708,12 +750,24 @@ export default function CaseDetail({
                   <>
                     {images.length > 0 ? (
                       <>
-                        <img
-                          src={`/uploads/${currentImage.filename}`}
-                          alt={caseData.title}
-                          style={styles.mainImage}
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
+                        <div style={{ position: 'relative' }}>
+                          <img
+                            src={`/uploads/${currentImage.filename}`}
+                            alt={caseData.title}
+                            style={styles.mainImage}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                          {/* Image counter */}
+                          {images.length > 1 && (
+                            <div style={styles.imageCounter}>
+                              {selectedImageIndex + 1} of {images.length}
+                            </div>
+                          )}
+                        </div>
+                        {/* Pinch-to-zoom hint on mobile */}
+                        {isMobile && (
+                          <div style={styles.pinchHint}>Pinch to zoom</div>
+                        )}
                         <div style={styles.thumbnailStrip} role="listbox" aria-label="Image thumbnails">
                           {images.map((img, i) => (
                             <div
@@ -874,6 +928,7 @@ export default function CaseDetail({
               style={{ ...styles.btn, ...styles.btnDanger }}
               onClick={handleDelete}
             >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
               Delete
             </button>
             <button
@@ -882,6 +937,7 @@ export default function CaseDetail({
                 if (window.annotateCase) window.annotateCase();
               }}
             >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
               Annotate
             </button>
             <button
@@ -893,12 +949,14 @@ export default function CaseDetail({
                 }
               }}
             >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Present
             </button>
             <button
-              style={{ ...styles.btn, ...styles.btnSecondary, marginLeft: 'auto' }}
+              style={{ ...styles.btn, ...styles.btnSecondary, marginLeft: isMobile ? undefined : 'auto' }}
               onClick={onClose}
             >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               Close
             </button>
           </div>

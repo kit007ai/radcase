@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import theme from '../theme';
 import useApi from '../hooks/useApi';
+import useIsMobile from '../hooks/useIsMobile';
 
 const MODALITIES = [
   'X-Ray', 'CT', 'MRI', 'Ultrasound',
@@ -12,18 +13,18 @@ const BODY_PARTS = [
   'Upper Extremity', 'Lower Extremity', 'Cardiac', 'Breast', 'MSK',
 ];
 
-const styles = {
+const getStyles = (mobile) => ({
   page: {
-    padding: theme.spacing.lg,
+    padding: mobile ? theme.spacing.md : theme.spacing.lg,
     maxWidth: '900px',
     margin: '0 auto',
   },
   pageHeader: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: mobile ? theme.spacing.md : theme.spacing.lg,
   },
   pageTitle: {
     margin: 0,
-    fontSize: theme.typography.sizes['2xl'],
+    fontSize: mobile ? theme.typography.sizes.xl : theme.typography.sizes['2xl'],
     fontWeight: theme.typography.fontWeights.bold,
     color: theme.colors.textPrimary,
     fontFamily: theme.typography.fontFamily,
@@ -36,13 +37,13 @@ const styles = {
   },
   card: {
     background: theme.colors.bgCard,
-    borderRadius: theme.radii.lg,
+    borderRadius: mobile ? theme.radii.md : theme.radii.lg,
     border: `1px solid ${theme.colors.border}`,
-    padding: theme.spacing.lg,
+    padding: mobile ? theme.spacing.md : theme.spacing.lg,
   },
   formRow: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: theme.spacing.md,
     marginBottom: theme.spacing.md,
   },
@@ -59,38 +60,40 @@ const styles = {
     fontFamily: theme.typography.fontFamily,
   },
   input: {
-    padding: '10px 12px',
+    padding: mobile ? '12px' : '10px 12px',
     background: theme.colors.glassBg,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     color: theme.colors.textPrimary,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: '16px', // Prevents iOS zoom
     fontFamily: theme.typography.fontFamily,
     outline: 'none',
     transition: `border-color ${theme.transitions.fast}`,
     width: '100%',
     boxSizing: 'border-box',
+    minHeight: mobile ? '44px' : undefined,
   },
   select: {
-    padding: '10px 12px',
+    padding: mobile ? '12px' : '10px 12px',
     background: theme.colors.glassBg,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     color: theme.colors.textPrimary,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: '16px', // Prevents iOS zoom
     fontFamily: theme.typography.fontFamily,
     outline: 'none',
     cursor: 'pointer',
     width: '100%',
     boxSizing: 'border-box',
+    minHeight: mobile ? '44px' : undefined,
   },
   textarea: {
-    padding: '10px 12px',
+    padding: mobile ? '12px' : '10px 12px',
     background: theme.colors.glassBg,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     color: theme.colors.textPrimary,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: '16px', // Prevents iOS zoom
     fontFamily: theme.typography.fontFamily,
     outline: 'none',
     resize: 'vertical',
@@ -131,7 +134,9 @@ const styles = {
   },
   previewGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+    gridTemplateColumns: mobile
+      ? 'repeat(auto-fill, minmax(70px, 1fr))'
+      : 'repeat(auto-fill, minmax(100px, 1fr))',
     gap: theme.spacing.sm,
     marginTop: theme.spacing.md,
   },
@@ -168,14 +173,15 @@ const styles = {
   },
   formActions: {
     display: 'flex',
-    justifyContent: 'flex-end',
+    flexDirection: mobile ? 'column' : 'row',
+    justifyContent: mobile ? undefined : 'flex-end',
     gap: theme.spacing.sm,
     marginTop: theme.spacing.lg,
     paddingTop: theme.spacing.md,
     borderTop: `1px solid ${theme.colors.border}`,
   },
   btn: {
-    padding: `10px ${theme.spacing.lg}`,
+    padding: mobile ? '12px' : `10px ${theme.spacing.lg}`,
     borderRadius: theme.radii.md,
     border: 'none',
     fontSize: theme.typography.sizes.sm,
@@ -183,6 +189,8 @@ const styles = {
     fontFamily: theme.typography.fontFamily,
     cursor: 'pointer',
     transition: `opacity ${theme.transitions.fast}`,
+    minHeight: mobile ? '44px' : undefined,
+    textAlign: 'center',
   },
   btnPrimary: {
     background: theme.colors.gradientPrimary,
@@ -203,10 +211,12 @@ const styles = {
     fontFamily: theme.typography.fontFamily,
     marginTop: theme.spacing.xs,
   },
-};
+});
 
 export default function AddCase({ onCaseSaved }) {
   const api = useApi();
+  const mobile = useIsMobile();
+  const styles = getStyles(mobile);
   const fileInputRef = useRef(null);
 
   const [title, setTitle] = useState('');
@@ -370,7 +380,7 @@ export default function AddCase({ onCaseSaved }) {
           </div>
 
           {/* Modality, Body Part, Difficulty */}
-          <div style={{ ...styles.formRow, gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          <div style={{ ...styles.formRow, gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fit, minmax(160px, 1fr))' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs }}>
               <label style={styles.label} htmlFor="addcase-modality">Modality</label>
               <select

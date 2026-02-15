@@ -11,23 +11,23 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3456',
+        target: 'http://localhost:3457',
         changeOrigin: true
       },
       '/uploads': {
-        target: 'http://localhost:3456',
+        target: 'http://localhost:3457',
         changeOrigin: true
       },
       '/thumbnails': {
-        target: 'http://localhost:3456',
+        target: 'http://localhost:3457',
         changeOrigin: true
       },
       '/dicom': {
-        target: 'http://localhost:3456',
+        target: 'http://localhost:3457',
         changeOrigin: true
       },
       '/ws': {
-        target: 'ws://localhost:3456',
+        target: 'ws://localhost:3457',
         ws: true
       }
     }

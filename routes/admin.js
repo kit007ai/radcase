@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const sharp = require('sharp');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ module.exports = function(db, monitor) {
   });
 
   // Get all users (for admin)
-  router.get('/users', requireAuth, (req, res) => {
+  router.get('/users', requireAdmin, (req, res) => {
     const users = db.prepare(`
       SELECT id, username, display_name, role, created_at, last_login,
              (SELECT COUNT(*) FROM quiz_attempts WHERE user_id = users.id) as quiz_count,
@@ -44,12 +44,12 @@ module.exports = function(db, monitor) {
       } = req.body;
 
       if (!name || !email || !role || !institution || !studyTime || !motivation) {
-        return res.status(400).json({ success: false, error: 'Missing required fields' });
+        return res.status(400).json({ error: 'Missing required fields' });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return res.status(400).json({ success: false, error: 'Invalid email format' });
+        return res.status(400).json({ error: 'Invalid email format' });
       }
 
       const existingSignup = db.prepare('SELECT id FROM beta_signups WHERE email = ?').get(email);
@@ -94,12 +94,12 @@ module.exports = function(db, monitor) {
       });
     } catch (error) {
       console.error('Beta signup error:', error);
-      res.status(500).json({ success: false, error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
   // Get beta signups (admin only)
-  router.get('/beta-signups', requireAuth, (req, res) => {
+  router.get('/beta-signups', requireAdmin, (req, res) => {
     try {
       const signups = db.prepare(`
         SELECT id, name, email, role, institution, specialty, study_time,
@@ -112,19 +112,19 @@ module.exports = function(db, monitor) {
       res.json({ success: true, signups });
     } catch (error) {
       console.error('Error fetching beta signups:', error);
-      res.status(500).json({ success: false, error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
   // Update beta signup status (admin only)
-  router.post('/beta-signups/:id/status', requireAuth, (req, res) => {
+  router.post('/beta-signups/:id/status', requireAdmin, (req, res) => {
     try {
       const { id } = req.params;
       const { status, notes } = req.body;
 
       const validStatuses = ['pending', 'contacted', 'interviewed', 'activated', 'rejected'];
       if (!validStatuses.includes(status)) {
-        return res.status(400).json({ success: false, error: 'Invalid status' });
+        return res.status(400).json({ error: 'Invalid status' });
       }
 
       const result = db.prepare(`
@@ -134,13 +134,13 @@ module.exports = function(db, monitor) {
       `).run(status, notes || null, id);
 
       if (result.changes === 0) {
-        return res.status(404).json({ success: false, error: 'Beta signup not found' });
+        return res.status(404).json({ error: 'Beta signup not found' });
       }
 
       res.json({ success: true, message: 'Status updated successfully' });
     } catch (error) {
       console.error('Error updating beta signup:', error);
-      res.status(500).json({ success: false, error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
@@ -154,12 +154,12 @@ module.exports = function(db, monitor) {
       } = req.body;
 
       if (!name || !email || !role || !institution || !timezone || !selectedTimes || !studyHabits || !mainChallenge) {
-        return res.status(400).json({ success: false, error: 'Missing required fields' });
+        return res.status(400).json({ error: 'Missing required fields' });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return res.status(400).json({ success: false, error: 'Invalid email format' });
+        return res.status(400).json({ error: 'Invalid email format' });
       }
 
       const requestId = uuidv4();
@@ -195,12 +195,12 @@ module.exports = function(db, monitor) {
       });
     } catch (error) {
       console.error('Interview request error:', error);
-      res.status(500).json({ success: false, error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
   // Get interview requests (admin only)
-  router.get('/interview-requests', requireAuth, (req, res) => {
+  router.get('/interview-requests', requireAdmin, (req, res) => {
     try {
       const requests = db.prepare(`
         SELECT id, name, email, role, institution, timezone, preferred_times,
@@ -213,7 +213,7 @@ module.exports = function(db, monitor) {
       res.json({ success: true, requests });
     } catch (error) {
       console.error('Error fetching interview requests:', error);
-      res.status(500).json({ success: false, error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 

@@ -486,11 +486,13 @@ export default function MicroLearning() {
   };
 
   const currentCase = cases[currentIndex];
-  const imgSrc = currentCase?.thumbnail
-    ? `/thumbnails/${currentCase.thumbnail}`
-    : currentCase?.images?.[0]
-      ? `/uploads/${currentCase.images[0].filename}`
-      : null;
+  const imgSrc = currentCase?.imageUrl
+    ? currentCase.imageUrl
+    : currentCase?.thumbnail
+      ? `/thumbnails/${currentCase.thumbnail}`
+      : currentCase?.images?.[0]
+        ? `/uploads/${currentCase.images[0].filename}`
+        : null;
 
   const progressPercent = cases.length > 0 ? (currentIndex / cases.length) * 100 : 0;
 
@@ -630,8 +632,8 @@ export default function MicroLearning() {
                 {currentCase.modality && (
                   <span style={{ ...styles.badge, ...styles.badgeModality }}>{currentCase.modality}</span>
                 )}
-                {currentCase.body_part && (
-                  <span style={{ ...styles.badge, ...styles.badgeBodyPart }}>{currentCase.body_part}</span>
+                {(currentCase.specialty || currentCase.body_part) && (
+                  <span style={{ ...styles.badge, ...styles.badgeBodyPart }}>{currentCase.specialty || currentCase.body_part}</span>
                 )}
                 <span style={{ ...styles.badge, ...styles.badgeDiff }}>
                   Diff: {currentCase.difficulty || '?'}

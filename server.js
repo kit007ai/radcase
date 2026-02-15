@@ -12,7 +12,7 @@ const webpush = require('web-push');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 3456;
+const PORT = process.env.PORT || 3457;
 
 // ============ JWT Secret ============
 const JWT_SECRET = require('./lib/jwt-secret');
@@ -373,11 +373,33 @@ app.get('/api/progress', (req, res, next) => {
 const syncRoutes = require('./routes/sync')(db, VAPID_PUBLIC_KEY);
 app.use('/api', syncRoutes);
 
-// Admin routes: /api/admin/* and /api/* (various admin endpoints)
+// Admin routes: /api/admin/*
 const adminRoutes = require('./routes/admin')(db, monitor);
 app.use('/api/admin', adminRoutes);
-// Mount admin routes that live at /api/* directly
-app.use('/api', adminRoutes);
+
+// Public data endpoints (available without /admin prefix)
+app.get('/api/filters', (req, res) => {
+  const modalities = db.prepare('SELECT DISTINCT modality FROM cases WHERE modality IS NOT NULL ORDER BY modality').all();
+  const bodyParts = db.prepare('SELECT DISTINCT body_part FROM cases WHERE body_part IS NOT NULL ORDER BY body_part').all();
+  res.json({
+    modalities: modalities.map(m => m.modality),
+    bodyParts: bodyParts.map(b => b.body_part),
+    difficulties: [1, 2, 3, 4, 5],
+  });
+});
+
+app.get('/api/analytics', (req, res) => {
+  const caseCount = db.prepare('SELECT COUNT(*) as count FROM cases').get();
+  const imageCount = db.prepare('SELECT COUNT(*) as count FROM images').get();
+  const byModality = db.prepare('SELECT modality, COUNT(*) as count FROM cases WHERE modality IS NOT NULL GROUP BY modality ORDER BY count DESC').all();
+  const byBodyPart = db.prepare('SELECT body_part, COUNT(*) as count FROM cases WHERE body_part IS NOT NULL GROUP BY body_part ORDER BY count DESC').all();
+  res.json({ counts: { cases: caseCount.count, images: imageCount.count }, byModality, byBodyPart });
+});
+
+app.get('/api/tags', (req, res) => {
+  const tags = db.prepare('SELECT t.name, COUNT(ct.case_id) as count FROM tags t LEFT JOIN case_tags ct ON t.id = ct.tag_id GROUP BY t.id ORDER BY count DESC').all();
+  res.json(tags);
+});
 
 // Serve beta signup page
 app.get('/beta', (req, res) => {

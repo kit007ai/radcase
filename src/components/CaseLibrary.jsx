@@ -2,20 +2,86 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import theme from '../theme';
 import useApi from '../hooks/useApi';
 import { useAuth } from '../context/AuthContext';
+import useIsMobile from '../hooks/useIsMobile';
 import CaseCard from './CaseCard';
 
-const styles = {
+const skeletonCSS = `
+@keyframes skeletonShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+`;
+
+// Skeleton loading card with shimmer effect
+function SkeletonCard({ compact, isList }) {
+  const shimmer = {
+    background: `linear-gradient(90deg, ${theme.colors.bgTertiary} 25%, rgba(255,255,255,0.06) 50%, ${theme.colors.bgTertiary} 75%)`,
+    backgroundSize: '200% 100%',
+    animation: 'skeletonShimmer 1.5s ease-in-out infinite',
+    borderRadius: theme.radii.sm,
+  };
+
+  if (isList) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        background: theme.colors.bgCard,
+        borderRadius: theme.radii.lg,
+        border: `1px solid ${theme.colors.border}`,
+        overflow: 'hidden',
+      }}>
+        <div style={{ ...shimmer, width: '120px', minWidth: '120px', height: '80px', borderRadius: 0 }} />
+        <div style={{ padding: `${theme.spacing.sm} ${theme.spacing.md}`, flex: 1 }}>
+          <div style={{ ...shimmer, height: '14px', width: '70%', marginBottom: theme.spacing.sm }} />
+          <div style={{ display: 'flex', gap: theme.spacing.xs }}>
+            <div style={{ ...shimmer, height: '18px', width: '50px', borderRadius: theme.radii.full }} />
+            <div style={{ ...shimmer, height: '18px', width: '60px', borderRadius: theme.radii.full }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      background: theme.colors.bgCard,
+      borderRadius: theme.radii.lg,
+      border: `1px solid ${theme.colors.border}`,
+      overflow: 'hidden',
+    }}>
+      <div style={{ ...shimmer, width: '100%', aspectRatio: compact ? '4 / 3' : '16 / 10', borderRadius: 0 }} />
+      <div style={{ padding: compact ? theme.spacing.sm : theme.spacing.md }}>
+        <div style={{ ...shimmer, height: compact ? '12px' : '16px', width: '80%', marginBottom: theme.spacing.sm }} />
+        <div style={{ display: 'flex', gap: theme.spacing.xs }}>
+          <div style={{ ...shimmer, height: compact ? '16px' : '18px', width: '50px', borderRadius: theme.radii.full }} />
+          <div style={{ ...shimmer, height: compact ? '16px' : '18px', width: '60px', borderRadius: theme.radii.full }} />
+        </div>
+        <div style={{ display: 'flex', gap: '3px', marginTop: theme.spacing.xs }}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} style={{ ...shimmer, width: compact ? '5px' : '6px', height: compact ? '5px' : '6px', borderRadius: '50%' }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const getStyles = (mobile) => ({
   page: {
-    padding: theme.spacing.lg,
+    padding: mobile ? '12px' : theme.spacing.lg,
     maxWidth: '1400px',
     margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box',
+    overflowX: 'hidden',
   },
   pageHeader: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: mobile ? theme.spacing.md : theme.spacing.lg,
   },
   pageTitle: {
     margin: 0,
-    fontSize: theme.typography.sizes['2xl'],
+    fontSize: mobile ? theme.typography.sizes.xl : theme.typography.sizes['2xl'],
     fontWeight: theme.typography.fontWeights.bold,
     color: theme.colors.textPrimary,
     fontFamily: theme.typography.fontFamily,
@@ -28,15 +94,16 @@ const styles = {
   },
   searchBar: {
     display: 'flex',
+    flexDirection: mobile ? 'column' : 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
-    alignItems: 'center',
+    marginBottom: mobile ? theme.spacing.md : theme.spacing.lg,
+    alignItems: mobile ? 'stretch' : 'center',
   },
   searchInputWrapper: {
     position: 'relative',
-    flex: '1 1 280px',
-    minWidth: '200px',
+    flex: mobile ? '1 1 auto' : '1 1 280px',
+    minWidth: mobile ? '0' : '200px',
   },
   searchIcon: {
     position: 'absolute',
@@ -54,35 +121,39 @@ const styles = {
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     color: theme.colors.textPrimary,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: '16px', // Prevents iOS zoom on focus
     fontFamily: theme.typography.fontFamily,
     outline: 'none',
     boxSizing: 'border-box',
     transition: `border-color ${theme.transitions.fast}`,
   },
   filterGroup: {
-    display: 'flex',
+    display: mobile ? 'grid' : 'flex',
+    gridTemplateColumns: mobile ? '1fr 1fr' : undefined,
     gap: theme.spacing.sm,
     flexWrap: 'wrap',
     alignItems: 'center',
   },
   filterSelect: {
-    padding: '10px 12px',
+    padding: mobile ? '12px' : '10px 12px',
     background: theme.colors.glassBg,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     color: theme.colors.textPrimary,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: '16px', // Prevents iOS zoom on focus
     fontFamily: theme.typography.fontFamily,
     outline: 'none',
     cursor: 'pointer',
-    minWidth: '140px',
+    minWidth: mobile ? '0' : '140px',
+    width: mobile ? '100%' : undefined,
+    minHeight: mobile ? '44px' : undefined,
   },
   bookmarkFilterBtn: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: mobile ? 'center' : undefined,
     gap: theme.spacing.xs,
-    padding: `8px ${theme.spacing.md}`,
+    padding: mobile ? '12px' : `8px ${theme.spacing.md}`,
     background: theme.colors.glassBg,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
@@ -91,6 +162,7 @@ const styles = {
     fontFamily: theme.typography.fontFamily,
     cursor: 'pointer',
     transition: `all ${theme.transitions.fast}`,
+    minHeight: mobile ? '44px' : undefined,
   },
   bookmarkFilterBtnActive: {
     background: 'rgba(239, 68, 68, 0.15)',
@@ -102,9 +174,10 @@ const styles = {
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     overflow: 'hidden',
+    gridColumn: mobile ? '1 / -1' : undefined,
   },
   viewToggleBtn: {
-    padding: '8px 12px',
+    padding: mobile ? '12px 16px' : '8px 12px',
     background: theme.colors.glassBg,
     border: 'none',
     color: theme.colors.textMuted,
@@ -112,6 +185,8 @@ const styles = {
     fontSize: theme.typography.sizes.sm,
     fontFamily: theme.typography.fontFamily,
     transition: `all ${theme.transitions.fast}`,
+    flex: mobile ? 1 : undefined,
+    minHeight: mobile ? '44px' : undefined,
   },
   viewToggleBtnActive: {
     background: theme.colors.accentMuted,
@@ -119,8 +194,12 @@ const styles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: theme.spacing.md,
+    gridTemplateColumns: mobile
+      ? 'repeat(2, minmax(0, 1fr))'
+      : 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
+    gap: mobile ? '8px' : theme.spacing.md,
+    width: '100%',
+    maxWidth: '100%',
   },
   list: {
     display: 'flex',
@@ -164,19 +243,20 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: mobile ? theme.spacing.xs : theme.spacing.sm,
     marginTop: theme.spacing.lg,
   },
   pageBtn: {
-    padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+    padding: mobile ? `${theme.spacing.sm} 12px` : `${theme.spacing.sm} ${theme.spacing.md}`,
     background: theme.colors.glassBg,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.radii.md,
     color: theme.colors.textSecondary,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: mobile ? theme.typography.sizes.xs : theme.typography.sizes.sm,
     fontFamily: theme.typography.fontFamily,
     cursor: 'pointer',
     transition: `all ${theme.transitions.fast}`,
+    minHeight: mobile ? '44px' : undefined,
   },
   pageBtnDisabled: {
     opacity: 0.4,
@@ -194,13 +274,15 @@ const styles = {
     color: theme.colors.textSecondary,
     fontFamily: theme.typography.fontFamily,
   },
-};
+});
 
 const ITEMS_PER_PAGE = 20;
 
 export default function CaseLibrary({ onViewCase, onNavigateAdd }) {
   const api = useApi();
   const { user } = useAuth();
+  const mobile = useIsMobile();
+  const styles = getStyles(mobile);
 
   const [cases, setCases] = useState([]);
   const [search, setSearch] = useState('');
@@ -438,8 +520,15 @@ export default function CaseLibrary({ onViewCase, onNavigateAdd }) {
 
       {/* Case Grid / List */}
       <div style={viewMode === 'grid' ? styles.grid : styles.list} role="list" aria-label="Case list">
+        <style>{skeletonCSS}</style>
         {loading ? (
-          <div style={styles.loadingText} role="status" aria-live="polite">Loading cases...</div>
+          <>
+            {Array.from({ length: mobile ? 4 : 6 }, (_, i) => (
+              <div key={`skeleton-${i}`} role="listitem" style={{ minWidth: 0, overflow: 'hidden' }}>
+                <SkeletonCard compact={mobile} isList={viewMode === 'list'} />
+              </div>
+            ))}
+          </>
         ) : cases.length === 0 ? (
           <div style={styles.emptyState}>
             <div style={styles.emptyIcon} aria-hidden="true">{'\u{1F4C2}'}</div>
@@ -453,13 +542,16 @@ export default function CaseLibrary({ onViewCase, onNavigateAdd }) {
           </div>
         ) : (
           cases.map(c => (
-            <div key={c.id} role="listitem">
+            <div key={c.id} role="listitem" style={{ minWidth: 0, overflow: 'hidden' }}>
               <CaseCard
                 caseData={c}
                 viewMode={viewMode}
                 isBookmarked={bookmarkedIds.has(c.id)}
                 onBookmarkToggle={handleBookmarkToggle}
-                onClick={onViewCase}
+                onClick={(caseData) => {
+                  if (onViewCase) onViewCase(caseData, cases.map(cc => cc.id));
+                }}
+                compact={mobile}
               />
             </div>
           ))
