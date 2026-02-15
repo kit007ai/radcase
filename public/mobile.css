@@ -162,7 +162,7 @@ body.offline .sidebar {
 .micro-learning-overlay {
   position: fixed;
   inset: 0;
-  z-index: 500;
+  z-index: 10002;
   background: #0a0a0f;
   display: flex;
   flex-direction: column;

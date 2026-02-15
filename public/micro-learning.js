@@ -463,6 +463,57 @@ class MicroLearningSession {
       this.sessionTimer = null;
     }
     this.persistActiveSession();
+    // Remove overlay
+    const container = document.getElementById('micro-learning-container');
+    if (container) container.remove();
+    this.currentSession = null;
+  }
+
+  bookmarkCase() {
+    if (!this.currentSession) return;
+    const idx = this.currentSession.currentCaseIndex || 0;
+    const c = this.currentSession.cases[idx];
+    if (!c) return;
+    // Toggle bookmark via API
+    fetch(`/api/bookmarks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ case_id: c.id })
+    }).catch(() => {});
+    // Visual feedback
+    const btn = document.querySelector('.quick-action-btn[title="Bookmark"]');
+    if (btn) { btn.style.background = 'rgba(99, 102, 241, 0.3)'; setTimeout(() => { btn.style.background = ''; }, 600); }
+  }
+
+  flagDifficult() {
+    if (!this.currentSession) return;
+    const idx = this.currentSession.currentCaseIndex || 0;
+    const c = this.currentSession.cases[idx];
+    if (!c) return;
+    // Store flagged case locally
+    const flagged = JSON.parse(localStorage.getItem('radcase_flagged_cases') || '[]');
+    if (!flagged.includes(c.id)) { flagged.push(c.id); localStorage.setItem('radcase_flagged_cases', JSON.stringify(flagged)); }
+    const btn = document.querySelector('.quick-action-btn[title="Flag as Difficult"]');
+    if (btn) { btn.style.background = 'rgba(239, 68, 68, 0.3)'; setTimeout(() => { btn.style.background = ''; }, 600); }
+  }
+
+  requestHint() {
+    if (!this.currentSession) return;
+    const idx = this.currentSession.currentCaseIndex || 0;
+    const c = this.currentSession.cases[idx];
+    if (!c || !c.explanation) return;
+    // Show a partial hint
+    const hint = c.explanation.split('\n')[0] || 'No hint available.';
+    const contentEl = document.getElementById('session-content');
+    if (!contentEl) return;
+    let hintEl = contentEl.querySelector('.hint-box');
+    if (hintEl) return; // Already showing
+    hintEl = document.createElement('div');
+    hintEl.className = 'hint-box';
+    hintEl.style.cssText = 'margin-top:12px;padding:12px;border-radius:10px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);color:#818cf8;font-size:0.85rem;';
+    hintEl.textContent = hint;
+    contentEl.appendChild(hintEl);
   }
 
   // ============ Cross-Device Session Resumption ============
