@@ -237,9 +237,12 @@ class MicroLearningSession {
     const currentIndex = this.currentSession.currentCaseIndex || 0;
     if (currentIndex < this.currentSession.cases.length - 1) {
       this.currentSession.currentCaseIndex = currentIndex + 1;
-      this.renderCurrentCase();
+      this.updateCaseContent();
       this.trackProgress('case_viewed');
       this.persistActiveSession();
+    } else {
+      // Last case — complete the session
+      this.completeSession();
     }
   }
 
@@ -249,8 +252,16 @@ class MicroLearningSession {
     const currentIndex = this.currentSession.currentCaseIndex || 0;
     if (currentIndex > 0) {
       this.currentSession.currentCaseIndex = currentIndex - 1;
-      this.renderCurrentCase();
+      this.updateCaseContent();
       this.persistActiveSession();
+    }
+  }
+
+  // Update the session-content element with the current case HTML
+  updateCaseContent() {
+    const contentEl = document.getElementById('session-content');
+    if (contentEl) {
+      contentEl.innerHTML = this.renderCurrentCase();
     }
   }
 
@@ -315,12 +326,12 @@ class MicroLearningSession {
 
     const currentIndex = this.currentSession.currentCaseIndex || 0;
     const currentCase = this.currentSession.cases[currentIndex];
-    
+
     const isCorrect = optionIndex === currentCase.correctAnswer;
     this.trackProgress('answer_submitted', { correct: isCorrect });
 
     // Show immediate feedback
-    this.showAnswerFeedback(isCorrect, currentCase);
+    this.showAnswerFeedback(isCorrect, currentCase, optionIndex);
 
     // Auto-advance after feedback
     setTimeout(() => {
@@ -328,13 +339,13 @@ class MicroLearningSession {
     }, 2000);
   }
 
-  showAnswerFeedback(isCorrect, caseData) {
+  showAnswerFeedback(isCorrect, caseData, selectedIndex) {
     const optionButtons = document.querySelectorAll('.case-option-btn');
     optionButtons.forEach((btn, index) => {
       btn.disabled = true;
       if (index === caseData.correctAnswer) {
         btn.classList.add('correct');
-      } else if (btn.classList.contains('selected')) {
+      } else if (index === selectedIndex) {
         btn.classList.add('incorrect');
       }
     });
