@@ -31,7 +31,7 @@ class MicroLearningSession {
 
     this.currentSession = {
       id: sessionId,
-      specialty: specialty || this.preferences.preferredSpecialty,
+      specialty: specialty || this.preferences.preferredSpecialty || 'General',
       difficulty: difficulty || this.calculateOptimalDifficulty(),
       startTime: Date.now(),
       cases: [],
@@ -605,7 +605,7 @@ class MicroLearningSession {
   }
 
   calculateOptimalDifficulty() {
-    return this.preferences.lastDifficulty || 'Intermediate';
+    return this.preferences.lastDifficulty || 'All';
   }
 
   // Utility methods
