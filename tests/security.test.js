@@ -59,7 +59,7 @@ describe('Security Tests', () => {
           contentType: 'application/x-php'
         });
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       expect(response.text).toContain('Invalid file type');
     });
 
