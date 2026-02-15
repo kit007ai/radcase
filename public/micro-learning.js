@@ -64,12 +64,20 @@ class MicroLearningSession {
   // Context-aware case selection
   async selectCasesForSession() {
     const params = new URLSearchParams({
-      specialty: this.currentSession.specialty,
-      difficulty: this.currentSession.difficulty,
       timeAvailable: Math.floor(this.sessionDuration / 60000), // minutes
       mobileOptimized: 'true',
       contextAware: 'true'
     });
+
+    // Only filter by specialty/difficulty if they aren't "all" defaults
+    const spec = this.currentSession.specialty;
+    if (spec && spec !== 'General' && spec !== 'All') {
+      params.set('specialty', spec);
+    }
+    const diff = this.currentSession.difficulty;
+    if (diff && diff !== 'All') {
+      params.set('difficulty', diff);
+    }
 
     // Pass last reviewed timestamp for spaced repetition weighting
     const lastReviewed = this.getLastReviewedTimestamp();
