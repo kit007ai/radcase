@@ -7,7 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+
+  <!-- Critical CSS for fast first paint -->
+  <link rel="stylesheet" href="/critical.css">
+  <!-- Lazy-load non-critical mobile styles -->
+  <link rel="stylesheet" href="/mobile.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/mobile.css"></noscript>
+
   <!-- PWA Configuration -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#6366f1">
@@ -2519,18 +2525,23 @@
     &#x26A1;
   </button>
 
-  <!-- Load modules -->
-  <script src="/annotate.js"></script>
-  <script src="/presentation.js"></script>
-  <script src="/spaced-repetition.js"></script>
-  <script src="/dicom-viewer.js"></script>
-  <script src="/touch-gestures.js"></script>
-  <script src="/swipe-quiz.js"></script>
-  <script src="/pwa-manager.js"></script>
-  <script src="/micro-learning.js"></script>
+  <!-- Eager: lazy-loader, PWA, and performance (critical path) -->
+  <script src="/lazy-loader.js"></script>
   <script src="/performance-optimizer.js"></script>
-  <script src="/sync-manager.js"></script>
-  <script src="/voice-narrator.js"></script>
+  <script src="/pwa-manager.js"></script>
+
+  <!-- Deferred: core feature modules -->
+  <script src="/annotate.js" defer></script>
+  <script src="/presentation.js" defer></script>
+  <script src="/spaced-repetition.js" defer></script>
+  <script src="/dicom-viewer.js" defer></script>
+  <script src="/sync-manager.js" defer></script>
+
+  <!-- Deferred: mobile/touch modules (loaded on all pages but non-blocking) -->
+  <script src="/touch-gestures.js" defer></script>
+  <script src="/swipe-quiz.js" defer></script>
+  <script src="/micro-learning.js" defer></script>
+  <script src="/voice-narrator.js" defer></script>
 
   <script>
     const API = '/api';
