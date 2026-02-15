@@ -16,8 +16,12 @@ class MicroLearningSession {
 
   // Start a new micro-learning session
   async startSession(specialty = null, difficulty = null) {
-    // Check for a resumable session from this or another device
-    const resumable = this.checkForResumableSession();
+    // Check for a resumable session from this device (localStorage)
+    let resumable = this.checkForResumableSession();
+    // If nothing local, check the server for a session from another device
+    if (!resumable) {
+      resumable = await this.checkServerForResumableSession();
+    }
     if (resumable && !this.currentSession) {
       this.showResumePrompt(resumable);
       return;
@@ -464,10 +468,21 @@ class MicroLearningSession {
     };
     localStorage.setItem('radcase_active_session', JSON.stringify(state));
 
-    // Sync to other devices via SyncManager
+    // Sync to other devices via SyncManager (WebSocket)
     if (window.syncManager && typeof window.syncManager.send === 'function') {
       window.syncManager.send('sync:session', state);
     }
+
+    // Persist to server for cross-device resumption via REST
+    fetch('/api/session/active', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        state,
+        deviceId: window.syncManager?.deviceId || 'unknown'
+      })
+    }).catch(() => { /* offline — WebSocket sync will cover it */ });
   }
 
   clearPersistedSession() {
@@ -475,29 +490,44 @@ class MicroLearningSession {
     if (window.syncManager && typeof window.syncManager.send === 'function') {
       window.syncManager.send('sync:session', { session: null });
     }
+    // Clear server-side state
+    fetch('/api/session/active', {
+      method: 'DELETE',
+      credentials: 'include'
+    }).catch(() => {});
   }
 
   checkForResumableSession() {
+    // Check localStorage first (same-device fast path)
     try {
       const saved = localStorage.getItem('radcase_active_session');
-      if (!saved) return null;
-      const state = JSON.parse(saved);
-
-      // Only resume if session is less than 30 minutes old
-      if (!state.session || !state.savedAt) return null;
-      if (Date.now() - state.savedAt > 30 * 60 * 1000) {
+      if (saved) {
+        const state = JSON.parse(saved);
+        if (state.session && state.savedAt &&
+            Date.now() - state.savedAt < 30 * 60 * 1000) {
+          const elapsed = state.savedAt - state.sessionStartTime;
+          const remaining = this.sessionDuration - elapsed;
+          if (remaining > 0) return state;
+        }
         localStorage.removeItem('radcase_active_session');
-        return null;
       }
+    } catch { /* ignore */ }
+    return null;
+  }
 
-      // Check remaining time
+  // Check server for an active session from another device
+  async checkServerForResumableSession() {
+    try {
+      const res = await fetch('/api/session/active', { credentials: 'include' });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.session) return null;
+      const state = data.session;
+      if (!state.session || !state.savedAt) return null;
+      // Validate remaining time
       const elapsed = state.savedAt - state.sessionStartTime;
       const remaining = this.sessionDuration - elapsed;
-      if (remaining <= 0) {
-        localStorage.removeItem('radcase_active_session');
-        return null;
-      }
-
+      if (remaining <= 0) return null;
       return state;
     } catch {
       return null;

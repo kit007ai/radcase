@@ -18,7 +18,7 @@ const { WebSocketServer } = require('ws');
 const webpush = require('web-push');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3456;
 
 // ============ SECURITY UTILITIES ============
 
@@ -2258,6 +2258,58 @@ app.post('/api/progress', (req, res) => {
   }
 
   res.json({ success: true, message: 'Progress synced' });
+});
+
+// ============ Active Micro-Learning Session (Cross-Device Resumption) ============
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS active_sessions (
+    user_id TEXT PRIMARY KEY,
+    session_state TEXT NOT NULL,
+    device_id TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
+
+// GET active session for the authenticated user
+app.get('/api/session/active', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT session_state, device_id, updated_at FROM active_sessions WHERE user_id = ?').get(req.user.id);
+  if (!row) {
+    return res.json({ session: null });
+  }
+  try {
+    const state = JSON.parse(row.session_state);
+    // Expire sessions older than 30 minutes
+    const updatedAt = new Date(row.updated_at).getTime();
+    if (Date.now() - updatedAt > 30 * 60 * 1000) {
+      db.prepare('DELETE FROM active_sessions WHERE user_id = ?').run(req.user.id);
+      return res.json({ session: null });
+    }
+    res.json({ session: state, deviceId: row.device_id, updatedAt: row.updated_at });
+  } catch {
+    res.json({ session: null });
+  }
+});
+
+// PUT (upsert) active session
+app.put('/api/session/active', requireAuth, (req, res) => {
+  const { state, deviceId } = req.body;
+  if (!state) {
+    return res.status(400).json({ error: 'state is required' });
+  }
+  db.prepare(`
+    INSERT INTO active_sessions (user_id, session_state, device_id, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(user_id) DO UPDATE SET session_state = excluded.session_state, device_id = excluded.device_id, updated_at = datetime('now')
+  `).run(req.user.id, JSON.stringify(state), deviceId || null);
+  res.json({ success: true });
+});
+
+// DELETE active session (session ended)
+app.delete('/api/session/active', requireAuth, (req, res) => {
+  db.prepare('DELETE FROM active_sessions WHERE user_id = ?').run(req.user.id);
+  res.json({ success: true });
 });
 
 // Bookmarks API
