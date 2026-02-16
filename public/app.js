@@ -1053,6 +1053,9 @@ function setupEventListeners() {
         loadQuizHub();
       }
       if (page === 'collections') loadCollectionsPage();
+      if (page === 'case-builder' && window.caseBuilder) {
+        caseBuilder.init(document.getElementById('caseBuilderContainer'));
+      }
 
       // Sync bottom nav
       document.querySelectorAll('.bottom-nav-item').forEach(i => {

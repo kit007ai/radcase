@@ -114,6 +114,7 @@ export function showPage(page) {
   const pageNames = {
     library: 'Case Library',
     add: 'Add New Case',
+    'case-builder': 'AI Case Builder',
     quiz: 'Quiz Mode',
     collections: 'Collections',
     analytics: 'Analytics'
