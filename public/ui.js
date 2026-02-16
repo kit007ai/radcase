@@ -118,7 +118,9 @@ export function showPage(page) {
     quiz: 'Quiz Mode',
     collections: 'Collections',
     analytics: 'Analytics',
-    'oral-boards': 'Oral Board Prep'
+    'oral-boards': 'Oral Board Prep',
+    'milestones': 'ACGME Milestones',
+    'program-dashboard': 'Program Dashboard'
   };
   announcePageChange(pageNames[page] || page);
 

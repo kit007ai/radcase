@@ -1154,3 +1154,171 @@ export async function fetchOralBoardStats() {
   }
   return await res.json();
 }
+
+// ============ Milestone API ============
+
+export async function fetchMilestones() {
+  const res = await fetch(`${API}/milestones`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch milestones'); }
+  return await res.json();
+}
+
+export async function fetchMilestoneDetail(milestoneId) {
+  const res = await fetch(`${API}/milestones/${milestoneId}`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch milestone'); }
+  return await res.json();
+}
+
+export async function recalculateMilestones() {
+  const res = await fetch(`${API}/milestones/recalculate`, { method: 'POST', credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to recalculate'); }
+  return await res.json();
+}
+
+export async function fetchMilestoneGaps() {
+  const res = await fetch(`${API}/milestones/gaps`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch gaps'); }
+  return await res.json();
+}
+
+export async function assessMilestone(userId, milestoneId, level, evidenceType, notes) {
+  const res = await fetch(`${API}/milestones/assess`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify({ userId, milestoneId, level, evidenceType, notes })
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to assess milestone'); }
+  return await res.json();
+}
+
+export async function fetchCaseMilestones(caseId) {
+  const res = await fetch(`${API}/milestones/cases/${caseId}/milestones`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch case milestones'); }
+  return await res.json();
+}
+
+export async function autoTagCaseMilestones(caseId) {
+  const res = await fetch(`${API}/milestones/cases/${caseId}/auto-tag`, { method: 'POST', credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to auto-tag case'); }
+  return await res.json();
+}
+
+// ============ Program API ============
+
+export async function createInstitution(name, type) {
+  const res = await fetch(`${API}/programs/institutions`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify({ name, type })
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to create institution'); }
+  return await res.json();
+}
+
+export async function fetchInstitutions() {
+  const res = await fetch(`${API}/programs/institutions`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch institutions'); }
+  return await res.json();
+}
+
+export async function createProgram(institutionId, name, specialty) {
+  const res = await fetch(`${API}/programs`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify({ institutionId, name, specialty })
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to create program'); }
+  return await res.json();
+}
+
+export async function fetchPrograms() {
+  const res = await fetch(`${API}/programs`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch programs'); }
+  return await res.json();
+}
+
+export async function fetchProgramDetail(programId) {
+  const res = await fetch(`${API}/programs/${programId}`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch program'); }
+  return await res.json();
+}
+
+export async function fetchProgramDashboard(programId) {
+  const res = await fetch(`${API}/programs/${programId}/dashboard`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch dashboard'); }
+  return await res.json();
+}
+
+export async function fetchResidentDetail(programId, userId) {
+  const res = await fetch(`${API}/programs/${programId}/residents/${userId}`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch resident'); }
+  return await res.json();
+}
+
+export async function fetchCohortStats(programId) {
+  const res = await fetch(`${API}/programs/${programId}/cohort-stats`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch stats'); }
+  return await res.json();
+}
+
+export async function fetchMilestoneReport(programId) {
+  const res = await fetch(`${API}/programs/${programId}/milestone-report`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch report'); }
+  return await res.json();
+}
+
+export async function fetchAtRiskResidents(programId) {
+  const res = await fetch(`${API}/programs/${programId}/at-risk`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch at-risk'); }
+  return await res.json();
+}
+
+export async function addProgramMember(programId, userId, role, pgyYear) {
+  const res = await fetch(`${API}/programs/${programId}/members`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify({ userId, role, pgyYear })
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to add member'); }
+  return await res.json();
+}
+
+export async function updateProgramMember(programId, userId, data) {
+  const res = await fetch(`${API}/programs/${programId}/members/${userId}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to update member'); }
+  return await res.json();
+}
+
+export async function removeProgramMember(programId, userId) {
+  const res = await fetch(`${API}/programs/${programId}/members/${userId}`, { method: 'DELETE', credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to remove member'); }
+  return await res.json();
+}
+
+export async function generateCohortSnapshot(programId) {
+  const res = await fetch(`${API}/programs/${programId}/cohort-snapshot`, { method: 'POST', credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to generate snapshot'); }
+  return await res.json();
+}
+
+// ============ CME API ============
+
+export async function fetchCMECredits() {
+  const res = await fetch(`${API}/cme`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch CME credits'); }
+  return await res.json();
+}
+
+export async function fetchCMESummary() {
+  const res = await fetch(`${API}/cme/summary`, { credentials: 'include' });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to fetch CME summary'); }
+  return await res.json();
+}
+
+export async function recordCMECredit(activityType, credits, category, title) {
+  const res = await fetch(`${API}/cme/record`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify({ activityType, credits, category, title })
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to record CME credit'); }
+  return await res.json();
+}

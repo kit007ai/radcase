@@ -1059,6 +1059,12 @@ function setupEventListeners() {
       if (page === 'oral-boards' && window.oralBoards) {
         oralBoards.init(document.getElementById('oralBoardsContainer'));
       }
+      if (page === 'milestones' && window.milestones) {
+        milestones.init(document.getElementById('milestonesContainer'));
+      }
+      if (page === 'program-dashboard' && window.programDashboard) {
+        programDashboard.init(document.getElementById('programDashboardContainer'));
+      }
 
       // Sync bottom nav
       document.querySelectorAll('.bottom-nav-item').forEach(i => {
