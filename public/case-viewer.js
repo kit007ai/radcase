@@ -124,6 +124,11 @@
         }
       };
       document.addEventListener('keydown', this._keyHandler);
+
+      // AI Tutor: notify overlay that study mode loaded
+      this._notifyAIStudyLoaded();
+      // AI Tutor: offer initial guidance for step 0 (History)
+      this._triggerAIStepHook(0);
     },
 
     // ======================== Reference Mode ========================
@@ -218,6 +223,10 @@
 
       this._updateStepIndicator();
       this._updateAdvanceButton();
+
+      // AI Tutor: notify step change and trigger step-specific hook
+      this._notifyAIStepChanged(this.currentStep);
+      this._triggerAIStepHook(this.currentStep);
     },
 
     _revealImages() {
@@ -479,6 +488,163 @@
       const d = document.createElement('div');
       d.textContent = str;
       return d.innerHTML;
+    },
+
+    // ======================== AI Tutor Integration ========================
+
+    _isAIAvailable() {
+      return !!(window.aiTutor && window.aiTutor.isConfigured);
+    },
+
+    _notifyAIStudyLoaded() {
+      if (!this._isAIAvailable()) return;
+
+      // Set case data on AI tutor
+      window.aiTutor.setCase(this.caseData);
+      window.aiTutor.setStudyStep(0);
+
+      // Show the AI toggle button
+      const caseModal = document.querySelector('#caseModal .modal.modal-case');
+      if (caseModal) caseModal.classList.add('ai-available');
+
+      // Dispatch event for study-ai-overlay
+      document.dispatchEvent(new CustomEvent('caseviewer:study-loaded', {
+        detail: { caseId: this.caseId, caseData: this.caseData }
+      }));
+    },
+
+    _notifyAIStepChanged(step) {
+      document.dispatchEvent(new CustomEvent('study:step-changed', {
+        detail: { step: step, caseId: this.caseId }
+      }));
+    },
+
+    _triggerAIStepHook(step) {
+      // Non-blocking AI guidance at each step. Does nothing if AI not configured.
+      if (!this._isAIAvailable()) return;
+
+      // Insert a guidance card into the current step section (optional, non-blocking)
+      switch (step) {
+        case 0: // HISTORY - offer systematic approach guidance
+          this._insertAIGuidanceCard(
+            'cvActionBar',
+            'Review the clinical history carefully.',
+            'What systematic approach should I take?',
+            step
+          );
+          break;
+
+        case 1: // IMAGES - Socratic: "What do you notice?"
+          this._insertAIGuidanceCard(
+            'cvActionBar',
+            'Study the images before building your differential.',
+            'What search pattern should I use?',
+            step
+          );
+          break;
+
+        case 2: { // DIFFERENTIAL submitted - AI evaluates
+          const textarea = document.getElementById('cvDifferentialTextarea');
+          if (textarea) {
+            // Only fire evaluation if user typed something
+            const checkDifferential = () => {
+              const text = textarea.value.trim();
+              if (text && window.studyAIOverlay && window.studyAIOverlay.isOpen()) {
+                window.studyAIOverlay.sendGuidance(this.caseId, 'differential', text);
+              }
+            };
+            // Listen for when user advances from differential step
+            textarea.addEventListener('blur', checkDifferential, { once: true });
+          }
+          this._insertAIGuidanceCard(
+            'cvDifferentialSection',
+            'Build your differential. The AI can help if you get stuck.',
+            'Give me a hint',
+            step,
+            true // append after section content
+          );
+          break;
+        }
+
+        case 3: // REVEAL - explain diagnosis
+          this._insertAIGuidanceCard(
+            'cvDiagnosisSection',
+            'Compare your differential to the actual diagnosis.',
+            'Why does this diagnosis fit?',
+            step,
+            true
+          );
+          break;
+
+        case 4: // TEACHING - follow-up questions
+          this._insertAIGuidanceCard(
+            'cvTeachingSection',
+            'Deepen your understanding with follow-up questions.',
+            'Test my understanding',
+            step,
+            true
+          );
+          break;
+      }
+    },
+
+    _insertAIGuidanceCard(anchorId, contextText, actionLabel, step, appendAfter) {
+      // Remove any existing guidance card
+      const existing = document.querySelector('.ai-step-guidance');
+      if (existing) existing.remove();
+
+      const card = document.createElement('div');
+      card.className = 'ai-step-guidance';
+      card.innerHTML =
+        '<div class="ai-step-guidance-header">' +
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>' +
+          '</svg>' +
+          '<span>AI Tutor</span>' +
+        '</div>' +
+        '<div class="ai-step-guidance-text">' + this._esc(contextText) + '</div>' +
+        '<div class="ai-step-guidance-actions">' +
+          '<button class="ai-step-guidance-btn ai-guidance-ask">' + this._esc(actionLabel) + '</button>' +
+          '<button class="ai-step-guidance-btn ai-guidance-open">Open AI Chat</button>' +
+        '</div>';
+
+      // Wire buttons
+      const askBtn = card.querySelector('.ai-guidance-ask');
+      const openBtn = card.querySelector('.ai-guidance-open');
+
+      askBtn.addEventListener('click', () => {
+        if (window.studyAIOverlay) {
+          window.studyAIOverlay.open();
+          // If it's a hint action, request hint
+          if (actionLabel.toLowerCase().includes('hint')) {
+            window.studyAIOverlay._requestHint();
+          } else {
+            // Send the action label as a message
+            if (window.studyAIOverlay._input) {
+              window.studyAIOverlay._input.value = actionLabel;
+              window.studyAIOverlay._sendMessage();
+            }
+          }
+        }
+        card.remove();
+      });
+
+      openBtn.addEventListener('click', () => {
+        if (window.studyAIOverlay) {
+          window.studyAIOverlay.open();
+        }
+        card.remove();
+      });
+
+      // Insert into DOM
+      const anchor = document.getElementById(anchorId);
+      if (anchor) {
+        if (appendAfter) {
+          anchor.appendChild(card);
+        } else {
+          anchor.parentNode.insertBefore(card, anchor);
+        }
+      }
     }
   };
 })();

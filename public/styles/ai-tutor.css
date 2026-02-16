@@ -1,0 +1,965 @@
+/* RadCase AI Tutor Styles
+   Dark HUD aesthetic with indigo accents matching RadCase design system */
+
+/* ======================== Toggle Button ======================== */
+
+.ai-tutor-toggle {
+  display: none; /* Hidden until AI is configured and case is in study mode */
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: var(--radius-md, 8px);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent, #6366f1);
+  cursor: pointer;
+  transition: all var(--duration-normal, 300ms) var(--ease-default, ease);
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.ai-tutor-toggle:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--accent, #6366f1);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+}
+
+.ai-tutor-toggle.active {
+  background: var(--accent, #6366f1);
+  color: #fff;
+  border-color: var(--accent, #6366f1);
+}
+
+.ai-tutor-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Show toggle when AI is available (set via JS) */
+.ai-available .ai-tutor-toggle {
+  display: flex;
+}
+
+/* ======================== Chat Panel (Desktop Side Panel) ======================== */
+
+.ai-chat-panel {
+  position: absolute;
+  top: 0;
+  right: -340px;
+  width: 320px;
+  height: 100%;
+  background: var(--bg-secondary, #12121a);
+  border-left: 1px solid var(--border, rgba(255,255,255,0.12));
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  transition: right var(--duration-normal, 300ms) var(--ease-default, ease);
+  overflow: hidden;
+}
+
+.ai-chat-panel-open {
+  right: 0;
+}
+
+/* Adjust modal layout when panel is open */
+.modal-case.ai-panel-active .modal-body {
+  padding-right: 320px;
+}
+
+/* ======================== Chat Header ======================== */
+
+.ai-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+  background: var(--bg-tertiary, #1a1a25);
+  flex-shrink: 0;
+}
+
+.ai-chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent, #6366f1);
+}
+
+.ai-chat-title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #f4f4f5);
+}
+
+.ai-chat-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--text-muted, #9898a0);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms);
+}
+
+.ai-chat-close:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary, #f4f4f5);
+}
+
+/* ======================== Step Context Banner ======================== */
+
+.ai-chat-step-context {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(99, 102, 241, 0.06);
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #b8b8c0);
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.ai-step-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--accent, #6366f1);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ======================== Chat Messages ======================== */
+
+.ai-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scroll-behavior: smooth;
+}
+
+.ai-chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ai-chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+/* ======================== Message Bubbles ======================== */
+
+.ai-message {
+  max-width: 90%;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg, 12px);
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.55;
+  word-wrap: break-word;
+  animation: aiMessageFadeIn 0.25s ease;
+}
+
+@keyframes aiMessageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-message-user {
+  align-self: flex-end;
+  background: var(--accent, #6366f1);
+  color: #fff;
+  border-bottom-right-radius: var(--radius-sm, 4px);
+}
+
+.ai-message-assistant {
+  align-self: flex-start;
+  background: var(--bg-tertiary, #1a1a25);
+  color: var(--text-primary, #f4f4f5);
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-bottom-left-radius: var(--radius-sm, 4px);
+}
+
+.ai-message-assistant p {
+  margin: 0 0 6px;
+}
+
+.ai-message-assistant p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-message-assistant ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.ai-message-assistant li {
+  margin-bottom: 3px;
+}
+
+.ai-message-assistant strong {
+  color: var(--accent, #6366f1);
+}
+
+.ai-message-error {
+  align-self: flex-start;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger, #ef4444);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+/* Hint messages */
+.ai-message.hint {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.ai-message.hint-level-1 { border-left: 3px solid rgba(245, 158, 11, 0.4); }
+.ai-message.hint-level-2 { border-left: 3px solid rgba(245, 158, 11, 0.6); }
+.ai-message.hint-level-3 { border-left: 3px solid rgba(245, 158, 11, 0.8); }
+.ai-message.hint-level-4 { border-left: 3px solid var(--warning, #f59e0b); }
+
+/* Step transition messages */
+.ai-message.step-transition {
+  background: rgba(99, 102, 241, 0.05);
+  border-color: rgba(99, 102, 241, 0.2);
+  font-style: italic;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #b8b8c0);
+}
+
+/* Guidance messages */
+.ai-message.guidance {
+  border-left: 3px solid var(--accent, #6366f1);
+}
+
+.ai-message.guidance-questions {
+  background: rgba(99, 102, 241, 0.08);
+  font-weight: 500;
+}
+
+/* System messages */
+.ai-message.system-message {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #9898a0);
+  background: transparent;
+  border: none;
+  text-align: center;
+  align-self: center;
+  padding: 4px 12px;
+}
+
+/* ======================== Typing/Loading Indicator ======================== */
+
+.ai-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.ai-typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #6366f1);
+  animation: aiTypingBounce 1.4s ease-in-out infinite;
+}
+
+.ai-typing-indicator span:nth-child(1) { animation-delay: 0s; }
+.ai-typing-indicator span:nth-child(2) { animation-delay: 0.16s; }
+.ai-typing-indicator span:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes aiTypingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ai-loading {
+  padding: 8px 14px;
+}
+
+/* ======================== Quick Actions ======================== */
+
+.ai-chat-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.12));
+  flex-shrink: 0;
+}
+
+.ai-quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: var(--radius-full, 9999px);
+  background: var(--bg-tertiary, #1a1a25);
+  color: var(--text-secondary, #b8b8c0);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms);
+  white-space: nowrap;
+}
+
+.ai-quick-action-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--accent, #6366f1);
+  color: var(--accent, #6366f1);
+}
+
+/* ======================== Chat Input ======================== */
+
+.ai-chat-input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.12));
+  background: var(--bg-tertiary, #1a1a25);
+  flex-shrink: 0;
+}
+
+.ai-chat-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-secondary, #12121a);
+  color: var(--text-primary, #f4f4f5);
+  font-family: inherit;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.4;
+  resize: none;
+  max-height: 120px;
+  outline: none;
+  transition: border-color var(--duration-fast, 150ms);
+}
+
+.ai-chat-input::placeholder {
+  color: var(--text-muted, #9898a0);
+}
+
+.ai-chat-input:focus {
+  border-color: var(--accent, #6366f1);
+}
+
+.ai-chat-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  background: var(--accent, #6366f1);
+  color: #fff;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms);
+  flex-shrink: 0;
+}
+
+.ai-chat-send:hover {
+  background: var(--accent-hover, #818cf8);
+}
+
+.ai-chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ======================== Hint Button (standalone) ======================== */
+
+.ai-hint-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md, 8px);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--warning, #f59e0b);
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms);
+}
+
+.ai-hint-btn:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--warning, #f59e0b);
+}
+
+.ai-hint-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-hint-btn .hint-level-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.ai-hint-btn .hint-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.3);
+}
+
+.ai-hint-btn .hint-dot.used {
+  background: var(--warning, #f59e0b);
+}
+
+/* ======================== Step Guidance Cards ======================== */
+
+.ai-step-guidance {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.ai-step-guidance-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--accent, #6366f1);
+}
+
+.ai-step-guidance-text {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #b8b8c0);
+  line-height: 1.55;
+}
+
+.ai-step-guidance-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ai-step-guidance-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  color: var(--text-secondary, #b8b8c0);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms);
+}
+
+.ai-step-guidance-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--accent, #6366f1);
+  color: var(--accent, #6366f1);
+}
+
+/* ======================== Weakness Coach Modal ======================== */
+
+.weakness-coach {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-modal, 1000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-normal, 300ms);
+}
+
+.weakness-coach-open {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.weakness-coach-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.weakness-coach-modal {
+  position: relative;
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  background: var(--bg-secondary, #12121a);
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: var(--radius-lg, 12px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.5));
+}
+
+.weakness-coach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+  background: var(--bg-tertiary, #1a1a25);
+}
+
+.weakness-coach-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent, #6366f1);
+}
+
+.weakness-coach-header h2 {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: 600;
+  color: var(--text-primary, #f4f4f5);
+  margin: 0;
+}
+
+.weakness-coach-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--text-muted, #9898a0);
+  font-size: 20px;
+  cursor: pointer;
+  transition: all var(--duration-fast, 150ms);
+}
+
+.weakness-coach-close:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary, #f4f4f5);
+}
+
+.weakness-coach-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.weakness-coach-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.weakness-coach-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.weakness-coach-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+}
+
+/* ======================== Weakness Coach Loading ======================== */
+
+.weakness-coach-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  gap: 16px;
+  color: var(--text-muted, #9898a0);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.weakness-coach-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  gap: 16px;
+  text-align: center;
+  color: var(--text-secondary, #b8b8c0);
+}
+
+.weakness-coach-error-detail {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #9898a0);
+}
+
+/* ======================== Weakness Sections ======================== */
+
+.weakness-section {
+  margin-bottom: 28px;
+}
+
+.weakness-section:last-child {
+  margin-bottom: 0;
+}
+
+.weakness-section-title {
+  font-size: var(--text-base, 1rem);
+  font-weight: 600;
+  color: var(--text-primary, #f4f4f5);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+}
+
+.weakness-subsection-title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--text-secondary, #b8b8c0);
+  margin: 14px 0 10px;
+}
+
+/* ======================== Focus Area Cards ======================== */
+
+.weakness-focus-areas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.weakness-focus-card {
+  padding: 14px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  background: var(--bg-tertiary, #1a1a25);
+}
+
+.weakness-focus-label {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #f4f4f5);
+  margin-bottom: 4px;
+}
+
+.weakness-focus-detail {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #9898a0);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.weakness-focus-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ======================== Weakness Bars ======================== */
+
+.weakness-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weakness-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weakness-bar-label {
+  width: 120px;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #b8b8c0);
+  text-align: right;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weakness-bar-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.weakness-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.8s ease;
+}
+
+.weakness-bar-value {
+  width: 40px;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ======================== AI Analysis Text ======================== */
+
+.weakness-ai-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weakness-recommendation {
+  padding: 12px 16px;
+  border-radius: var(--radius-md, 8px);
+  border-left: 3px solid var(--accent, #6366f1);
+  background: rgba(99, 102, 241, 0.05);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #b8b8c0);
+  line-height: 1.55;
+}
+
+.weakness-recommendation p {
+  margin: 0;
+}
+
+.weakness-rec-reason {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-muted, #9898a0);
+  margin-bottom: 14px;
+  font-style: italic;
+}
+
+/* ======================== Practice Cards ======================== */
+
+.practice-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.practice-card {
+  padding: 14px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  background: var(--bg-tertiary, #1a1a25);
+  transition: all var(--duration-fast, 150ms);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.practice-card:hover {
+  border-color: var(--accent, #6366f1);
+  box-shadow: var(--shadow-glow, 0 0 20px rgba(99,102,241,0.15));
+}
+
+.practice-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.practice-card-modality {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--accent, #6366f1);
+  letter-spacing: 0.5px;
+}
+
+.practice-card-difficulty {
+  display: flex;
+  gap: 1px;
+}
+
+.difficulty-star {
+  font-size: 10px;
+  color: rgba(255,255,255,0.15);
+}
+
+.difficulty-star.filled {
+  color: var(--warning, #f59e0b);
+}
+
+.practice-card-title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #f4f4f5);
+  line-height: 1.3;
+}
+
+.practice-card-body-part {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #9898a0);
+}
+
+.practice-card-reason {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #b8b8c0);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.practice-card-btn {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.weakness-practice-action {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+/* ======================== Mobile Bottom Sheet ======================== */
+
+@media (max-width: 768px) {
+  .ai-chat-panel {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: -100%;
+    width: 100%;
+    height: 60vh;
+    border-left: none;
+    border-top: 1px solid var(--border, rgba(255,255,255,0.12));
+    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
+    z-index: calc(var(--z-modal, 1000) + 5);
+    transition: bottom var(--duration-normal, 300ms) var(--ease-default, ease);
+  }
+
+  .ai-chat-panel-open {
+    bottom: 0;
+    right: 0;
+  }
+
+  .modal-case.ai-panel-active .modal-body {
+    padding-right: 0;
+  }
+
+  /* Drag handle for bottom sheet */
+  .ai-chat-header::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .ai-chat-header {
+    position: relative;
+    padding-top: 18px;
+  }
+
+  /* Weakness coach mobile */
+  .weakness-coach-modal {
+    width: 100%;
+    max-width: 100%;
+    height: 90vh;
+    max-height: 90vh;
+    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
+    margin-top: auto;
+  }
+
+  .weakness-focus-areas {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .weakness-bar-label {
+    width: 80px;
+    font-size: var(--text-xs, 0.75rem);
+  }
+
+  .weakness-bar-value {
+    width: 36px;
+    font-size: var(--text-xs, 0.75rem);
+  }
+
+  .ai-tutor-toggle {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ai-tutor-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .ai-chat-panel {
+    height: 70vh;
+  }
+
+  .ai-chat-quick-actions {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .ai-quick-action-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .ai-chat-input {
+    font-size: var(--text-xs, 0.75rem);
+  }
+
+  .weakness-coach-modal {
+    height: 95vh;
+    max-height: 95vh;
+  }
+}

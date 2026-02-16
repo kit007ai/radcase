@@ -957,3 +957,102 @@ export async function deleteDraft(id) {
     throw new Error(err.error || 'Failed to delete draft');
   }
 }
+
+// ============ AI Tutor API ============
+
+export async function fetchAIStatus() {
+  const res = await fetch(`${API}/ai/status`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch AI status');
+  }
+  return await res.json();
+}
+
+export async function chatWithAI(caseId, message, conversationId) {
+  const body = { message };
+  if (caseId) body.caseId = caseId;
+  if (conversationId) body.conversationId = conversationId;
+
+  const res = await fetch(`${API}/ai/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'AI chat request failed');
+  }
+  return await res.json();
+}
+
+export async function getAIHint(caseId, hintLevel, step) {
+  const res = await fetch(`${API}/ai/hint/${caseId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ hintLevel, step })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to get AI hint');
+  }
+  return await res.json();
+}
+
+export async function getAIGuidance(caseId, step, userInput) {
+  const res = await fetch(`${API}/ai/guidance/${caseId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ step, userInput })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to get AI guidance');
+  }
+  return await res.json();
+}
+
+export async function evaluateReport(caseId, traineeReport) {
+  const res = await fetch(`${API}/ai/evaluate-report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ caseId, traineeReport })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to evaluate report');
+  }
+  return await res.json();
+}
+
+export async function fetchWeaknessAnalysis() {
+  const res = await fetch(`${API}/ai/weakness-analysis`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({})
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch weakness analysis');
+  }
+  return await res.json();
+}
+
+export async function fetchPracticeRecommendations() {
+  const res = await fetch(`${API}/ai/practice-recommendations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({})
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch practice recommendations');
+  }
+  return await res.json();
+}
