@@ -1,5 +1,9 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const { requireAuth } = require('../middleware/auth');
+const { calculateXp, awardXp, updateStreak } = require('./gamification');
+const { evaluateBadges } = require('../lib/badge-evaluator');
+const { getOrCreateDailyChallenge } = require('../lib/daily-challenge');
 
 const router = express.Router();
 
@@ -90,31 +94,274 @@ module.exports = function(db) {
     res.json({ ...quizCase, images });
   });
 
-  // Submit quiz attempt
+  // Submit quiz attempt (extended with XP + session tracking)
   router.post('/attempt', (req, res) => {
-    const { case_id, correct, time_spent_ms } = req.body;
+    const { case_id, correct, time_spent_ms, session_id, answer_index, correct_index } = req.body;
     const userId = req.user?.id || null;
 
     if (!case_id) {
       return res.status(400).json({ error: 'case_id is required' });
     }
 
-    const caseExists = db.prepare('SELECT id FROM cases WHERE id = ?').get(case_id);
-    if (!caseExists) {
+    const caseData = db.prepare('SELECT id, difficulty FROM cases WHERE id = ?').get(case_id);
+    if (!caseData) {
       return res.status(404).json({ error: 'Case not found' });
     }
 
-    db.prepare(`
-      INSERT INTO quiz_attempts (case_id, correct, time_spent_ms, user_id)
-      VALUES (?, ?, ?, ?)
-    `).run(case_id, correct ? 1 : 0, time_spent_ms || 0, userId);
+    let xpEarned = 0;
+    let streakInfo = null;
+    let levelUp = false;
+    let newBadges = [];
+    let sessionCorrectStreak = 0;
 
-    // Update spaced repetition progress if user is logged in
+    // Calculate correct streak within session for streak bonus
+    if (session_id && userId) {
+      const recentAttempts = db.prepare(`
+        SELECT correct FROM quiz_attempts WHERE session_id = ? AND user_id = ?
+        ORDER BY id DESC LIMIT 10
+      `).all(session_id, userId);
+      for (const a of recentAttempts) {
+        if (a.correct) sessionCorrectStreak++;
+        else break;
+      }
+    }
+
+    // Calculate and award XP for logged-in users
+    if (userId) {
+      xpEarned = calculateXp(correct, caseData.difficulty, time_spent_ms, sessionCorrectStreak);
+      const oldLevel = db.prepare('SELECT level FROM user_xp WHERE user_id = ?').get(userId);
+      const oldLevelNum = oldLevel?.level || 1;
+
+      const xpResult = awardXp(db, userId, xpEarned, correct ? 'correct_answer' : 'incorrect_answer', session_id, case_id);
+      levelUp = xpResult.level > oldLevelNum;
+
+      streakInfo = updateStreak(db, userId);
+      if (streakInfo.isNewDay) {
+        const dayBonus = 15;
+        awardXp(db, userId, dayBonus, 'first_session_of_day', session_id, null);
+        xpEarned += dayBonus;
+      }
+    }
+
+    // Record the attempt
+    db.prepare(`
+      INSERT INTO quiz_attempts (case_id, correct, time_spent_ms, user_id, session_id, answer_index, correct_index, xp_earned)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(case_id, correct ? 1 : 0, time_spent_ms || 0, userId, session_id || null, answer_index ?? null, correct_index ?? null, xpEarned);
+
+    // Update session stats
+    if (session_id) {
+      db.prepare(`
+        UPDATE quiz_sessions SET total_questions = total_questions + 1,
+        correct_count = correct_count + ?, xp_earned = xp_earned + ?
+        WHERE id = ?
+      `).run(correct ? 1 : 0, xpEarned, session_id);
+    }
+
+    // Update spaced repetition
     if (userId) {
       updateSpacedRepetition(db, userId, case_id, correct ? 1 : 0);
     }
 
-    res.json({ message: 'Attempt recorded' });
+    // Check for new badges (async, don't block response)
+    if (userId) {
+      try { newBadges = evaluateBadges(db, userId); } catch (e) {}
+    }
+
+    res.json({
+      message: 'Attempt recorded',
+      xpEarned,
+      levelUp,
+      newBadges: newBadges.map(b => ({ id: b.id, name: b.name, icon: b.icon, rarity: b.rarity })),
+      streak: streakInfo?.current_streak || 0,
+    });
+  });
+
+  // POST /api/quiz/session - Create a new quiz session
+  router.post('/session', (req, res) => {
+    const { mode, planId } = req.body;
+    const userId = req.user?.id;
+    const sessionId = uuidv4();
+
+    db.prepare(`
+      INSERT INTO quiz_sessions (id, user_id, mode, plan_id)
+      VALUES (?, ?, ?, ?)
+    `).run(sessionId, userId || 'guest', mode || 'quick', planId || null);
+
+    res.json({ sessionId });
+  });
+
+  // POST /api/quiz/session/:id/complete - Complete a session
+  router.post('/session/:id/complete', (req, res) => {
+    const session = db.prepare('SELECT * FROM quiz_sessions WHERE id = ?').get(req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    db.prepare('UPDATE quiz_sessions SET completed_at = CURRENT_TIMESTAMP WHERE id = ?').run(req.params.id);
+
+    const userId = req.user?.id;
+    let bonusXp = 0;
+
+    // Perfect session bonus
+    if (userId && session.total_questions >= 5 && session.correct_count === session.total_questions) {
+      bonusXp += 30;
+      awardXp(db, userId, 30, 'perfect_session', req.params.id, null);
+    }
+
+    // Check for new badges after session complete
+    let newBadges = [];
+    if (userId) {
+      try { newBadges = evaluateBadges(db, userId); } catch (e) {}
+    }
+
+    res.json({
+      completed: true,
+      totalQuestions: session.total_questions,
+      correctCount: session.correct_count,
+      xpEarned: session.xp_earned + bonusXp,
+      bonusXp,
+      newBadges: newBadges.map(b => ({ id: b.id, name: b.name, icon: b.icon, rarity: b.rarity })),
+    });
+  });
+
+  // GET /api/quiz/daily-challenge - Get today's challenge
+  router.get('/daily-challenge', (req, res) => {
+    const challenge = getOrCreateDailyChallenge(db);
+    if (!challenge) return res.json({ available: false });
+
+    const userId = req.user?.id;
+    let completed = false;
+    if (userId) {
+      const result = db.prepare('SELECT * FROM user_daily_challenge WHERE user_id = ? AND challenge_date = ?')
+        .get(userId, challenge.date);
+      if (result) completed = true;
+    }
+
+    // Load case data
+    const cases = challenge.caseIds.map(id => {
+      const c = db.prepare(`
+        SELECT c.*, (SELECT filename FROM images WHERE case_id = c.id ORDER BY sequence LIMIT 1) as thumbnail
+        FROM cases c WHERE c.id = ?
+      `).get(id);
+      return c;
+    }).filter(Boolean);
+
+    res.json({
+      available: true,
+      date: challenge.date,
+      completed,
+      cases: completed ? [] : cases,
+      caseCount: challenge.caseIds.length,
+    });
+  });
+
+  // POST /api/quiz/daily-challenge - Submit daily challenge results
+  router.post('/daily-challenge', requireAuth, (req, res) => {
+    const { score, total } = req.body;
+    const userId = req.user.id;
+    const today = new Date().toISOString().split('T')[0];
+
+    const existing = db.prepare('SELECT * FROM user_daily_challenge WHERE user_id = ? AND challenge_date = ?')
+      .get(userId, today);
+    if (existing) return res.status(400).json({ error: 'Already completed today' });
+
+    let xpEarned = 50; // completion bonus
+    if (score === total) xpEarned += 25; // perfect bonus
+
+    awardXp(db, userId, xpEarned, 'daily_challenge', null, null);
+
+    db.prepare(`
+      INSERT INTO user_daily_challenge (user_id, challenge_date, score, total, xp_earned)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(userId, today, score, total, xpEarned);
+
+    res.json({ xpEarned, perfect: score === total });
+  });
+
+  // POST /api/quiz/finding-attempt - Submit "find the finding" attempt
+  router.post('/finding-attempt', (req, res) => {
+    const { case_id, image_id, click_x, click_y } = req.body;
+
+    const regions = db.prepare('SELECT * FROM case_finding_regions WHERE case_id = ? AND image_id = ?')
+      .all(case_id, image_id);
+
+    if (regions.length === 0) {
+      return res.json({ hit: false, message: 'No finding regions defined', regions: [] });
+    }
+
+    let hit = false;
+    let bestDistance = Infinity;
+    let closestRegion = null;
+
+    for (const region of regions) {
+      const data = JSON.parse(region.region_data);
+      const distance = calculateDistance(click_x, click_y, data);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        closestRegion = region;
+      }
+      if (distance <= 1.0) hit = true;
+    }
+
+    res.json({
+      hit,
+      partialCredit: !hit && bestDistance <= 1.5,
+      regions: regions.map(r => ({ ...r, region_data: JSON.parse(r.region_data) })),
+      closestDistance: bestDistance,
+    });
+  });
+
+  // GET /api/quiz/mcq-options/:caseId - Generate MCQ options for a case
+  router.get('/mcq-options/:caseId', (req, res) => {
+    const caseData = db.prepare('SELECT * FROM cases WHERE id = ?').get(req.params.caseId);
+    if (!caseData || !caseData.diagnosis) {
+      return res.status(404).json({ error: 'Case not found or has no diagnosis' });
+    }
+
+    // Get plausible distractors from same body_part/modality
+    const distractors = db.prepare(`
+      SELECT DISTINCT diagnosis FROM cases
+      WHERE id != ? AND diagnosis IS NOT NULL AND diagnosis != ''
+        AND (body_part = ? OR modality = ?)
+      ORDER BY RANDOM() LIMIT 10
+    `).all(caseData.id, caseData.body_part, caseData.modality);
+
+    const wrongAnswers = [];
+    for (const d of distractors) {
+      if (d.diagnosis !== caseData.diagnosis && !wrongAnswers.includes(d.diagnosis)) {
+        wrongAnswers.push(d.diagnosis);
+        if (wrongAnswers.length >= 3) break;
+      }
+    }
+
+    // Fallback distractors
+    if (wrongAnswers.length < 3) {
+      const fallbacks = db.prepare(`
+        SELECT DISTINCT diagnosis FROM cases
+        WHERE id != ? AND diagnosis IS NOT NULL AND diagnosis != ? AND diagnosis != ''
+        ORDER BY RANDOM() LIMIT ?
+      `).all(caseData.id, caseData.diagnosis, 3 - wrongAnswers.length);
+      for (const d of fallbacks) {
+        if (!wrongAnswers.includes(d.diagnosis)) wrongAnswers.push(d.diagnosis);
+      }
+    }
+
+    const staticFallbacks = ['Normal study', 'Artifact', 'Incidental finding'];
+    while (wrongAnswers.length < 3) {
+      const f = staticFallbacks[wrongAnswers.length];
+      if (f && f !== caseData.diagnosis) wrongAnswers.push(f);
+      else break;
+    }
+
+    // Shuffle options, track correct index
+    const options = [caseData.diagnosis, ...wrongAnswers];
+    // Fisher-Yates shuffle
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+    const correctIndex = options.indexOf(caseData.diagnosis);
+
+    res.json({ options, correctIndex });
   });
 
   // Get quiz stats (user-specific if logged in)
@@ -240,3 +487,21 @@ module.exports = function(db) {
 
 // Export for use by sync routes
 module.exports.updateSpacedRepetition = updateSpacedRepetition;
+
+// Calculate distance from click to region (normalized: <=1.0 = inside, 1.0-1.5 = partial)
+function calculateDistance(clickX, clickY, regionData) {
+  if (regionData.type === 'ellipse') {
+    const { cx, cy, rx, ry } = regionData;
+    const dx = (clickX - cx) / rx;
+    const dy = (clickY - cy) / ry;
+    return Math.sqrt(dx * dx + dy * dy);
+  } else if (regionData.type === 'rect') {
+    const { x, y, w, h } = regionData;
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const dx = Math.max(0, Math.abs(clickX - cx) - w / 2) / (w / 2);
+    const dy = Math.max(0, Math.abs(clickY - cy) - h / 2) / (h / 2);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  return Infinity;
+}
