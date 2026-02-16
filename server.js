@@ -523,6 +523,45 @@ db.exec(`
   );
 `);
 
+// AI Case Builder tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS case_drafts (
+    id TEXT PRIMARY KEY,
+    source_report TEXT,
+    source_dicom_metadata TEXT,
+    generated_content TEXT,
+    "references" TEXT,
+    status TEXT DEFAULT 'generating',
+    ai_provider TEXT,
+    ai_model TEXT,
+    generation_time_ms INTEGER,
+    created_by TEXT,
+    reviewed_by TEXT,
+    review_notes TEXT,
+    published_case_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (reviewed_by) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS case_references (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    draft_id TEXT,
+    case_id TEXT,
+    source_name TEXT NOT NULL,
+    source_url TEXT,
+    source_type TEXT,
+    quality_tier TEXT,
+    quality_score INTEGER,
+    citation_text TEXT,
+    relevant_section TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (draft_id) REFERENCES case_drafts(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+  );
+`);
+
 // Active sessions table
 db.exec(`
   CREATE TABLE IF NOT EXISTS active_sessions (
@@ -699,6 +738,10 @@ app.use('/api', syncRoutes);
 // Admin routes: /api/admin/*
 const adminRoutes = require('./routes/admin')(db, monitor);
 app.use('/api/admin', adminRoutes);
+
+// Case Builder routes: /api/case-builder/*
+const caseBuilderRoutes = require('./routes/case-builder')(db);
+app.use('/api/case-builder', caseBuilderRoutes);
 
 // Public data endpoints (available without /admin prefix)
 app.get('/api/filters', (req, res) => {
