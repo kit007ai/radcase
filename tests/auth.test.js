@@ -48,7 +48,19 @@ describe('Authentication Endpoints', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('at least 4 characters');
+      expect(response.body.error).toContain('at least 8 characters');
+    });
+
+    test('should reject password shorter than 8 characters', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          username: `testuser_short_${crypto.randomBytes(4).toString('hex')}`,
+          password: '1234567'
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('at least 8 characters');
     });
 
     test('should reject duplicate username', async () => {

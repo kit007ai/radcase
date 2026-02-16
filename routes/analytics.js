@@ -9,7 +9,7 @@ module.exports = function(db) {
   router.get('/deep', (req, res) => {
     const userId = req.user?.id;
     if (!userId) {
-      return res.json({ error: 'Login required for deep analytics', authenticated: false });
+      return res.status(401).json({ error: 'Login required for deep analytics', authenticated: false });
     }
 
     // Performance by body part

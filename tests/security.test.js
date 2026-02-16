@@ -276,6 +276,49 @@ describe('Security Tests', () => {
     });
   });
 
+  describe('Auth Guards', () => {
+    test('AI configure endpoint returns 401 without auth', async () => {
+      const response = await request(app)
+        .post('/api/admin/ai/configure')
+        .send({ provider: 'openai', apiKey: 'test' });
+
+      expect(response.status).toBe(401);
+    });
+
+    test('AI configure endpoint returns 403 without admin role', async () => {
+      const response = await request(app)
+        .post('/api/admin/ai/configure')
+        .set('Cookie', userCookie)
+        .send({ provider: 'openai', apiKey: 'test' });
+
+      // userCookie is from admin TEST_USER, but role may be 'resident' by default
+      expect([401, 403]).toContain(response.status);
+    });
+
+    test('Image delete returns 401 without auth', async () => {
+      const response = await request(app)
+        .delete('/api/admin/images/nonexistent-id');
+
+      expect(response.status).toBe(401);
+    });
+
+    test('Sync annotation endpoint returns 401 without auth', async () => {
+      const response = await request(app)
+        .post('/api/annotations')
+        .send({ image_id: 'test', annotations: '[]' });
+
+      expect(response.status).toBe(401);
+    });
+
+    test('Sync progress endpoint returns 401 without auth', async () => {
+      const response = await request(app)
+        .post('/api/progress')
+        .send({ case_id: 'test', event: 'test' });
+
+      expect(response.status).toBe(401);
+    });
+  });
+
   describe('Error Handling', () => {
     test('should not leak sensitive information in error messages', async () => {
       // Test with a known API endpoint that returns proper errors

@@ -315,8 +315,8 @@ module.exports = function(db) {
       `).run(req.params.id, case_id, displayOrder, now);
 
       // Update case_count
-      db.prepare('UPDATE collections SET case_count = case_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-        .run(req.params.id);
+      db.prepare('UPDATE collections SET case_count = (SELECT COUNT(*) FROM collection_cases WHERE collection_id = ?) WHERE id = ?')
+        .run(req.params.id, req.params.id);
 
       // Set cover_image to first case's thumbnail if not set
       if (!collection.cover_image) {
@@ -361,8 +361,8 @@ module.exports = function(db) {
       }
 
       // Update case_count
-      db.prepare('UPDATE collections SET case_count = case_count - 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-        .run(req.params.id);
+      db.prepare('UPDATE collections SET case_count = (SELECT COUNT(*) FROM collection_cases WHERE collection_id = ?) WHERE id = ?')
+        .run(req.params.id, req.params.id);
 
       res.json({ message: 'Case removed from collection' });
     } catch (err) {

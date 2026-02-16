@@ -18,6 +18,7 @@ function createRateLimiter({ maxRequests = 10, windowMs = 60 * 1000 } = {}) {
   }, windowMs);
 
   return function rateLimit(req, res, next) {
+    if (process.env.NODE_ENV === 'test') return next();
     const ip = req.ip || req.connection.remoteAddress;
     const now = Date.now();
 

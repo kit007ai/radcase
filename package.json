@@ -43,6 +43,7 @@
     "dicom-parser": "^1.8.21",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.3",
     "lru-cache": "^11.2.5",

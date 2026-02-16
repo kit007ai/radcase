@@ -281,7 +281,7 @@ module.exports = function(db) {
   router.post('/finding-attempt', (req, res) => {
     const { case_id, image_id, click_x, click_y } = req.body;
 
-    const regions = db.prepare('SELECT * FROM case_finding_regions WHERE case_id = ? AND image_id = ?')
+    const regions = db.prepare('SELECT id, case_id, image_id, finding_type AS region_type, region_data, label, description FROM case_key_findings WHERE case_id = ? AND image_id = ?')
       .all(case_id, image_id);
 
     if (regions.length === 0) {

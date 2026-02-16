@@ -46,7 +46,7 @@ module.exports = function(db, VAPID_PUBLIC_KEY) {
   });
 
   // Annotations sync endpoint (used by service worker background sync)
-  router.post('/annotations', (req, res) => {
+  router.post('/annotations', requireAuth, (req, res) => {
     const { image_id, case_id, annotations } = req.body;
     if (!image_id || !annotations) {
       return res.status(400).json({ error: 'image_id and annotations required' });
@@ -64,7 +64,7 @@ module.exports = function(db, VAPID_PUBLIC_KEY) {
   });
 
   // Progress sync endpoint (used by service worker background sync)
-  router.post('/progress', (req, res) => {
+  router.post('/progress', requireAuth, (req, res) => {
     const userId = req.user?.id;
     const { case_id, event, data, sessionId } = req.body;
 

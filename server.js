@@ -10,6 +10,7 @@ const cookieParser = require('cookie-parser');
 const { WebSocketServer } = require('ws');
 const webpush = require('web-push');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3457;
@@ -472,17 +473,6 @@ db.exec(`
     xp_earned INTEGER DEFAULT 0
   );
 
-  -- Image Finding Regions
-  CREATE TABLE IF NOT EXISTS case_finding_regions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    case_id TEXT NOT NULL,
-    image_id TEXT NOT NULL,
-    region_type TEXT NOT NULL DEFAULT 'ellipse',
-    region_data TEXT NOT NULL,
-    label TEXT,
-    description TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
 `);
 
 // ============ Seed Badges & Study Plan Templates ============
@@ -558,6 +548,15 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id);
 `);
 
+// ============ Performance Indexes ============
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_quiz_attempts_user_date ON quiz_attempts(user_id, attempted_at);
+  CREATE INDEX IF NOT EXISTS idx_case_discussions_case_pinned ON case_discussions(case_id, pinned);
+  CREATE INDEX IF NOT EXISTS idx_collections_created_by ON collections(created_by);
+  CREATE INDEX IF NOT EXISTS idx_xp_transactions_user ON xp_transactions(user_id, created_at);
+  CREATE INDEX IF NOT EXISTS idx_collection_cases_collection ON collection_cases(collection_id, display_order);
+`);
+
 // ============ PERFORMANCE MIDDLEWARE ============
 const compression = require('compression');
 const { getCache, CacheInvalidator } = require('./lib/cache');
@@ -625,6 +624,11 @@ app.use(express.static(STATIC_DIR, {
     }
   }
 }));
+
+// ============ Global API Rate Limiting ============
+if (process.env.NODE_ENV !== 'test') {
+  app.use('/api', rateLimit({ windowMs: 60000, max: 100, standardHeaders: true, legacyHeaders: false }));
+}
 
 // ============ Mount Route Modules ============
 

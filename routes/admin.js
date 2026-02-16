@@ -279,7 +279,7 @@ module.exports = function(db, monitor) {
     });
   });
 
-  router.post('/ai/configure', (req, res) => {
+  router.post('/ai/configure', requireAdmin, (req, res) => {
     const { provider, apiKey, model, baseUrl } = req.body;
     if (provider) setAIConfig('provider', provider);
     if (apiKey) setAIConfig('apiKey', apiKey);
@@ -288,24 +288,24 @@ module.exports = function(db, monitor) {
     res.json({ success: true });
   });
 
-  router.post('/ai/chat', async (req, res) => {
+  router.post('/ai/chat', requireAdmin, async (req, res) => {
     const config = getAIConfig();
     if (!config.provider || !config.apiKey) {
-      return res.json({ error: 'AI not configured' });
+      return res.status(400).json({ error: 'AI not configured' });
     }
     const { systemPrompt, messages } = req.body;
     try {
       const response = await callAI(config, systemPrompt, messages);
       res.json({ response });
     } catch (err) {
-      res.json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   });
 
-  router.post('/ai/complete', async (req, res) => {
+  router.post('/ai/complete', requireAdmin, async (req, res) => {
     const config = getAIConfig();
     if (!config.provider || !config.apiKey) {
-      return res.json({ error: 'AI not configured' });
+      return res.status(400).json({ error: 'AI not configured' });
     }
     const { prompt, maxTokens } = req.body;
     try {
@@ -314,7 +314,7 @@ module.exports = function(db, monitor) {
       ], maxTokens);
       res.json({ response });
     } catch (err) {
-      res.json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   });
 
@@ -451,7 +451,7 @@ module.exports = function(db, monitor) {
   });
 
   // Delete image
-  router.delete('/images/:id', (req, res) => {
+  router.delete('/images/:id', requireAuth, (req, res) => {
     const image = db.prepare('SELECT filename FROM images WHERE id = ?').get(req.params.id);
     if (image) {
       fs.unlink(path.join(UPLOAD_DIR, image.filename), () => {});
