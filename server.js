@@ -562,6 +562,46 @@ db.exec(`
   );
 `);
 
+// AI Tutor tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_conversations (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    case_id TEXT,
+    conversation_type TEXT DEFAULT 'chat',
+    messages TEXT NOT NULL DEFAULT '[]',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS weakness_analysis (
+    user_id TEXT PRIMARY KEY,
+    analysis_data TEXT NOT NULL DEFAULT '{}',
+    weak_body_parts TEXT,
+    weak_modalities TEXT,
+    weak_diagnoses TEXT,
+    recommended_case_ids TEXT,
+    last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS report_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    trainee_report TEXT NOT NULL,
+    ai_feedback TEXT,
+    score REAL,
+    missed_findings TEXT,
+    overcalls TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+  );
+`);
+
 // Active sessions table
 db.exec(`
   CREATE TABLE IF NOT EXISTS active_sessions (
@@ -742,6 +782,10 @@ app.use('/api/admin', adminRoutes);
 // Case Builder routes: /api/case-builder/*
 const caseBuilderRoutes = require('./routes/case-builder')(db);
 app.use('/api/case-builder', caseBuilderRoutes);
+
+// AI Tutor routes: /api/ai/*
+const aiTutorRoutes = require('./routes/ai-tutor')(db);
+app.use('/api/ai', aiTutorRoutes);
 
 // Public data endpoints (available without /admin prefix)
 app.get('/api/filters', (req, res) => {
