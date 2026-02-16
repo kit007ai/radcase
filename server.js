@@ -602,6 +602,36 @@ db.exec(`
   );
 `);
 
+// Oral Board Simulator tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS oral_board_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    mode TEXT NOT NULL DEFAULT 'practice',
+    status TEXT NOT NULL DEFAULT 'active',
+    transcript TEXT NOT NULL DEFAULT '[]',
+    evaluation TEXT,
+    score REAL,
+    duration_ms INTEGER,
+    turn_count INTEGER DEFAULT 0,
+    started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS oral_board_annotations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    turn_number INTEGER NOT NULL,
+    annotation_type TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES oral_board_sessions(id) ON DELETE CASCADE
+  );
+`);
+
 // Active sessions table
 db.exec(`
   CREATE TABLE IF NOT EXISTS active_sessions (
@@ -786,6 +816,10 @@ app.use('/api/case-builder', caseBuilderRoutes);
 // AI Tutor routes: /api/ai/*
 const aiTutorRoutes = require('./routes/ai-tutor')(db);
 app.use('/api/ai', aiTutorRoutes);
+
+// Oral Board Simulator routes: /api/oral-boards/*
+const oralBoardRoutes = require('./routes/oral-boards')(db);
+app.use('/api/oral-boards', oralBoardRoutes);
 
 // Public data endpoints (available without /admin prefix)
 app.get('/api/filters', (req, res) => {
