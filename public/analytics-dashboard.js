@@ -317,7 +317,7 @@ class AnalyticsDashboard {
     el.innerHTML = weak.map(c => `
       <div class="weakness-item" onclick="viewCase('${c.id}')" style="cursor:pointer">
         <div class="weakness-info">
-          <span class="weakness-title">${escapeHtml(c.title || c.diagnosis)}</span>
+          <span class="weakness-title">${(typeof window.escapeHtml === 'function' ? window.escapeHtml : (s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }))(c.title || c.diagnosis)}</span>
           <span class="weakness-meta">${c.body_part || ''} ${c.modality ? '&middot; ' + c.modality : ''}</span>
         </div>
         <div class="weakness-stats">

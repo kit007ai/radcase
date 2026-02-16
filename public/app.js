@@ -30,6 +30,7 @@ window.closePreferencesModal = closePreferencesModal;
 window.savePreferencesAndClose = savePreferencesAndClose;
 window.resetPreferences = resetPreferences;
 window.toast = toast;
+window.radcaseState = state;
 
 // ============ Authentication ============
 

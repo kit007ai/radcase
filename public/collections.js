@@ -4,6 +4,9 @@ window.collectionsManager = {
   activeTab: 'my', // 'my', 'curated', 'shared'
 
   async init() {
+    if (!window.radcaseState?.currentUser) {
+      this.activeTab = 'curated';
+    }
     this.render();
     await this.loadCollections();
   },
@@ -26,9 +29,24 @@ window.collectionsManager = {
 
   async loadCollections() {
     try {
-      let url = '/api/collections';
-      if (this.activeTab === 'curated') url = '/api/collections/public';
+      const isAuthed = !!(window.radcaseState?.currentUser);
+      let url;
+      if (this.activeTab === 'curated' || this.activeTab === 'shared') {
+        url = '/api/collections/public';
+      } else if (isAuthed) {
+        url = '/api/collections';
+      } else {
+        // Not authenticated - show sign-in prompt for My Collections
+        this.collections = [];
+        this.renderAuthPrompt();
+        return;
+      }
       const res = await fetch(url, { credentials: 'include' });
+      if (res.status === 401) {
+        this.collections = [];
+        this.renderAuthPrompt();
+        return;
+      }
       const data = await res.json();
       this.collections = data.collections || [];
       this.renderGrid();
@@ -37,6 +55,20 @@ window.collectionsManager = {
       this.collections = [];
       this.renderGrid();
     }
+  },
+
+  renderAuthPrompt() {
+    const grid = document.getElementById('collectionsGrid');
+    if (!grid) return;
+    grid.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;text-align:center;padding:2rem;grid-column:1/-1;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" style="margin-bottom:0.75rem;">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+        <h3 style="color:#e2e8f0;margin:0 0 0.5rem;">Sign In Required</h3>
+        <p style="color:#94a3b8;margin:0 0 1rem;">Sign in to create and manage your personal collections.</p>
+        <button onclick="window.showAuthModal && showAuthModal()" style="background:#6366f1;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:0.5rem;cursor:pointer;font-size:0.9rem;">Sign In</button>
+      </div>`;
   },
 
   switchTab(tab) {

@@ -2,9 +2,8 @@ const express = require('express');
 const { requireAuth } = require('../middleware/auth');
 const MilestoneEngine = require('../lib/milestone-engine');
 
-const router = express.Router();
-
 module.exports = function(db) {
+  const router = express.Router();
   const engine = new MilestoneEngine(db);
 
   // GET /api/milestones - Get all milestones with user's progress

@@ -1,10 +1,10 @@
 // RadCase Service Worker - PWA Offline Functionality
 // Version 1.0.0 - Sprint 2 Advanced Mobile UX
 
-const CACHE_NAME = 'radcase-v2.0.0';
-const STATIC_CACHE = 'radcase-static-v2';
-const API_CACHE = 'radcase-api-v2';
-const DICOM_CACHE = 'radcase-dicom-v2';
+const CACHE_NAME = 'radcase-v3.0.0';
+const STATIC_CACHE = 'radcase-static-v3';
+const API_CACHE = 'radcase-api-v3';
+const DICOM_CACHE = 'radcase-dicom-v3';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
@@ -13,19 +13,50 @@ const STATIC_FILES = [
   '/manifest.json',
   '/critical.css',
   '/mobile.css',
+  '/styles/design-tokens.css',
+  '/styles/base.css',
+  '/styles/layout.css',
+  '/styles/components.css',
+  '/styles/views.css',
+  '/styles/quiz.css',
+  '/styles/case-library.css',
+  '/styles/case-builder.css',
+  '/styles/ai-tutor.css',
+  '/styles/oral-boards.css',
+  '/styles/milestones.css',
   '/lazy-loader.js',
+  '/performance-optimizer.js',
+  '/pwa-manager.js',
   '/annotate.js',
-  '/dicom-viewer.js',
   '/presentation.js',
   '/spaced-repetition.js',
-  '/touch-gestures.js',
-  '/swipe-quiz.js',
-  '/pwa-manager.js',
-  '/micro-learning.js',
-  '/performance-optimizer.js',
+  '/dicom-viewer.js',
   '/sync-manager.js',
+  '/touch-gestures.js',
   '/voice-narrator.js',
-  '/ai-tutor.js'
+  '/quiz-engine.js',
+  '/quiz-cards.js',
+  '/quiz-gamification.js',
+  '/quiz-study-plans.js',
+  '/analytics-dashboard.js',
+  '/finding-quiz.js',
+  '/case-viewer.js',
+  '/differential-input.js',
+  '/key-findings-overlay.js',
+  '/discussions.js',
+  '/related-cases.js',
+  '/collections.js',
+  '/case-builder.js',
+  '/ai-tutor.js',
+  '/study-ai-overlay.js',
+  '/weakness-coach.js',
+  '/oral-boards.js',
+  '/milestones.js',
+  '/program-dashboard.js',
+  '/state.js',
+  '/api.js',
+  '/ui.js',
+  '/app.js'
 ];
 
 // Install event - cache static resources
@@ -159,7 +190,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static files - cache first with network fallback
+  // HTML and JS files - network first to ensure freshness
+  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname === '/') {
+    event.respondWith(networkFirstStrategy(request, STATIC_CACHE));
+    return;
+  }
+
+  // Other static files (CSS, images, fonts) - cache first with network fallback
   event.respondWith(cacheFirstStrategy(request, STATIC_CACHE));
 });
 

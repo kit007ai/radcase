@@ -30,6 +30,18 @@
 
   async function init(el) {
     container = el;
+    if (!window.radcaseState?.currentUser) {
+      container.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;text-align:center;padding:2rem;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" style="margin-bottom:1rem;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <h3 style="color:#e2e8f0;margin:0 0 0.5rem;">Sign In Required</h3>
+          <p style="color:#94a3b8;margin:0 0 1rem;">Sign in with a program director account to access the program dashboard.</p>
+          <button onclick="window.showAuthModal && showAuthModal()" style="background:#6366f1;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:0.5rem;cursor:pointer;font-size:0.9rem;">Sign In</button>
+        </div>`;
+      return;
+    }
     renderLoading();
     await loadPrograms();
   }

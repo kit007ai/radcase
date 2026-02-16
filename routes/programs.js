@@ -3,9 +3,8 @@ const { v4: uuidv4 } = require('uuid');
 const { requireAuth } = require('../middleware/auth');
 const MilestoneEngine = require('../lib/milestone-engine');
 
-const router = express.Router();
-
 module.exports = function(db) {
+  const router = express.Router();
   const engine = new MilestoneEngine(db);
 
   // Helper: Check if user is program director or faculty for a program
