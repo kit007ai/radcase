@@ -1056,3 +1056,101 @@ export async function fetchPracticeRecommendations() {
   }
   return await res.json();
 }
+
+// ============ Oral Board API ============
+
+export async function createOralBoardSession(caseId, mode, difficulty) {
+  const body = { mode: mode || 'practice' };
+  if (caseId) body.caseId = caseId;
+  if (difficulty) body.difficulty = difficulty;
+  const res = await fetch(`${API}/oral-boards/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create oral board session');
+  }
+  return await res.json();
+}
+
+export async function submitOralBoardResponse(sessionId, message, isVoiceTranscript) {
+  const res = await fetch(`${API}/oral-boards/sessions/${sessionId}/respond`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ message, isVoiceTranscript: !!isVoiceTranscript })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to submit oral board response');
+  }
+  return await res.json();
+}
+
+export async function endOralBoardSession(sessionId, reason) {
+  const res = await fetch(`${API}/oral-boards/sessions/${sessionId}/end`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ reason: reason || 'user_ended' })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to end oral board session');
+  }
+  return await res.json();
+}
+
+export async function fetchOralBoardSessions(status, limit, offset) {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  if (limit) params.append('limit', limit);
+  if (offset) params.append('offset', offset);
+  const res = await fetch(`${API}/oral-boards/sessions?${params}`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch oral board sessions');
+  }
+  return await res.json();
+}
+
+export async function fetchOralBoardSession(sessionId) {
+  const res = await fetch(`${API}/oral-boards/sessions/${sessionId}`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch oral board session');
+  }
+  return await res.json();
+}
+
+export async function fetchOralBoardReplay(sessionId) {
+  const res = await fetch(`${API}/oral-boards/sessions/${sessionId}/replay`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch oral board replay');
+  }
+  return await res.json();
+}
+
+export async function deleteOralBoardSession(sessionId) {
+  const res = await fetch(`${API}/oral-boards/sessions/${sessionId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete oral board session');
+  }
+}
+
+export async function fetchOralBoardStats() {
+  const res = await fetch(`${API}/oral-boards/stats`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch oral board stats');
+  }
+  return await res.json();
+}

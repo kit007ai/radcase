@@ -117,7 +117,8 @@ export function showPage(page) {
     'case-builder': 'AI Case Builder',
     quiz: 'Quiz Mode',
     collections: 'Collections',
-    analytics: 'Analytics'
+    analytics: 'Analytics',
+    'oral-boards': 'Oral Board Prep'
   };
   announcePageChange(pageNames[page] || page);
 

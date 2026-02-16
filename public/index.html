@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/styles/case-library.css?v=1">
   <link rel="stylesheet" href="/styles/case-builder.css?v=1">
   <link rel="stylesheet" href="/styles/ai-tutor.css?v=1">
+  <link rel="stylesheet" href="/styles/oral-boards.css?v=1">
   <script src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
   <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
   <script src="https://unpkg.com/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
@@ -80,6 +81,9 @@
         </button>
         <button class="nav-item" data-page="analytics" aria-label="View analytics">
           <span class="icon" aria-hidden="true">&#x1F4CA;</span> Analytics
+        </button>
+        <button class="nav-item" data-page="oral-boards" aria-label="Oral Board Prep">
+          <span class="icon" aria-hidden="true">&#x1F399;</span> Oral Boards
         </button>
         <button class="nav-item nav-item-preferences" onclick="openPreferencesModal()" aria-label="Preferences">
           <span class="icon" aria-hidden="true">&#x2699;&#xFE0F;</span> Preferences
@@ -270,6 +274,12 @@
       <section id="page-analytics" class="page hidden">
         <div class="page-header"><h2>Analytics</h2><p>Deep performance insights and board readiness</p></div>
         <div id="analyticsDashboard"></div>
+      </section>
+
+      <!-- Oral Board Prep Page -->
+      <section id="page-oral-boards" class="page hidden">
+        <div class="page-header"><h2>Oral Board Prep</h2><p>AI-powered ABR oral board simulation</p></div>
+        <div id="oralBoardsContainer"></div>
       </section>
     </main>
   </div>
@@ -488,6 +498,7 @@
   <script src="/ai-tutor.js?v=1" defer></script>
   <script src="/study-ai-overlay.js?v=1" defer></script>
   <script src="/weakness-coach.js?v=1" defer></script>
+  <script src="/oral-boards.js?v=1" defer></script>
   <script type="module" src="/app.js?v=6"></script>
 </body>
 </html>
