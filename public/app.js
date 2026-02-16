@@ -141,6 +141,9 @@ async function loadCases() {
   if (body_part) params.append('body_part', body_part);
   if (difficulty) params.append('difficulty', difficulty);
 
+  // Show loading state
+  document.getElementById('caseGrid').innerHTML = '<div class="loading-state"><div class="loading-spinner"></div><p style="color: var(--text-secondary); margin-top: 1rem;">Loading cases...</p></div>';
+
   try {
     let cases = await api.fetchCases(params);
     if (state.bookmarkFilterActive && state.bookmarkedCaseIds.size > 0) {
@@ -151,11 +154,19 @@ async function loadCases() {
     renderCases(cases);
   } catch (err) {
     console.error('Failed to load cases:', err);
+    document.getElementById('caseGrid').innerHTML = '<div class="loading-state"><p style="color: var(--text-secondary);">Failed to load cases. Please try again.</p></div>';
   }
 }
 window.loadCases = loadCases;
 
 async function viewCase(id) {
+  // Show loading in modal body
+  const modalBody = document.querySelector('#caseModal .modal-body');
+  if (modalBody && !document.getElementById('caseModal').classList.contains('active')) {
+    document.getElementById('modalTitle').textContent = 'Loading...';
+  }
+  document.getElementById('caseModal').classList.add('active');
+
   try {
     if (state.dicomViewer) {
       state.dicomViewer.destroy();
@@ -177,9 +188,9 @@ async function viewCase(id) {
     if (imageWrap) imageWrap.classList.remove('study-blurred');
 
     // Mode toggle UI
-    const modeToggle = document.getElementById('viewerModeToggle');
-    if (modeToggle) {
-      modeToggle.querySelectorAll('.viewer-mode-btn').forEach(btn => {
+    const modeSwitch = document.getElementById('viewerModeSwitch');
+    if (modeSwitch) {
+      modeSwitch.querySelectorAll('.mode-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === state.viewerMode);
       });
     }
@@ -447,9 +458,18 @@ function showLevelNotes() {
 // Mode toggle
 function toggleViewerMode(mode) {
   state.viewerMode = mode;
-  document.querySelectorAll('.viewer-mode-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
-  });
+  // Update the new .viewer-mode-switch buttons
+  const modeSwitch = document.getElementById('viewerModeSwitch');
+  if (modeSwitch) {
+    modeSwitch.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+  }
+  // Show/hide step indicator based on mode
+  const studyIndicator = document.getElementById('studyStepIndicator');
+  if (studyIndicator) {
+    studyIndicator.style.display = mode === 'study' ? 'flex' : 'none';
+  }
   // Re-open current case in new mode
   if (state.currentCase) {
     viewCase(state.currentCase.id);
@@ -512,7 +532,9 @@ function initDicomViewer() {
   // Attach touch gestures after DICOM viewer initializes
   if (state.dicomViewer && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
     if (state.touchGestureHandler) state.touchGestureHandler.destroy();
-    state.touchGestureHandler = integrateTouchGestures(state.dicomViewer);
+    if (typeof integrateTouchGestures === 'function') {
+      state.touchGestureHandler = integrateTouchGestures(state.dicomViewer);
+    }
   }
 }
 window.initDicomViewer = initDicomViewer;
@@ -1184,23 +1206,18 @@ document.addEventListener('keydown', (e) => {
 // ============ Trainee Level Preferences Save ============
 
 const origSavePrefs = window.savePreferencesAndClose;
-window.savePreferencesAndClose = async function() {
-  // Check if trainee level changed
-  const prefLevel = document.getElementById('prefTraineeLevel');
-  if (prefLevel && state.currentUser) {
-    const newLevel = prefLevel.value;
+window.savePreferencesAndClose = function() {
+  // Handle trainee level update
+  const levelSelect = document.getElementById('prefTraineeLevel');
+  if (levelSelect && state.currentUser) {
+    const newLevel = levelSelect.value;
     if (newLevel !== state.traineeLevel) {
-      try {
-        await apiModule.updateTraineeLevel(newLevel);
-        state.traineeLevel = newLevel;
-        localStorage.setItem('radcase-trainee-level', newLevel);
-        toast('Trainee level updated', 'success');
-      } catch (e) {
-        console.error('Failed to update trainee level:', e);
-      }
+      state.traineeLevel = newLevel;
+      apiModule.updateTraineeLevel(newLevel).catch(e => console.warn('Failed to update trainee level:', e));
     }
   }
-  savePreferencesAndClose();
+  // Call original
+  if (origSavePrefs) origSavePrefs();
 };
 
 // ============ Initialize ============

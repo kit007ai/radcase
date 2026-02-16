@@ -16,8 +16,6 @@ export const state = {
   currentCaseIndex: -1,
   annotationCanvas: null,
   touchGestureHandler: null,
-  // Quiz session state
-  quizSessionActive: false,
   quizHubLoaded: false,
   // Case library overhaul
   traineeLevel: 'resident',

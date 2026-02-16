@@ -201,6 +201,13 @@ export function closeModal() {
   document.getElementById('caseModal').classList.remove('active');
   state.currentCase = null;
 
+  // Close annotation modal if open
+  document.getElementById('annotationModal')?.classList.remove('active');
+  state.annotationCanvas = null;
+
+  // Reset study session
+  state.studySession = { caseId: null, currentStep: 0, startTime: null, differentialScore: null, completed: false };
+
   if (typeof voiceNarrator !== 'undefined') {
     voiceNarrator.stop();
     document.getElementById('voiceNarrateBtn').classList.remove('active');
