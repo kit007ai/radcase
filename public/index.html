@@ -18,6 +18,8 @@
   <meta name="HandheldFriendly" content="true"><meta name="MobileOptimized" content="320">
   <link rel="stylesheet" href="/styles/base.css?v=4"><link rel="stylesheet" href="/styles/layout.css?v=4">
   <link rel="stylesheet" href="/styles/components.css?v=4"><link rel="stylesheet" href="/styles/views.css?v=4">
+  <link rel="stylesheet" href="/styles/quiz.css?v=1">
+  <link rel="stylesheet" href="/styles/case-library.css?v=1">
   <script src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
   <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
   <script src="https://unpkg.com/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
@@ -62,6 +64,9 @@
         </button>
         <button class="nav-item" data-page="quiz" aria-label="Quiz mode">
           <span class="icon" aria-hidden="true">&#x1F3AF;</span> Quiz Mode
+        </button>
+        <button class="nav-item" data-page="collections" aria-label="Collections">
+          <span class="icon" aria-hidden="true">&#x1F4DA;</span> Collections
         </button>
         <button class="nav-item" data-page="analytics" aria-label="View analytics">
           <span class="icon" aria-hidden="true">&#x1F4CA;</span> Analytics
@@ -183,64 +188,72 @@
         </div>
       </section>
 
-      <!-- Quiz Page -->
+      <!-- Quiz Hub Page -->
       <section id="page-quiz" class="page hidden">
-        <div class="page-header"><h2>Quiz Mode</h2><p>Test your diagnostic skills</p></div>
-        <div class="quiz-container" id="quizContainer">
-          <div class="search-bar quiz-filters">
-            <select class="filter-select" id="quizModality"><option value="">All Modalities</option></select>
-            <select class="filter-select" id="quizBodyPart"><option value="">All Body Parts</option></select>
-            <select class="filter-select" id="quizDifficulty">
-              <option value="">All Difficulties</option>
-              <option value="1">Easy</option><option value="2">Medium</option><option value="3">Hard</option>
-              <option value="4">Expert</option><option value="5">Master</option>
-            </select>
-            <button class="btn btn-primary" onclick="startQuiz()">&#x1F3AF; Start Quiz</button>
+        <div class="quiz-hub">
+          <div id="quizHubHeader"></div>
+
+          <div class="quiz-hub-modes" id="quizHubModes">
+            <button class="quiz-hub-mode-btn" onclick="quizEngine.startDailyChallenge()">
+              <span class="quiz-hub-mode-icon">&#x1F4C5;</span>Daily Challenge
+            </button>
+            <button class="quiz-hub-mode-btn" onclick="quizEngine.startQuickStudy()">
+              <span class="quiz-hub-mode-icon">&#x26A1;</span>Quick Study
+            </button>
+            <button class="quiz-hub-mode-btn" onclick="quizEngine.startReviewDue()">
+              <span class="quiz-hub-mode-icon">&#x1F504;</span>Review Due
+            </button>
+            <button class="quiz-hub-mode-btn" onclick="quizEngine.startWeaknessDrill()">
+              <span class="quiz-hub-mode-icon">&#x1F3AF;</span>Weakness Drill
+            </button>
           </div>
-          <div id="quizArea" class="hidden">
-            <div class="quiz-image-container"><img id="quizImage" src="" alt="Quiz case"></div>
-            <div class="card quiz-card"><h3>Clinical History</h3><p id="quizHistory">-</p></div>
-            <div id="quizGuess" class="quiz-card">
-              <label class="form-label">What is your diagnosis?</label>
-              <div class="quiz-answer-row">
-                <input type="text" class="form-input" id="quizAnswer" placeholder="Enter your diagnosis...">
-                <button class="btn btn-primary" onclick="revealAnswer()">Reveal</button>
-              </div>
-            </div>
-            <div class="quiz-reveal" id="quizReveal">
-              <h3>&#x1F4CB; Answer</h3>
-              <div class="quiz-reveal-section"><strong>Diagnosis:</strong><p id="revealDiagnosis"></p></div>
-              <div class="quiz-reveal-section"><strong>Key Findings:</strong><p id="revealFindings"></p></div>
-              <div class="quiz-reveal-section"><strong>Teaching Points:</strong><p id="revealTeaching"></p></div>
-              <div class="quiz-reveal-actions">
-                <button class="btn btn-danger" onclick="recordAttempt(false)">&#x274C; Missed it</button>
-                <button class="btn btn-primary" onclick="recordAttempt(true)">&#x2705; Got it!</button>
-              </div>
-            </div>
+
+          <div class="quiz-hub-section" id="quizHubPlans">
+            <h3>Your Study Plans</h3>
+            <div id="quizPlansList"></div>
           </div>
-          <div id="quizEmpty" class="empty-state">
-            <div class="icon">&#x1F3AF;</div><h3>Ready to test your skills?</h3><p>Select filters above and click Start Quiz to begin</p>
+
+          <div class="quiz-hub-section">
+            <h3>Custom Session</h3>
+            <div class="quiz-hub-filters">
+              <select class="filter-select" id="quizModality"><option value="">All Modalities</option></select>
+              <select class="filter-select" id="quizBodyPart"><option value="">All Body Parts</option></select>
+              <select class="filter-select" id="quizDifficulty">
+                <option value="">All Difficulties</option>
+                <option value="1">Easy</option><option value="2">Medium</option><option value="3">Hard</option>
+                <option value="4">Expert</option><option value="5">Master</option>
+              </select>
+            </div>
+            <div class="quiz-hub-count-select">
+              <button class="quiz-count-btn active" data-count="10">10 Qs</button>
+              <button class="quiz-count-btn" data-count="20">20 Qs</button>
+              <button class="quiz-count-btn" data-count="50">50 Qs</button>
+            </div>
+            <button class="btn btn-primary" onclick="startCustomQuiz()" style="width:100%">Start Session</button>
+          </div>
+
+          <div class="quiz-hub-section" id="quizHubBadges">
+            <h3>Recent Badges</h3>
+            <div id="quizBadgeShelf"></div>
+          </div>
+
+          <div class="quiz-hub-section" id="quizHubLeaderboard" style="display:none;">
+            <h3>Leaderboard</h3>
+            <div id="quizLeaderboardContent"></div>
           </div>
         </div>
       </section>
 
-      <!-- Analytics Page -->
+      <!-- Collections Page -->
+      <section id="page-collections" class="page hidden">
+        <div class="page-header"><h2>Collections</h2><p>Curated playlists and custom case collections</p></div>
+        <div id="collectionsContent"></div>
+      </section>
+
+      <!-- Analytics Dashboard Page -->
       <section id="page-analytics" class="page hidden">
-        <div class="page-header"><h2>Analytics</h2><p>Track your learning progress</p></div>
-        <div class="card-grid">
-          <div class="card">
-            <h3 class="analytics-card-title">Quiz Performance</h3>
-            <div id="quizStats">
-              <div class="stat-row"><span>Total Attempts</span><span class="stat-value" id="analyticsAttempts">-</span></div>
-              <div class="stat-row"><span>Correct</span><span class="stat-value" id="analyticsCorrect">-</span></div>
-              <div class="stat-row"><span>Accuracy</span><span class="stat-value" id="analyticsAccuracy">-</span></div>
-              <div class="stat-row"><span>Avg Time</span><span class="stat-value" id="analyticsTime">-</span></div>
-            </div>
-          </div>
-          <div class="card"><h3 class="analytics-card-title">Cases by Modality</h3><div id="modalityStats"></div></div>
-          <div class="card"><h3 class="analytics-card-title">Cases by Body Part</h3><div id="bodyPartStats"></div></div>
-          <div class="card"><h3 class="analytics-card-title">Cases to Review</h3><div id="reviewList"><p style="color: var(--text-muted);">No cases need review yet</p></div></div>
-        </div>
+        <div class="page-header"><h2>Analytics</h2><p>Deep performance insights and board readiness</p></div>
+        <div id="analyticsDashboard"></div>
       </section>
     </main>
   </div>
@@ -259,17 +272,32 @@
         <button class="voice-narrate-btn" id="voiceNarrateBtn" onclick="toggleVoiceNarration()" title="Read case aloud" aria-label="Read case aloud">
           <span class="voice-narrate-icon">&#x1F50A;</span>
         </button>
+        <div class="viewer-mode-toggle" id="viewerModeToggle">
+          <button class="viewer-mode-btn" data-mode="reference" onclick="window.toggleViewerMode('reference')">Reference</button>
+          <button class="viewer-mode-btn active" data-mode="study" onclick="window.toggleViewerMode('study')">Study</button>
+        </div>
         <div class="modal-tabs hidden" id="viewerTabs">
           <button class="tab-btn active" data-tab="images" onclick="switchViewerTab('images')">&#x1F4F7; Images</button>
           <button class="tab-btn" data-tab="dicom" onclick="switchViewerTab('dicom')">&#x1F52C; DICOM</button>
         </div>
         <button class="modal-close" onclick="closeModal()">&#x2715;</button>
       </div>
+      <div class="study-step-indicator" id="studyStepIndicator" style="display:none;">
+        <div class="study-step active" data-step="0"><span class="study-step-dot"></span>History</div>
+        <div class="study-step-connector"></div>
+        <div class="study-step" data-step="1"><span class="study-step-dot"></span>Images</div>
+        <div class="study-step-connector"></div>
+        <div class="study-step" data-step="2"><span class="study-step-dot"></span>Differential</div>
+        <div class="study-step-connector"></div>
+        <div class="study-step" data-step="3"><span class="study-step-dot"></span>Reveal</div>
+        <div class="study-step-connector"></div>
+        <div class="study-step" data-step="4"><span class="study-step-dot"></span>Teaching</div>
+      </div>
       <div class="modal-body">
         <div class="case-view">
           <div class="viewer-container">
             <div id="imageViewerPanel">
-              <div class="case-viewer"><img id="modalMainImage" src="" alt="Case image"></div>
+              <div class="case-viewer" id="caseViewerImageWrap"><img id="modalMainImage" src="" alt="Case image"></div>
               <div class="case-thumbnails" id="modalThumbnails"></div>
             </div>
             <div id="dicomViewerPanel" class="hidden">
@@ -296,12 +324,17 @@
             <div class="detail-section"><h3>Diagnosis</h3><div class="detail-content detail-diagnosis" id="modalDiagnosis">-</div></div>
             <div class="detail-section"><h3>Key Findings</h3><div class="detail-content" id="modalFindings">-</div></div>
             <div class="detail-section"><h3>Teaching Points</h3><div class="detail-content" id="modalTeaching">-</div></div>
+            <div class="detail-section" id="levelNotesSection" style="display:none;"><div class="level-notes-callout" id="levelNotesCallout"></div></div>
+            <div id="differentialInputArea" style="display:none;"></div>
+            <div id="relatedCasesArea"></div>
+            <div id="discussionArea"></div>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-danger btn-sm" onclick="deleteCase()">&#x1F5D1;&#xFE0F; Delete</button>
         <button class="btn btn-secondary" onclick="annotateCase()">&#x270F;&#xFE0F; Annotate</button>
+        <button class="btn btn-secondary" onclick="collectionsManager.showAddToCollectionPicker(state.currentCase?.id)">&#x1F4DA; Add to Collection</button>
         <button class="btn btn-primary" onclick="presentCase()">&#x1F3AC; Present</button>
         <button class="btn btn-secondary" onclick="closeModal()">Close</button>
       </div>
@@ -338,6 +371,16 @@
         <div class="form-group"><label class="form-label">Display Name</label><input type="text" class="form-input" name="displayName" autocomplete="name" placeholder="How should we call you?"></div>
         <div class="form-group"><label class="form-label">Email (optional)</label><input type="email" class="form-input" name="email" autocomplete="email"></div>
         <div class="form-group"><label class="form-label">Password *</label><input type="password" class="form-input" name="password" required autocomplete="new-password" minlength="4" placeholder="At least 4 characters"></div>
+        <div class="form-group">
+          <label class="form-label">I am a...</label>
+          <div class="trainee-level-selector" id="registerTraineeLevel">
+            <button type="button" class="trainee-level-btn" data-level="student" onclick="selectTraineeLevel(this)">Medical Student</button>
+            <button type="button" class="trainee-level-btn active" data-level="resident" onclick="selectTraineeLevel(this)">Resident</button>
+            <button type="button" class="trainee-level-btn" data-level="fellow" onclick="selectTraineeLevel(this)">Fellow</button>
+            <button type="button" class="trainee-level-btn" data-level="attending" onclick="selectTraineeLevel(this)">Attending</button>
+          </div>
+          <input type="hidden" name="traineeLevel" value="resident">
+        </div>
         <button type="submit" class="btn btn-primary auth-submit">Create Account</button>
       </form>
       <div class="guest-link"><a href="#" onclick="closeAuthModal(); return false;">Continue as guest &#x2192;</a></div>
@@ -366,6 +409,15 @@
             <button type="button" class="pref-color-swatch" data-color="#ffffff" style="background:#ffffff;" aria-label="White" title="White"></button>
           </div>
         </div>
+        <div class="form-group">
+          <label class="form-label" for="prefTraineeLevel">Trainee Level</label>
+          <select class="form-select" id="prefTraineeLevel">
+            <option value="student">Medical Student</option>
+            <option value="resident" selected>Resident</option>
+            <option value="fellow">Fellow</option>
+            <option value="attending">Attending</option>
+          </select>
+        </div>
         <div class="form-group"><label class="form-label" for="prefTheme">Theme</label><select class="form-select" id="prefTheme"><option value="auto">Auto</option><option value="dark" selected>Dark</option><option value="light">Light</option></select></div>
         <div class="preferences-actions">
           <button class="btn btn-secondary btn-sm" onclick="resetPreferences()">Reset Defaults</button>
@@ -382,18 +434,30 @@
       <button class="bottom-nav-item active" data-page="library" aria-label="Case Library"><span class="nav-icon" aria-hidden="true">&#x1F4DA;</span>Library</button>
       <button class="bottom-nav-item" data-page="add" aria-label="Add Case"><span class="nav-icon" aria-hidden="true">&#x2795;</span>Add</button>
       <button class="bottom-nav-item" data-page="quiz" aria-label="Quiz Mode"><span class="nav-icon" aria-hidden="true">&#x1F3AF;</span>Quiz</button>
-      <button class="bottom-nav-item" onclick="swipeQuiz.start()" aria-label="Quick Study"><span class="nav-icon" aria-hidden="true">&#x1F4F1;</span>Swipe</button>
+      <button class="bottom-nav-item" data-page="collections" aria-label="Collections"><span class="nav-icon" aria-hidden="true">&#x1F4DA;</span>Collections</button>
       <button class="bottom-nav-item" data-page="analytics" aria-label="Analytics"><span class="nav-icon" aria-hidden="true">&#x1F4CA;</span>Stats</button>
     </div>
   </nav>
 
-  <button class="micro-learning-fab" id="microLearningFab" onclick="microLearning.startSession()" aria-label="Quick Study" title="Start 5-min Learning Session">&#x26A1;</button>
+  <button class="micro-learning-fab" id="microLearningFab" onclick="quizEngine.startQuickStudy()" aria-label="Quick Study" title="Start Quick Study Session">&#x26A1;</button>
 
   <script src="/lazy-loader.js?v=4"></script><script src="/performance-optimizer.js?v=4"></script><script src="/pwa-manager.js?v=4"></script>
   <script src="/annotate.js?v=4" defer></script><script src="/presentation.js?v=4" defer></script>
   <script src="/spaced-repetition.js?v=4" defer></script><script src="/dicom-viewer.js?v=4" defer></script>
   <script src="/sync-manager.js?v=4" defer></script><script src="/touch-gestures.js?v=4" defer></script>
-  <script src="/swipe-quiz.js?v=4" defer></script><script src="/micro-learning.js?v=5" defer></script><script src="/voice-narrator.js?v=4" defer></script>
-  <script type="module" src="/app.js?v=4"></script>
+  <script src="/quiz-engine.js?v=1" defer></script>
+  <script src="/quiz-cards.js?v=1" defer></script>
+  <script src="/quiz-gamification.js?v=1" defer></script>
+  <script src="/quiz-study-plans.js?v=1" defer></script>
+  <script src="/analytics-dashboard.js?v=1" defer></script>
+  <script src="/finding-quiz.js?v=1" defer></script>
+  <script src="/voice-narrator.js?v=4" defer></script>
+  <script src="/case-viewer.js?v=1" defer></script>
+  <script src="/differential-input.js?v=1" defer></script>
+  <script src="/key-findings-overlay.js?v=1" defer></script>
+  <script src="/discussions.js?v=1" defer></script>
+  <script src="/related-cases.js?v=1" defer></script>
+  <script src="/collections.js?v=1" defer></script>
+  <script type="module" src="/app.js?v=6"></script>
 </body>
 </html>

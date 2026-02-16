@@ -234,6 +234,297 @@ try {
   // Column already exists
 }
 
+// Add session_id, answer_index, correct_index, xp_earned columns to quiz_attempts
+try { db.exec('ALTER TABLE quiz_attempts ADD COLUMN session_id TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE quiz_attempts ADD COLUMN answer_index INTEGER'); } catch (e) {}
+try { db.exec('ALTER TABLE quiz_attempts ADD COLUMN correct_index INTEGER'); } catch (e) {}
+try { db.exec('ALTER TABLE quiz_attempts ADD COLUMN xp_earned INTEGER DEFAULT 0'); } catch (e) {}
+
+// ============ Case Library Overhaul: ALTER TABLE ============
+try { db.exec("ALTER TABLE users ADD COLUMN trainee_level TEXT DEFAULT 'resident'"); } catch (e) {}
+try { db.exec('ALTER TABLE cases ADD COLUMN differentials TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE cases ADD COLUMN student_notes TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE cases ADD COLUMN fellow_notes TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE cases ADD COLUMN category TEXT'); } catch (e) {}
+
+// ============ Case Library Overhaul: New Tables ============
+db.exec(`
+  CREATE TABLE IF NOT EXISTS case_key_findings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id TEXT NOT NULL,
+    image_id TEXT NOT NULL,
+    finding_type TEXT NOT NULL DEFAULT 'arrow',
+    region_data TEXT NOT NULL,
+    label TEXT NOT NULL,
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+    FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS related_cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id_a TEXT NOT NULL,
+    case_id_b TEXT NOT NULL,
+    relationship_type TEXT NOT NULL DEFAULT 'similar',
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(case_id_a, case_id_b, relationship_type),
+    FOREIGN KEY (case_id_a) REFERENCES cases(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id_b) REFERENCES cases(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS pattern_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    pattern_type TEXT NOT NULL DEFAULT 'diagnosis',
+    created_by TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS pattern_group_cases (
+    group_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    display_order INTEGER DEFAULT 0,
+    PRIMARY KEY (group_id, case_id),
+    FOREIGN KEY (group_id) REFERENCES pattern_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS case_discussions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    parent_id INTEGER,
+    content TEXT NOT NULL,
+    discussion_type TEXT DEFAULT 'comment',
+    upvotes INTEGER DEFAULT 0,
+    pinned INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES case_discussions(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS discussion_upvotes (
+    user_id TEXT NOT NULL,
+    discussion_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, discussion_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS collections (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    cover_image TEXT,
+    collection_type TEXT DEFAULT 'custom',
+    visibility TEXT DEFAULT 'private',
+    created_by TEXT NOT NULL,
+    share_code TEXT UNIQUE,
+    case_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS collection_cases (
+    collection_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    display_order INTEGER DEFAULT 0,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (collection_id, case_id),
+    FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS collection_progress (
+    user_id TEXT NOT NULL,
+    collection_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    completed INTEGER DEFAULT 0,
+    score REAL,
+    completed_at DATETIME,
+    PRIMARY KEY (user_id, collection_id, case_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS differential_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    user_differentials TEXT NOT NULL,
+    score REAL NOT NULL,
+    matched TEXT,
+    missed TEXT,
+    extra TEXT,
+    time_spent_ms INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+  );
+`);
+
+// ============ Gamification & Quiz Overhaul Tables ============
+db.exec(`
+  -- XP and Leveling
+  CREATE TABLE IF NOT EXISTS user_xp (
+    user_id TEXT PRIMARY KEY,
+    total_xp INTEGER DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    current_streak INTEGER DEFAULT 0,
+    longest_streak INTEGER DEFAULT 0,
+    last_study_date DATE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  -- XP Transaction Log
+  CREATE TABLE IF NOT EXISTS xp_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    session_id TEXT,
+    case_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Badges
+  CREATE TABLE IF NOT EXISTS badges (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    icon TEXT,
+    category TEXT,
+    rarity TEXT DEFAULT 'bronze',
+    criteria TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS user_badges (
+    user_id TEXT NOT NULL,
+    badge_id TEXT NOT NULL,
+    earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, badge_id)
+  );
+
+  -- Daily Challenges
+  CREATE TABLE IF NOT EXISTS daily_challenges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    challenge_date DATE NOT NULL UNIQUE,
+    case_ids TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS user_daily_challenge (
+    user_id TEXT NOT NULL,
+    challenge_date DATE NOT NULL,
+    score INTEGER,
+    total INTEGER,
+    xp_earned INTEGER DEFAULT 0,
+    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, challenge_date)
+  );
+
+  -- Study Plans
+  CREATE TABLE IF NOT EXISTS study_plan_templates (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    category TEXT,
+    milestones TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS user_study_plans (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    template_id TEXT,
+    name TEXT NOT NULL,
+    target_date DATE,
+    milestones TEXT NOT NULL,
+    current_milestone INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS study_plan_progress (
+    plan_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    milestone_index INTEGER NOT NULL,
+    attempted BOOLEAN DEFAULT 0,
+    correct BOOLEAN,
+    attempted_at DATETIME,
+    PRIMARY KEY (plan_id, case_id)
+  );
+
+  -- Quiz Sessions
+  CREATE TABLE IF NOT EXISTS quiz_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    plan_id TEXT,
+    started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME,
+    total_questions INTEGER DEFAULT 0,
+    correct_count INTEGER DEFAULT 0,
+    xp_earned INTEGER DEFAULT 0
+  );
+
+  -- Image Finding Regions
+  CREATE TABLE IF NOT EXISTS case_finding_regions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id TEXT NOT NULL,
+    image_id TEXT NOT NULL,
+    region_type TEXT NOT NULL DEFAULT 'ellipse',
+    region_data TEXT NOT NULL,
+    label TEXT,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// ============ Seed Badges & Study Plan Templates ============
+const { seedBadges } = require('./lib/badge-evaluator');
+const { seedStudyPlanTemplates } = require('./lib/daily-challenge');
+seedBadges(db);
+seedStudyPlanTemplates(db);
+
+// ============ Seed Curated Collections ============
+function seedCuratedCollections(db) {
+  const { v4: uuidv4 } = require('uuid');
+
+  // Ensure system user exists for curated collections (FK constraint)
+  const systemUser = db.prepare("SELECT id FROM users WHERE id = 'system'").get();
+  if (!systemUser) {
+    db.prepare("INSERT OR IGNORE INTO users (id, username, password_hash, display_name, role, trainee_level) VALUES ('system', 'system', '', 'System', 'admin', 'attending')").run();
+  }
+
+  const curated = [
+    { name: 'Emergency Must-Knows', description: 'Critical emergency radiology cases every radiologist must recognize', type: 'curated', query: "category = 'emergency' AND difficulty <= 3" },
+    { name: 'Classic Board Cases', description: 'High-yield board exam favorites and classic presentations', type: 'curated', query: "category IN ('board_favorite', 'classic')" },
+    { name: 'Aunt Minnie Cases', description: 'Pathognomonic appearances - if you see it, you know it', type: 'curated', query: "category = 'aunt_minnie'" },
+    { name: 'Zebra Cases', description: 'Rare and unusual cases to expand your differential', type: 'curated', query: "category = 'zebra'" },
+    { name: 'The Fundamentals', description: 'Essential cases for building a strong radiology foundation', type: 'curated', query: 'difficulty <= 2' },
+  ];
+  for (const c of curated) {
+    const existing = db.prepare("SELECT id FROM collections WHERE name = ? AND collection_type = 'curated'").get(c.name);
+    if (!existing) {
+      const id = uuidv4();
+      db.prepare(`INSERT INTO collections (id, name, description, collection_type, visibility, created_by) VALUES (?, ?, ?, ?, 'public', 'system')`).run(id, c.name, c.description, c.type);
+      // Auto-populate with matching cases
+      try {
+        const cases = db.prepare(`SELECT id FROM cases WHERE ${c.query}`).all();
+        const insert = db.prepare('INSERT OR IGNORE INTO collection_cases (collection_id, case_id, display_order) VALUES (?, ?, ?)');
+        cases.forEach((cs, i) => insert.run(id, cs.id, i));
+        db.prepare('UPDATE collections SET case_count = ? WHERE id = ?').run(cases.length, id);
+      } catch (e) { /* no matching cases yet */ }
+    }
+  }
+}
+seedCuratedCollections(db);
+
 // AI Configuration table
 db.exec(`
   CREATE TABLE IF NOT EXISTS ai_config (
@@ -368,6 +659,34 @@ app.get('/api/progress', (req, res, next) => {
   req.url = '/progress' + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
   quizRoutes(req, res, next);
 });
+
+// Gamification routes: /api/gamification/*
+const gamificationRoutes = require('./routes/gamification')(db);
+app.use('/api/gamification', gamificationRoutes);
+
+// Study Plans routes: /api/study-plans/*
+const studyPlanRoutes = require('./routes/study-plans')(db);
+app.use('/api/study-plans', studyPlanRoutes);
+
+// Case Viewer routes (study/reference mode, key findings, differentials)
+const caseViewerRoutes = require('./routes/case-viewer')(db);
+app.use('/api/cases', caseViewerRoutes);
+
+// Discussion routes: /api/discussions/*
+const discussionRoutes = require('./routes/discussions')(db);
+app.use('/api/discussions', discussionRoutes);
+
+// Collection routes: /api/collections/*
+const collectionRoutes = require('./routes/collections')(db);
+app.use('/api/collections', collectionRoutes);
+
+// Pattern routes: /api/patterns/*
+const patternRoutes = require('./routes/patterns')(db);
+app.use('/api/patterns', patternRoutes);
+
+// Analytics routes: /api/analytics/*
+const analyticsRoutes = require('./routes/analytics')(db);
+app.use('/api/analytics', analyticsRoutes);
 
 // Sync routes: /api/* (push, annotations, progress POST, session, bookmarks, sync)
 const syncRoutes = require('./routes/sync')(db, VAPID_PUBLIC_KEY);
