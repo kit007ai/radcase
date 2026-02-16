@@ -836,3 +836,124 @@ export async function updateTraineeLevel(traineeLevel) {
   }
   return await res.json();
 }
+
+// ============ AI Case Builder API ============
+
+export async function fetchCaseBuilderStatus() {
+  const res = await fetch(`${API}/case-builder/status`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch case builder status');
+  }
+  return await res.json();
+}
+
+export async function generateCase(reportText, dicomMetadata) {
+  const res = await fetch(`${API}/case-builder/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ reportText, dicomMetadata })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Case generation failed');
+  }
+  return await res.json();
+}
+
+export async function fetchDrafts(status) {
+  const params = status ? `?status=${status}` : '';
+  const res = await fetch(`${API}/case-builder/drafts${params}`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch drafts');
+  }
+  return await res.json();
+}
+
+export async function fetchDraft(id) {
+  const res = await fetch(`${API}/case-builder/drafts/${id}`, { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch draft');
+  }
+  return await res.json();
+}
+
+export async function updateDraft(id, data) {
+  const res = await fetch(`${API}/case-builder/drafts/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update draft');
+  }
+  return await res.json();
+}
+
+export async function approveDraft(id) {
+  const res = await fetch(`${API}/case-builder/drafts/${id}/approve`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to approve draft');
+  }
+  return await res.json();
+}
+
+export async function rejectDraft(id, reason) {
+  const res = await fetch(`${API}/case-builder/drafts/${id}/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ reason })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to reject draft');
+  }
+  return await res.json();
+}
+
+export async function publishDraft(id) {
+  const res = await fetch(`${API}/case-builder/drafts/${id}/publish`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to publish draft');
+  }
+  return await res.json();
+}
+
+export async function regenerateSection(draftId, section, instructions) {
+  const res = await fetch(`${API}/case-builder/drafts/${draftId}/regenerate-section`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ section, instructions })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to regenerate section');
+  }
+  return await res.json();
+}
+
+export async function deleteDraft(id) {
+  const res = await fetch(`${API}/case-builder/drafts/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete draft');
+  }
+}
