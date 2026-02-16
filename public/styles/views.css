@@ -251,7 +251,7 @@
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: var(--z-auth-modal);
 }
 
 .auth-modal.active {
@@ -362,7 +362,7 @@
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 3000;
+  z-index: var(--z-preferences);
 }
 .preferences-overlay.active {
   display: flex;

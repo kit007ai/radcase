@@ -123,7 +123,7 @@
   height: 60px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
-  z-index: 200;
+  z-index: var(--z-sticky);
   align-items: center;
   padding: 0 16px;
   gap: 16px;
@@ -181,7 +181,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 150;
+  z-index: calc(var(--z-sidebar) - 150);
 }
 
 .mobile-overlay.active {
@@ -196,7 +196,7 @@
 
   .sidebar {
     transform: translateX(-100%);
-    z-index: 300;
+    z-index: var(--z-sidebar);
     transition: transform 0.3s ease;
   }
 

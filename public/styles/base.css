@@ -18,10 +18,10 @@ html {
   --bg-secondary: #12121a;
   --bg-tertiary: #1a1a25;
   --bg-card: rgba(255, 255, 255, 0.03);
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.12);
   --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-secondary: #b8b8c0;
+  --text-muted: #9898a0;
   --accent: #6366f1;
   --accent-hover: #818cf8;
   --success: #22c55e;
@@ -84,4 +84,13 @@ html.font-large { font-size: 18px; }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

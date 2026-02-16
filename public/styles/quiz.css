@@ -4,7 +4,7 @@
 .quiz-session-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: var(--z-quiz-overlay);
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -626,7 +626,7 @@
 .quiz-plan-dialog {
   position: fixed;
   inset: 0;
-  z-index: 10001;
+  z-index: var(--z-system);
   background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
@@ -692,9 +692,9 @@
   min-width: 70px;
 }
 
-.quiz-badge.gold { border-color: #f59e0b; }
-.quiz-badge.silver { border-color: #94a3b8; }
-.quiz-badge.bronze { border-color: #d97706; }
+.quiz-badge.gold { border-color: var(--badge-gold); }
+.quiz-badge.silver { border-color: var(--badge-silver); }
+.quiz-badge.bronze { border-color: var(--badge-bronze); }
 
 .quiz-badge-icon { font-size: 20px; }
 .quiz-badge-name { font-size: 10px; color: var(--text-secondary); text-align: center; }
@@ -732,7 +732,7 @@
   top: 20%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.5);
-  z-index: 20000;
+  z-index: calc(var(--z-quiz-overlay) * 2);
   opacity: 0;
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   pointer-events: none;
@@ -785,7 +785,7 @@
   position: fixed;
   top: 80px;
   right: 20px;
-  z-index: 20000;
+  z-index: calc(var(--z-quiz-overlay) * 2);
   opacity: 0;
   transform: translateX(100px);
   transition: all 0.4s ease;
@@ -802,7 +802,7 @@
   gap: 12px;
   padding: 12px 20px;
   background: var(--bg-secondary);
-  border: 2px solid #f59e0b;
+  border: 2px solid var(--badge-gold);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
 }
@@ -816,7 +816,7 @@
 
 .quiz-badge-toast-content strong {
   font-size: 12px;
-  color: #f59e0b;
+  color: var(--badge-gold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -906,7 +906,7 @@
 .streak-level-1 { background: rgba(99, 102, 241, 0.3); }
 .streak-level-2 { background: rgba(99, 102, 241, 0.5); }
 .streak-level-3 { background: rgba(99, 102, 241, 0.7); }
-.streak-level-4 { background: #6366f1; }
+.streak-level-4 { background: var(--accent); }
 
 .streak-legend {
   display: flex;
@@ -1035,7 +1035,7 @@
 .finding-quiz-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10001;
+  z-index: var(--z-system);
   background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
@@ -1101,7 +1101,7 @@
 .finding-compare-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10001;
+  z-index: var(--z-system);
   background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;

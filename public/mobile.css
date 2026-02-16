@@ -10,7 +10,7 @@
   right: 0;
   background: #12121a;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: 200;
+  z-index: var(--z-sticky);
   padding: 4px 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
@@ -44,11 +44,11 @@
 }
 
 .mobile-bottom-nav .bottom-nav-item.active {
-  color: #818cf8;
+  color: var(--accent-hover);
 }
 
 .mobile-bottom-nav .bottom-nav-item:active {
-  color: #6366f1;
+  color: var(--accent);
 }
 
 /* ============ PWA Install Banner Styles ============ */
@@ -126,14 +126,14 @@
   left: 0;
   right: 0;
   height: 28px;
-  background: #f59e0b;
+  background: var(--warning);
   color: #000;
   display: none;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 600;
-  z-index: 10001;
+  z-index: var(--z-system);
 }
 
 body.offline .offline-indicator {
@@ -180,7 +180,7 @@ body.offline .sidebar {
 .micro-learning-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10002;
+  z-index: calc(var(--z-system) + 1);
   background: #0a0a0f;
   display: flex;
   flex-direction: column;
@@ -227,7 +227,7 @@ body.offline .sidebar {
 }
 
 .session-timer {
-  color: #818cf8;
+  color: var(--accent-hover);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -279,7 +279,7 @@ body.offline .sidebar {
   padding: 2px 8px;
   border-radius: 12px;
   background: rgba(99, 102, 241, 0.15);
-  color: #818cf8;
+  color: var(--accent-hover);
 }
 
 .case-image-container {
@@ -337,19 +337,19 @@ body.offline .sidebar {
 
 .case-option-btn:active {
   background: rgba(99, 102, 241, 0.15);
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 
 .case-option-btn.correct {
   background: rgba(16, 185, 129, 0.15);
-  border-color: #10b981;
-  color: #10b981;
+  border-color: var(--success);
+  color: var(--success);
 }
 
 .case-option-btn.incorrect {
   background: rgba(239, 68, 68, 0.15);
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .case-option-btn:disabled {
@@ -371,8 +371,8 @@ body.offline .sidebar {
   font-size: 0.9rem;
 }
 
-.explanation-header.correct { color: #10b981; }
-.explanation-header.incorrect { color: #ef4444; }
+.explanation-header.correct { color: var(--success); }
+.explanation-header.incorrect { color: var(--danger); }
 
 .explanation-text {
   color: #a1a1aa;
@@ -532,7 +532,7 @@ body.offline .sidebar {
     bottom: 80px;
     left: 8px;
     right: 8px;
-    z-index: 300;
+    z-index: var(--z-sidebar);
     border-radius: 14px;
     padding: 8px;
     gap: 6px;

@@ -4,9 +4,9 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 10px;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-md);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -133,7 +133,7 @@
 
 /* Badges */
 .badge {
-  padding: 4px 10px;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -362,8 +362,8 @@
 
 .form-input, .form-select, .form-textarea {
   width: 100%;
-  padding: 12px 16px;
-  border-radius: 10px;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -469,7 +469,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s;
@@ -606,7 +606,7 @@
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 1001;
+  z-index: var(--z-modal-nav);
   background: rgba(0,0,0,0.6);
   color: #fff;
   border: none;
@@ -874,7 +874,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 1100;
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   gap: 12px;
