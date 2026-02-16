@@ -366,6 +366,7 @@ export async function fetchStudyPlanDetail(planId) {
   return await res.json();
 }
 
+// Used by quiz-engine.js startStudyPlan() via direct fetch; exported for future features
 export async function fetchStudyPlanNextSession(planId) {
   const res = await fetch(`${API}/study-plans/${planId}/next-session`, { credentials: 'include' });
   if (!res.ok) {
@@ -776,6 +777,7 @@ export async function linkRelatedCases(caseId, relatedCaseId, relationshipType, 
   return await res.json();
 }
 
+// Used by future features
 export async function fetchPatternGroups() {
   const res = await fetch(`${API}/patterns/groups`);
   if (!res.ok) {
@@ -794,6 +796,7 @@ export async function fetchPatternGroup(id) {
   return await res.json();
 }
 
+// Used by future features
 export async function createPatternGroup(data) {
   const res = await fetch(`${API}/patterns/groups`, {
     method: 'POST',
@@ -808,6 +811,7 @@ export async function createPatternGroup(data) {
   return await res.json();
 }
 
+// Used by future features
 export async function autoGeneratePatternGroups() {
   const res = await fetch(`${API}/patterns/groups/auto-generate`, { method: 'POST', credentials: 'include' });
   if (!res.ok) {
