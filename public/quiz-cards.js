@@ -12,7 +12,7 @@ class QuizCardComponent {
     el.className = 'quiz-mcq-card';
 
     const imageHtml = card.imageUrl
-      ? `<div class="quiz-card-image"><img src="${this._escapeHtml(card.imageUrl)}" alt="Case image" loading="eager" onerror="this.parentElement.style.display='none'"></div>`
+      ? `<div class="quiz-card-image"><img src="${escapeHtml(card.imageUrl)}" alt="Case image" loading="eager" onerror="this.parentElement.style.display='none'"></div>`
       : '';
 
     const tags = [];
@@ -25,20 +25,20 @@ class QuizCardComponent {
       <div class="quiz-card-body">
         <div class="quiz-card-meta">
           <div class="quiz-card-tags">
-            ${tags.map(t => `<span class="quiz-tag">${this._escapeHtml(t)}</span>`).join('')}
+            ${tags.map(t => `<span class="quiz-tag">${escapeHtml(t)}</span>`).join('')}
           </div>
           <span class="quiz-card-xp-preview">+${xpPreview} XP</span>
         </div>
-        <h3 class="quiz-card-question">${this._escapeHtml(card.question || 'What is the most likely diagnosis?')}</h3>
+        <h3 class="quiz-card-question">${escapeHtml(card.question || 'What is the most likely diagnosis?')}</h3>
         <div class="quiz-options">
           ${card.options.map((opt, i) => `
             <button class="quiz-option-btn" data-index="${i}">
               <span class="quiz-option-letter">${String.fromCharCode(65 + i)}</span>
-              <span class="quiz-option-text">${this._escapeHtml(opt)}</span>
+              <span class="quiz-option-text">${escapeHtml(opt)}</span>
             </button>
           `).join('')}
         </div>
-        ${card.clinical_history ? `<div class="quiz-card-clinical"><strong>Clinical:</strong> ${this._escapeHtml(card.clinical_history)}</div>` : ''}
+        ${card.clinical_history ? `<div class="quiz-card-clinical"><strong>Clinical:</strong> ${escapeHtml(card.clinical_history)}</div>` : ''}
       </div>
       <div class="quiz-card-feedback hidden">
         <div class="quiz-feedback-header"></div>
@@ -74,9 +74,9 @@ class QuizCardComponent {
         header.className = 'quiz-feedback-header ' + (correct ? 'quiz-feedback-correct' : 'quiz-feedback-wrong');
 
         let explanationHtml = '';
-        if (card.explanation) explanationHtml += `<p>${this._escapeHtml(card.explanation)}</p>`;
-        if (card.findings && card.findings !== card.explanation) explanationHtml += `<p><strong>Findings:</strong> ${this._escapeHtml(card.findings)}</p>`;
-        if (card.teaching_points && card.teaching_points !== card.explanation) explanationHtml += `<p><strong>Teaching:</strong> ${this._escapeHtml(card.teaching_points)}</p>`;
+        if (card.explanation) explanationHtml += `<p>${escapeHtml(card.explanation)}</p>`;
+        if (card.findings && card.findings !== card.explanation) explanationHtml += `<p><strong>Findings:</strong> ${escapeHtml(card.findings)}</p>`;
+        if (card.teaching_points && card.teaching_points !== card.explanation) explanationHtml += `<p><strong>Teaching:</strong> ${escapeHtml(card.teaching_points)}</p>`;
         explanation.innerHTML = explanationHtml || '<p>No additional explanation available.</p>';
         feedback.classList.remove('hidden');
 
@@ -155,28 +155,19 @@ class QuizCardComponent {
     }, { passive: true });
     card.addEventListener('touchend', () => onEnd(), { passive: true });
 
-    // Mouse events
+    // Mouse events - store references for proper cleanup
     card.addEventListener('mousedown', (e) => {
       if (e.target.closest('button')) return;
       onStart(e.clientX, e.clientY);
+      const onMouseMove = (e) => onMove(e.clientX);
+      const onMouseUp = () => {
+        onEnd();
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
     });
-    const mouseMoveHandler = (e) => onMove(e.clientX);
-    const mouseUpHandler = () => {
-      onEnd();
-      document.removeEventListener('mousemove', mouseMoveHandler);
-      document.removeEventListener('mouseup', mouseUpHandler);
-    };
-    card.addEventListener('mousedown', () => {
-      document.addEventListener('mousemove', mouseMoveHandler);
-      document.addEventListener('mouseup', mouseUpHandler);
-    });
-  }
-
-  _escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 }
 

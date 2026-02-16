@@ -41,7 +41,9 @@ class FindingQuiz {
       canvas.height = img.naturalHeight;
 
       const handleClick = async (e) => {
-        const rect = img.getBoundingClientRect();
+        // Normalize coordinates to image dimensions (0-1 range)
+        const imgEl = overlay.querySelector('img') || overlay.querySelector('.finding-quiz-image');
+        const rect = imgEl.getBoundingClientRect();
         const clickX = (e.clientX - rect.left) / rect.width;
         const clickY = (e.clientY - rect.top) / rect.height;
 

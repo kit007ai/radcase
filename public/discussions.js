@@ -79,7 +79,7 @@ window.discussionPanel = {
           ${typeBadge}
           <span class="discussion-time">${this.timeAgo(comment.created_at)}</span>
         </div>
-        <div class="discussion-content">${this.escapeHtml(comment.content)}</div>
+        <div class="discussion-content">${escapeHtml(comment.content)}</div>
         <div class="discussion-actions">
           <button class="discussion-upvote-btn ${upvoted}" onclick="discussionPanel.toggleUpvote(${comment.id})">
             ▲ <span>${comment.upvotes || 0}</span>
@@ -171,12 +171,6 @@ window.discussionPanel = {
         btn.querySelector('span').textContent = data.upvotes;
       }
     } catch (e) { console.error('Failed to toggle upvote:', e); }
-  },
-
-  escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   },
 
   timeAgo(dateStr) {

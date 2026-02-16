@@ -5,6 +5,16 @@ class AnalyticsDashboard {
     this.data = null;
   }
 
+  _getThemeColors() {
+    const style = getComputedStyle(document.documentElement);
+    return {
+      accent: style.getPropertyValue('--accent').trim() || '#6366f1',
+      success: style.getPropertyValue('--success').trim() || '#22c55e',
+      danger: style.getPropertyValue('--danger').trim() || '#ef4444',
+      warning: style.getPropertyValue('--warning').trim() || '#f59e0b',
+    };
+  }
+
   async loadData() {
     try {
       const res = await fetch('/api/analytics/deep', { credentials: 'include' });
@@ -93,11 +103,12 @@ class AnalyticsDashboard {
     const bd = document.getElementById('readinessBreakdown');
     if (!el || !this.data.boardReadiness) return;
 
+    const colors = this._getThemeColors();
     const score = this.data.boardReadiness.score;
     const radius = 60;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (score / 100) * circumference;
-    const color = score < 40 ? '#ef4444' : score < 70 ? '#f59e0b' : '#22c55e';
+    const color = score < 40 ? colors.danger : score < 70 ? colors.warning : colors.success;
 
     el.innerHTML = `
       <svg width="160" height="160" viewBox="0 0 160 160">
@@ -170,6 +181,7 @@ class AnalyticsDashboard {
       return;
     }
 
+    const colors = this._getThemeColors();
     const width = 600, height = 200, padding = 40;
     const chartW = width - padding * 2, chartH = height - padding * 2;
     const maxAcc = 100;
@@ -189,8 +201,8 @@ class AnalyticsDashboard {
       <svg viewBox="0 0 ${width} ${height}" class="analytics-trend-svg">
         <defs>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+            <stop offset="0%" stop-color="${colors.accent}" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="${colors.accent}" stop-opacity="0"/>
           </linearGradient>
         </defs>
         <!-- Grid lines -->
@@ -202,10 +214,10 @@ class AnalyticsDashboard {
         <!-- Area -->
         <path d="${areaPath}" fill="url(#areaGrad)"/>
         <!-- Line -->
-        <path d="${linePath}" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${linePath}" fill="none" stroke="${colors.accent}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         <!-- Points -->
         ${points.map(p => `
-          <circle cx="${p.x}" cy="${p.y}" r="4" fill="#6366f1" stroke="var(--bg-secondary)" stroke-width="2">
+          <circle cx="${p.x}" cy="${p.y}" r="4" fill="${colors.accent}" stroke="var(--bg-secondary)" stroke-width="2">
             <title>${p.date}: ${p.accuracy}% (${p.attempts} attempts)</title>
           </circle>
         `).join('')}
@@ -217,6 +229,7 @@ class AnalyticsDashboard {
     const el = document.getElementById('anatomyMap');
     if (!el) return;
 
+    const colors = this._getThemeColors();
     const bodyParts = this.data.performanceByBodyPart || [];
     const partMap = {};
     for (const p of bodyParts) {
@@ -238,10 +251,10 @@ class AnalyticsDashboard {
 
     const getColor = (accuracy) => {
       if (accuracy === undefined) return 'var(--bg-tertiary)';
-      if (accuracy < 50) return '#ef4444';
-      if (accuracy < 70) return '#f59e0b';
-      if (accuracy < 85) return '#6366f1';
-      return '#22c55e';
+      if (accuracy < 50) return colors.danger;
+      if (accuracy < 70) return colors.warning;
+      if (accuracy < 85) return colors.accent;
+      return colors.success;
     };
 
     let html = '<div class="anatomy-region-list">';
@@ -265,6 +278,7 @@ class AnalyticsDashboard {
     const el = document.getElementById('modalityBars');
     if (!el) return;
 
+    const colors = this._getThemeColors();
     const modalities = this.data.performanceByModality || [];
     if (modalities.length === 0) {
       el.innerHTML = '<p class="analytics-empty-text">No modality data yet</p>';
@@ -274,7 +288,7 @@ class AnalyticsDashboard {
     const maxAttempts = Math.max(...modalities.map(m => m.attempts), 1);
 
     el.innerHTML = modalities.map(m => {
-      const barColor = m.accuracy < 50 ? '#ef4444' : m.accuracy < 70 ? '#f59e0b' : m.accuracy < 85 ? '#6366f1' : '#22c55e';
+      const barColor = m.accuracy < 50 ? colors.danger : m.accuracy < 70 ? colors.warning : m.accuracy < 85 ? colors.accent : colors.success;
       return `
         <div class="modality-bar-row">
           <span class="modality-bar-label">${m.modality}</span>
@@ -293,6 +307,7 @@ class AnalyticsDashboard {
     const el = document.getElementById('weaknessList');
     if (!el) return;
 
+    const colors = this._getThemeColors();
     const weak = this.data.weakestCases || [];
     if (weak.length === 0) {
       el.innerHTML = '<p class="analytics-empty-text">Complete more quizzes to see weak areas</p>';
@@ -302,11 +317,11 @@ class AnalyticsDashboard {
     el.innerHTML = weak.map(c => `
       <div class="weakness-item" onclick="viewCase('${c.id}')" style="cursor:pointer">
         <div class="weakness-info">
-          <span class="weakness-title">${this._escapeHtml(c.title || c.diagnosis)}</span>
+          <span class="weakness-title">${escapeHtml(c.title || c.diagnosis)}</span>
           <span class="weakness-meta">${c.body_part || ''} ${c.modality ? '&middot; ' + c.modality : ''}</span>
         </div>
         <div class="weakness-stats">
-          <span class="weakness-accuracy" style="color: ${c.accuracy < 50 ? '#ef4444' : '#f59e0b'}">${c.accuracy}%</span>
+          <span class="weakness-accuracy" style="color: ${c.accuracy < 50 ? colors.danger : colors.warning}">${c.accuracy}%</span>
           <span class="weakness-attempts">${c.attempts} attempts</span>
         </div>
       </div>
@@ -315,13 +330,6 @@ class AnalyticsDashboard {
 
   _formatKey(key) {
     return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
-  }
-
-  _escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 }
 

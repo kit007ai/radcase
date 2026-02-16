@@ -5,6 +5,10 @@ class QuizGamification {
     this.profile = null;
   }
 
+  clearProfile() {
+    this.profile = null;
+  }
+
   async loadProfile() {
     try {
       const res = await fetch('/api/gamification/profile', { credentials: 'include' });
@@ -88,7 +92,8 @@ class QuizGamification {
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 500);
     }, 3000);
-    this.profile.level++;
+    // Don't mutate cache - reload fresh profile
+    this.loadProfile();
   }
 
   showBadgeEarned(badge) {
@@ -129,7 +134,7 @@ class QuizGamification {
           ${data.leaderboard.slice(0, 10).map(e => `
             <div class="quiz-leaderboard-row">
               <span class="quiz-leaderboard-rank">${e.rank <= 3 ? ['&#x1F947;','&#x1F948;','&#x1F949;'][e.rank-1] : '#' + e.rank}</span>
-              <span class="quiz-leaderboard-name">${this._escapeHtml(e.displayName)}</span>
+              <span class="quiz-leaderboard-name">${escapeHtml(e.displayName)}</span>
               <span class="quiz-leaderboard-xp">${e.periodXp.toLocaleString()}</span>
             </div>
           `).join('')}
@@ -138,13 +143,6 @@ class QuizGamification {
     } catch (e) {
       container.innerHTML = '<p class="quiz-hub-empty">Failed to load leaderboard</p>';
     }
-  }
-
-  _escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 }
 

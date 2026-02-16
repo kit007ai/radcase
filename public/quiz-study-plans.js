@@ -46,7 +46,7 @@ class QuizStudyPlans {
       html += `
         <div class="quiz-plan-item" data-plan-id="${plan.id}">
           <div class="quiz-plan-info">
-            <span class="quiz-plan-name">${this._escapeHtml(plan.name)}</span>
+            <span class="quiz-plan-name">${escapeHtml(plan.name)}</span>
             <span class="quiz-plan-milestone">Milestone ${plan.currentMilestone + 1}/${plan.totalMilestones}</span>
           </div>
           <div class="quiz-plan-progress-row">
@@ -82,8 +82,8 @@ class QuizStudyPlans {
         <div class="quiz-plan-template-list">
           ${this.templates.map(t => `
             <div class="quiz-plan-template" data-template-id="${t.id}">
-              <div class="quiz-plan-template-name">${this._escapeHtml(t.name)}</div>
-              <div class="quiz-plan-template-desc">${this._escapeHtml(t.description)}</div>
+              <div class="quiz-plan-template-name">${escapeHtml(t.name)}</div>
+              <div class="quiz-plan-template-desc">${escapeHtml(t.description)}</div>
               <div class="quiz-plan-template-meta">${t.milestones.length} milestones &middot; ${t.category}</div>
             </div>
           `).join('')}
@@ -123,12 +123,6 @@ class QuizStudyPlans {
     document.body.appendChild(dialog);
   }
 
-  _escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 }
 
 window.quizStudyPlans = new QuizStudyPlans();
