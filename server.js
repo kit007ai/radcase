@@ -632,6 +632,135 @@ db.exec(`
   );
 `);
 
+// ============ Phase 5: Institutional Features & Milestone Tracking ============
+
+// ALTER TABLE for new columns
+try { db.exec("ALTER TABLE users ADD COLUMN institution_id TEXT"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN program_id TEXT"); } catch (e) {}
+try { db.exec("ALTER TABLE users ADD COLUMN pgy_year INTEGER"); } catch (e) {}
+try { db.exec("ALTER TABLE cases ADD COLUMN acgme_domains TEXT"); } catch (e) {}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS institutions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT DEFAULT 'academic',
+    logo_url TEXT,
+    settings TEXT DEFAULT '{}',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS programs (
+    id TEXT PRIMARY KEY,
+    institution_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    specialty TEXT DEFAULT 'diagnostic_radiology',
+    accreditation_id TEXT,
+    settings TEXT DEFAULT '{}',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (institution_id) REFERENCES institutions(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS program_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    program_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'resident',
+    pgy_year INTEGER,
+    start_date DATE,
+    end_date DATE,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(program_id, user_id),
+    FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS acgme_milestones (
+    id TEXT PRIMARY KEY,
+    domain TEXT NOT NULL,
+    subdomain TEXT NOT NULL,
+    description TEXT NOT NULL,
+    level_descriptions TEXT NOT NULL,
+    body_parts TEXT,
+    modalities TEXT,
+    display_order INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS case_milestones (
+    case_id TEXT NOT NULL,
+    milestone_id TEXT NOT NULL,
+    relevance_score REAL DEFAULT 1.0,
+    PRIMARY KEY (case_id, milestone_id),
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+    FOREIGN KEY (milestone_id) REFERENCES acgme_milestones(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS milestone_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    milestone_id TEXT NOT NULL,
+    current_level REAL DEFAULT 1.0,
+    evidence TEXT DEFAULT '[]',
+    assessment_count INTEGER DEFAULT 0,
+    last_assessed DATETIME,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, milestone_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (milestone_id) REFERENCES acgme_milestones(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS milestone_assessments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    milestone_id TEXT NOT NULL,
+    assessor_id TEXT,
+    level REAL NOT NULL,
+    evidence_type TEXT NOT NULL,
+    evidence_id TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (milestone_id) REFERENCES acgme_milestones(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS cme_credits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    activity_type TEXT NOT NULL,
+    activity_id TEXT,
+    credits REAL NOT NULL,
+    category TEXT DEFAULT 'SA-CME',
+    title TEXT,
+    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS cohort_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    program_id TEXT NOT NULL,
+    snapshot_date DATE NOT NULL,
+    pgy_year INTEGER,
+    metric_type TEXT NOT NULL,
+    percentiles TEXT NOT NULL,
+    sample_size INTEGER,
+    FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_program_members_program ON program_members(program_id, status);
+  CREATE INDEX IF NOT EXISTS idx_program_members_user ON program_members(user_id);
+  CREATE INDEX IF NOT EXISTS idx_milestone_progress_user ON milestone_progress(user_id);
+  CREATE INDEX IF NOT EXISTS idx_milestone_assessments_user ON milestone_assessments(user_id, milestone_id);
+  CREATE INDEX IF NOT EXISTS idx_case_milestones_case ON case_milestones(case_id);
+  CREATE INDEX IF NOT EXISTS idx_case_milestones_milestone ON case_milestones(milestone_id);
+  CREATE INDEX IF NOT EXISTS idx_cme_credits_user ON cme_credits(user_id);
+  CREATE INDEX IF NOT EXISTS idx_cohort_snapshots_program ON cohort_snapshots(program_id, snapshot_date);
+`);
+
+// Seed ACGME milestones
+const { seedMilestones } = require('./lib/acgme-milestones');
+seedMilestones(db);
+
 // Active sessions table
 db.exec(`
   CREATE TABLE IF NOT EXISTS active_sessions (
@@ -820,6 +949,18 @@ app.use('/api/ai', aiTutorRoutes);
 // Oral Board Simulator routes: /api/oral-boards/*
 const oralBoardRoutes = require('./routes/oral-boards')(db);
 app.use('/api/oral-boards', oralBoardRoutes);
+
+// Milestones routes: /api/milestones/*
+const milestonesRoutes = require('./routes/milestones')(db);
+app.use('/api/milestones', milestonesRoutes);
+
+// Programs routes: /api/programs/*
+const programsRoutes = require('./routes/programs')(db);
+app.use('/api/programs', programsRoutes);
+
+// CME routes: /api/cme/*
+const cmeRoutes = require('./routes/cme')(db);
+app.use('/api/cme', cmeRoutes);
 
 // Public data endpoints (available without /admin prefix)
 app.get('/api/filters', (req, res) => {
