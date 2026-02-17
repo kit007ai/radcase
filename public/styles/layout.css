@@ -44,6 +44,12 @@
   align-items: center;
   justify-content: center;
   font-size: 24px;
+  color: white;
+}
+
+.logo-icon svg {
+  stroke: white;
+  flex-shrink: 0;
 }
 
 .logo h1 {
@@ -96,6 +102,15 @@
 
 .nav-item .icon {
   font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.nav-item .icon svg {
+  flex-shrink: 0;
 }
 
 /* Page Headers */
@@ -164,6 +179,12 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  color: white;
+}
+
+.mobile-logo-icon svg {
+  stroke: white;
+  flex-shrink: 0;
 }
 
 .mobile-logo h1 {

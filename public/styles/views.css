@@ -217,6 +217,12 @@
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
+  color: white;
+}
+
+.user-avatar svg {
+  stroke: white;
+  flex-shrink: 0;
 }
 
 .user-info {

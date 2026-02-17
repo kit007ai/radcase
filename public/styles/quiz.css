@@ -494,7 +494,7 @@
 
 .quiz-hub-mode-btn:active { transform: scale(0.97); }
 
-.quiz-hub-mode-icon { font-size: 20px; display: block; margin-bottom: 6px; }
+.quiz-hub-mode-icon { font-size: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
 
 /* Hub Sections */
 .quiz-hub-section {

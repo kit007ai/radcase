@@ -41,6 +41,10 @@
 .mobile-bottom-nav .bottom-nav-item .nav-icon {
   font-size: 1.3rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
 }
 
 .mobile-bottom-nav .bottom-nav-item.active {
@@ -170,6 +174,13 @@ body.offline .sidebar {
   z-index: 190;
   transition: transform 0.2s, box-shadow 0.2s;
   -webkit-tap-highlight-color: transparent;
+  align-items: center;
+  justify-content: center;
+}
+
+.micro-learning-fab svg {
+  stroke: white;
+  flex-shrink: 0;
 }
 
 .micro-learning-fab:active {
