@@ -869,20 +869,92 @@
     border-top: 1px solid var(--border, rgba(255,255,255,0.12));
     border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
     z-index: calc(var(--z-modal, 1000) + 5);
-    transition: bottom var(--duration-normal, 300ms) var(--ease-default, ease);
+    transition: bottom var(--duration-normal, 300ms) var(--ease-default, ease),
+                height var(--duration-normal, 300ms) var(--ease-default, ease);
   }
 
+  /* Collapsed state: slim bar above bottom nav */
   .ai-chat-panel-open {
     bottom: 0;
     right: 0;
+    height: 56px;
+    overflow: hidden;
   }
 
-  .modal-case.ai-panel-active .modal-body {
-    padding-right: 0;
+  /* Expanded state: full chat */
+  .ai-chat-panel-open.ai-chat-expanded {
+    height: 60vh;
+    overflow: hidden;
   }
 
-  /* Drag handle for bottom sheet */
-  .ai-chat-header::before {
+  /* Collapsed: hide everything except header */
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-step-context,
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-messages,
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-quick-actions,
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-input-area {
+    display: none;
+  }
+
+  /* Collapsed header: show preview and expand chevron */
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-header {
+    cursor: pointer;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Hide close button in collapsed state, show expand chevron */
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-close {
+    display: none;
+  }
+
+  /* Expand chevron (shown in collapsed state) */
+  .ai-chat-expand-chevron {
+    display: none;
+  }
+
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-expand-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm, 4px);
+    background: transparent;
+    color: var(--text-muted, #9898a0);
+    font-size: 18px;
+    cursor: pointer;
+    transition: all var(--duration-fast, 150ms);
+    flex-shrink: 0;
+  }
+
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-expand-chevron:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary, #f4f4f5);
+  }
+
+  /* Preview snippet in collapsed bar */
+  .ai-chat-preview {
+    display: none;
+  }
+
+  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-preview {
+    display: block;
+    flex: 1;
+    font-size: 12px;
+    color: var(--text-secondary, #b8b8c0);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 10px;
+    line-height: 1.4;
+  }
+
+  /* Expanded: show drag handle */
+  .ai-chat-panel-open.ai-chat-expanded .ai-chat-header::before {
     content: '';
     position: absolute;
     top: 6px;
@@ -894,9 +966,24 @@
     background: rgba(255,255,255,0.2);
   }
 
-  .ai-chat-header {
+  .ai-chat-panel-open.ai-chat-expanded .ai-chat-header {
     position: relative;
     padding-top: 18px;
+    cursor: grab;
+  }
+
+  /* Hide preview in expanded state */
+  .ai-chat-panel-open.ai-chat-expanded .ai-chat-preview {
+    display: none;
+  }
+
+  /* Hide expand chevron in expanded state */
+  .ai-chat-panel-open.ai-chat-expanded .ai-chat-expand-chevron {
+    display: none;
+  }
+
+  .modal-case.ai-panel-active .modal-body {
+    padding-right: 0;
   }
 
   /* Weakness coach mobile */
@@ -940,7 +1027,7 @@
 
 /* Very small screens */
 @media (max-width: 360px) {
-  .ai-chat-panel {
+  .ai-chat-panel.ai-chat-expanded {
     height: 70vh;
   }
 

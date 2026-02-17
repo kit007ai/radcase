@@ -71,9 +71,11 @@
     _input: null,
     _toggleBtn: null,
     _isOpen: false,
+    _isExpanded: false,
     _currentCaseId: null,
     _currentStep: 0,
     _loading: false,
+    _lastPreviewText: '',
 
     // ======================== Initialization ========================
 
@@ -127,6 +129,12 @@
             '</svg>' +
             '<span class="ai-chat-title">AI Tutor</span>' +
           '</div>' +
+          '<span class="ai-chat-preview" id="aiChatPreview"></span>' +
+          '<button class="ai-chat-expand-chevron" aria-label="Expand AI Tutor">' +
+            '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<polyline points="18 15 12 9 6 15"/>' +
+            '</svg>' +
+          '</button>' +
           '<button class="ai-chat-close" aria-label="Close AI Tutor">&times;</button>' +
         '</div>' +
         '<div class="ai-chat-step-context" id="aiStepContext"></div>' +
@@ -168,6 +176,28 @@
         this._input.style.height = 'auto';
         this._input.style.height = Math.min(this._input.scrollHeight, 120) + 'px';
       });
+
+      // Mobile: tap collapsed bar to expand
+      var chevronBtn = panel.querySelector('.ai-chat-expand-chevron');
+      if (chevronBtn) {
+        chevronBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.expand();
+        });
+      }
+
+      // Mobile: tap collapsed header to expand
+      var header = panel.querySelector('.ai-chat-header');
+      if (header) {
+        header.addEventListener('click', () => {
+          if (this._isMobile() && this._isOpen && !this._isExpanded) {
+            this.expand();
+          }
+        });
+      }
+
+      // Mobile: drag header down to collapse when expanded
+      this._setupDragToCollapse(header);
     },
 
     _bindEvents() {
@@ -210,30 +240,117 @@
 
       this._ensureCreated();
       this._isOpen = true;
+      this._isExpanded = false;
       this._panel.classList.add('ai-chat-panel-open');
+      this._panel.classList.remove('ai-chat-expanded');
       if (this._toggleBtn) this._toggleBtn.classList.add('active');
 
-      // Add class to modal for layout adjustment
-      const caseModal = document.querySelector('#caseModal .modal.modal-case');
-      if (caseModal) caseModal.classList.add('ai-panel-active');
+      // Add class to modal for layout adjustment (desktop only)
+      if (!this._isMobile()) {
+        const caseModal = document.querySelector('#caseModal .modal.modal-case');
+        if (caseModal) caseModal.classList.add('ai-panel-active');
+      }
 
       // Show step context
       this._updateStepContext(this._currentStep);
       this._updateQuickActions(this._currentStep);
+      this._updatePreview();
 
-      // Focus input
-      setTimeout(() => {
-        if (this._input) this._input.focus();
-      }, 300);
+      // On desktop, auto-expand and focus input
+      if (!this._isMobile()) {
+        this._isExpanded = true;
+        this._panel.classList.add('ai-chat-expanded');
+        setTimeout(() => {
+          if (this._input) this._input.focus();
+        }, 300);
+      }
     },
 
     close() {
       this._isOpen = false;
-      if (this._panel) this._panel.classList.remove('ai-chat-panel-open');
+      this._isExpanded = false;
+      if (this._panel) {
+        this._panel.classList.remove('ai-chat-panel-open');
+        this._panel.classList.remove('ai-chat-expanded');
+      }
       if (this._toggleBtn) this._toggleBtn.classList.remove('active');
 
       const caseModal = document.querySelector('#caseModal .modal.modal-case');
       if (caseModal) caseModal.classList.remove('ai-panel-active');
+    },
+
+    expand() {
+      if (!this._isOpen) return;
+      this._isExpanded = true;
+      if (this._panel) this._panel.classList.add('ai-chat-expanded');
+
+      // Add layout class on desktop
+      if (!this._isMobile()) {
+        const caseModal = document.querySelector('#caseModal .modal.modal-case');
+        if (caseModal) caseModal.classList.add('ai-panel-active');
+      }
+
+      setTimeout(() => {
+        if (this._input) this._input.focus();
+        if (this._messageList) this._messageList.scrollTop = this._messageList.scrollHeight;
+      }, 300);
+    },
+
+    collapse() {
+      if (!this._isOpen) return;
+      this._isExpanded = false;
+      if (this._panel) this._panel.classList.remove('ai-chat-expanded');
+      this._updatePreview();
+    },
+
+    _isMobile() {
+      return window.innerWidth <= 768;
+    },
+
+    _updatePreview() {
+      var preview = this._panel?.querySelector('#aiChatPreview');
+      if (!preview) return;
+      if (this._lastPreviewText) {
+        preview.textContent = this._lastPreviewText;
+      } else {
+        preview.textContent = 'Tap to chat with AI Tutor';
+      }
+    },
+
+    _setupDragToCollapse(header) {
+      if (!header) return;
+      var startY = 0;
+      var dragging = false;
+      var self = this;
+
+      header.addEventListener('touchstart', function(e) {
+        if (!self._isMobile() || !self._isExpanded) return;
+        startY = e.touches[0].clientY;
+        dragging = true;
+      }, { passive: true });
+
+      header.addEventListener('touchmove', function(e) {
+        if (!dragging) return;
+        var dy = e.touches[0].clientY - startY;
+        // Only allow dragging down
+        if (dy > 0 && self._panel) {
+          var damped = Math.min(dy * 0.5, 100);
+          self._panel.style.transform = 'translateY(' + damped + 'px)';
+        }
+      }, { passive: true });
+
+      header.addEventListener('touchend', function(e) {
+        if (!dragging) return;
+        dragging = false;
+        var dy = e.changedTouches[0].clientY - startY;
+        if (self._panel) {
+          self._panel.style.transform = '';
+        }
+        // If dragged down more than 60px, collapse
+        if (dy > 60) {
+          self.collapse();
+        }
+      }, { passive: true });
     },
 
     _ensureCreated() {
@@ -245,6 +362,8 @@
       this._currentCaseId = null;
       this._currentStep = 0;
       this._loading = false;
+      this._lastPreviewText = '';
+      this._isExpanded = false;
       if (this._messageList) this._messageList.innerHTML = '';
       if (window.aiTutor) {
         window.aiTutor.clearHistory();
@@ -390,6 +509,13 @@
 
       this._messageList.appendChild(msg);
       this._messageList.scrollTop = this._messageList.scrollHeight;
+
+      // Update preview text for collapsed mobile bar
+      if (role === 'assistant' && text && !extraClass?.includes('step-transition')) {
+        // Strip formatting for preview
+        this._lastPreviewText = text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/\n/g, ' ').slice(0, 80);
+        this._updatePreview();
+      }
     },
 
     _showLoading(show) {
