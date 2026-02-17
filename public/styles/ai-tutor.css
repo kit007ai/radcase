@@ -62,9 +62,9 @@
   right: 0;
 }
 
-/* Adjust modal layout when panel is open */
+/* Adjust modal layout when panel is open - shrink content area instead of padding */
 .modal-case.ai-panel-active .modal-body {
-  padding-right: 320px;
+  margin-right: 320px;
 }
 
 /* ======================== Chat Header ======================== */
@@ -875,16 +875,20 @@
 
   /* Collapsed state: slim bar above bottom nav */
   .ai-chat-panel-open {
-    bottom: 0;
+    bottom: 60px;
     right: 0;
-    height: 56px;
+    height: 48px;
     overflow: hidden;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
   }
 
   /* Expanded state: full chat */
   .ai-chat-panel-open.ai-chat-expanded {
-    height: 60vh;
+    bottom: 0;
+    height: 55vh;
     overflow: hidden;
+    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
   }
 
   /* Collapsed: hide everything except header */
@@ -898,11 +902,11 @@
   /* Collapsed header: show preview and expand chevron */
   .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-header {
     cursor: pointer;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    min-height: 56px;
+    padding: 4px 12px;
+    min-height: 48px;
     display: flex;
     align-items: center;
+    border-bottom: none;
   }
 
   /* Hide close button in collapsed state, show expand chevron */
@@ -983,7 +987,7 @@
   }
 
   .modal-case.ai-panel-active .modal-body {
-    padding-right: 0;
+    margin-right: 0;
   }
 
   /* Weakness coach mobile */
@@ -1028,7 +1032,7 @@
 /* Very small screens */
 @media (max-width: 360px) {
   .ai-chat-panel.ai-chat-expanded {
-    height: 70vh;
+    height: 65vh;
   }
 
   .ai-chat-quick-actions {

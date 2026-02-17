@@ -731,7 +731,7 @@ const dicomStyles = `
   .dicom-canvas-container {
     flex: 1;
     position: relative;
-    min-height: 400px;
+    min-height: 200px;
   }
 
   .dicom-element {
@@ -940,6 +940,14 @@ const dicomStyles = `
 
   /* Mobile: larger DICOM controls for touch */
   @media (max-width: 768px) {
+    .dicom-viewer-wrapper {
+      overflow: visible;
+    }
+
+    .dicom-canvas-container {
+      min-height: 150px;
+    }
+
     .dicom-overlay {
       font-size: 11px;
     }
