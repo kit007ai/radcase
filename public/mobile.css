@@ -652,13 +652,22 @@ body.offline .sidebar {
   }
 
   .modal-header {
-    padding: 10px 48px 10px 12px;
+    padding: 10px 12px;
     position: relative;
-    gap: 6px;
+    gap: 4px 8px;
+    align-items: center;
+    overflow: visible;
   }
 
+  /* Row 1: Full title with close button in corner */
   .modal-header h2 {
     font-size: 1rem;
+    width: calc(100% - 40px);
+    flex: none;
+    order: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Pin close button to top-right corner */
@@ -668,12 +677,50 @@ body.offline .sidebar {
     right: 8px;
     width: 36px;
     height: 36px;
+    order: 1;
   }
 
-  /* Compact mode switch on mobile */
-  .viewer-mode-switch .mode-btn {
-    padding: 4px 8px;
+  /* Row 2: Position indicator + action buttons + mode switch */
+  .case-position-indicator {
+    order: 2;
     font-size: 0.7rem;
+    padding: 2px 8px;
+  }
+
+  .modal-bookmark-btn {
+    order: 2;
+    padding: 4px 6px;
+    margin-right: 0;
+  }
+
+  .voice-narrate-btn {
+    order: 2;
+    width: 32px;
+    height: 32px;
+  }
+
+  .viewer-mode-switch {
+    order: 2;
+    margin-left: auto;
+    padding: 2px;
+    gap: 1px;
+  }
+
+  /* Icons only on mobile mode switch */
+  .viewer-mode-switch .mode-btn {
+    padding: 5px 8px;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .viewer-mode-switch .mode-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Row 3: Tabs (already handled by components.css order: 5) */
+  .modal-tabs {
+    order: 3;
   }
 
   .modal-body {
