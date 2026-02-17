@@ -1,10 +1,10 @@
 // RadCase Service Worker - PWA Offline Functionality
 // Version 1.0.0 - Sprint 2 Advanced Mobile UX
 
-const CACHE_NAME = 'radcase-v3.0.0';
-const STATIC_CACHE = 'radcase-static-v3';
-const API_CACHE = 'radcase-api-v3';
-const DICOM_CACHE = 'radcase-dicom-v3';
+const CACHE_NAME = 'radcase-v4.0.0';
+const STATIC_CACHE = 'radcase-static-v4';
+const API_CACHE = 'radcase-api-v4';
+const DICOM_CACHE = 'radcase-dicom-v4';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
