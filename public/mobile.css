@@ -652,11 +652,28 @@ body.offline .sidebar {
   }
 
   .modal-header {
-    padding: 12px 16px;
+    padding: 10px 48px 10px 12px;
+    position: relative;
+    gap: 6px;
   }
 
   .modal-header h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
+  }
+
+  /* Pin close button to top-right corner */
+  .modal-header .modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Compact mode switch on mobile */
+  .viewer-mode-switch .mode-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
   }
 
   .modal-body {

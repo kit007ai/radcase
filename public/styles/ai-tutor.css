@@ -854,41 +854,39 @@
   padding-top: 8px;
 }
 
-/* ======================== Mobile Bottom Sheet ======================== */
+/* ======================== Mobile Inline AI Tutor ======================== */
 
 @media (max-width: 768px) {
+  /* Inline panel: part of document flow, never covers content */
   .ai-chat-panel {
-    position: fixed;
+    position: relative;
     top: auto;
-    left: 0;
-    right: 0;
-    bottom: -100%;
+    left: auto;
+    right: auto;
+    bottom: auto;
     width: 100%;
-    height: 60vh;
+    height: auto;
     border-left: none;
     border-top: 1px solid var(--border, rgba(255,255,255,0.12));
-    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
-    z-index: calc(var(--z-modal, 1000) + 5);
-    transition: bottom var(--duration-normal, 300ms) var(--ease-default, ease),
-                height var(--duration-normal, 300ms) var(--ease-default, ease);
+    border-radius: 12px 12px 0 0;
+    z-index: 1;
+    transition: none;
+    display: none;
   }
 
-  /* Collapsed state: slim bar above bottom nav */
+  /* Open but collapsed: slim bar */
   .ai-chat-panel-open {
-    bottom: 60px;
-    right: 0;
+    display: block;
     height: 48px;
     overflow: hidden;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
   }
 
-  /* Expanded state: full chat */
+  /* Expanded: show full chat inline */
   .ai-chat-panel-open.ai-chat-expanded {
-    bottom: 0;
-    height: 55vh;
+    height: 350px;
     overflow: hidden;
-    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Collapsed: hide everything except header */
@@ -899,7 +897,7 @@
     display: none;
   }
 
-  /* Collapsed header: show preview and expand chevron */
+  /* Collapsed header: tap to expand */
   .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-header {
     cursor: pointer;
     padding: 4px 12px;
@@ -909,12 +907,11 @@
     border-bottom: none;
   }
 
-  /* Hide close button in collapsed state, show expand chevron */
+  /* Hide close button in collapsed, show expand chevron */
   .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-close {
     display: none;
   }
 
-  /* Expand chevron (shown in collapsed state) */
   .ai-chat-expand-chevron {
     display: none;
   }
@@ -931,13 +928,7 @@
     color: var(--text-muted, #9898a0);
     font-size: 18px;
     cursor: pointer;
-    transition: all var(--duration-fast, 150ms);
     flex-shrink: 0;
-  }
-
-  .ai-chat-panel-open:not(.ai-chat-expanded) .ai-chat-expand-chevron:hover {
-    background: rgba(255,255,255,0.08);
-    color: var(--text-primary, #f4f4f5);
   }
 
   /* Preview snippet in collapsed bar */
@@ -954,41 +945,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin: 0 10px;
-    line-height: 1.4;
   }
 
-  /* Expanded: show drag handle */
-  .ai-chat-panel-open.ai-chat-expanded .ai-chat-header::before {
-    content: '';
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(255,255,255,0.2);
-  }
-
-  .ai-chat-panel-open.ai-chat-expanded .ai-chat-header {
-    position: relative;
-    padding-top: 18px;
-    cursor: grab;
-  }
-
-  /* Hide preview in expanded state */
-  .ai-chat-panel-open.ai-chat-expanded .ai-chat-preview {
-    display: none;
-  }
-
-  /* Hide expand chevron in expanded state */
+  /* Hide preview and chevron in expanded */
+  .ai-chat-panel-open.ai-chat-expanded .ai-chat-preview,
   .ai-chat-panel-open.ai-chat-expanded .ai-chat-expand-chevron {
     display: none;
   }
 
   .modal-case.ai-panel-active .modal-body {
     margin-right: 0;
-    padding-bottom: 120px;
+    padding-bottom: 0;
   }
 
   /* Weakness coach mobile */
