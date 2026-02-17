@@ -648,6 +648,7 @@ body.offline .sidebar {
     max-height: 100vh;
     border-radius: 0;
     max-width: 100%;
+    overflow-x: hidden;
   }
 
   .modal-header {
@@ -678,26 +679,42 @@ body.offline .sidebar {
   .case-view {
     grid-template-columns: 1fr;
     gap: 12px;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
-  /* Image viewer: larger, centered */
+  /* Image viewer: fill width, centered */
   .case-viewer {
     border-radius: 8px;
     margin: 0 auto;
     width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .case-viewer img {
-    max-height: 55vh;
+    width: 100%;
+    max-height: 70vh;
     object-fit: contain;
     background: #000;
   }
 
-  /* DICOM viewer: fit screen width for square images */
+  /* All viewer children respect container width */
+  .viewer-container,
+  #imageViewerPanel,
+  #dicomViewerPanel {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  /* DICOM viewer: auto height from square canvas inside */
   .dicom-viewer-area {
-    height: calc(100vw - 24px);
-    min-height: 200px;
-    max-height: 55vh;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   /* DICOM controls compact */

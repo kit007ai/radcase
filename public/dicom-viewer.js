@@ -943,10 +943,15 @@ const dicomStyles = `
     .dicom-viewer-wrapper {
       overflow: hidden;
       max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .dicom-canvas-container {
-      min-height: 200px;
+      flex: none;
+      width: 100%;
+      aspect-ratio: 1;
+      min-height: 0;
     }
 
     .dicom-overlay {
