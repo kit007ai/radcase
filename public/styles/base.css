@@ -8,9 +8,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Prevent double-tap zoom on mobile */
+/* Prevent double-tap zoom on mobile; prevent horizontal scroll */
 html {
   touch-action: manipulation;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 :root {
@@ -37,6 +40,9 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Font size overrides */

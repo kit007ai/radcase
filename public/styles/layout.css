@@ -4,6 +4,9 @@
 .app {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .sidebar {
@@ -229,7 +232,8 @@
     margin-left: 0;
     padding-top: 60px; /* Account for mobile header */
     width: 100%;
-    max-width: 100vw;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   /* Mobile-friendly search bar */

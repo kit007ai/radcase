@@ -850,9 +850,9 @@ app.use(express.static(STATIC_DIR, {
     else if (IS_PRODUCTION && /\-[a-f0-9]{8,}\.(js|css)$/.test(filePath)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
-    // JS/CSS - cache for 1 day
+    // JS/CSS - short cache to allow quick updates
     else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
-      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 min
     }
     // Icons/images - cache for 7 days
     else if (filePath.endsWith('.png') || filePath.endsWith('.jpg') || filePath.endsWith('.svg')) {

@@ -1,10 +1,10 @@
 // RadCase Service Worker - PWA Offline Functionality
 // Version 1.0.0 - Sprint 2 Advanced Mobile UX
 
-const CACHE_NAME = 'radcase-v4.0.0';
-const STATIC_CACHE = 'radcase-static-v4';
-const API_CACHE = 'radcase-api-v4';
-const DICOM_CACHE = 'radcase-dicom-v4';
+const CACHE_NAME = 'radcase-v5.0.0';
+const STATIC_CACHE = 'radcase-static-v5';
+const API_CACHE = 'radcase-api-v5';
+const DICOM_CACHE = 'radcase-dicom-v5';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
@@ -193,13 +193,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML and JS files - network first to ensure freshness
-  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname === '/') {
+  // HTML, JS, and CSS files - network first to ensure freshness
+  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname === '/') {
     event.respondWith(networkFirstStrategy(request, STATIC_CACHE));
     return;
   }
 
-  // Other static files (CSS, images, fonts) - cache first with network fallback
+  // Other static files (images, fonts) - cache first with network fallback
   event.respondWith(cacheFirstStrategy(request, STATIC_CACHE));
 });
 
