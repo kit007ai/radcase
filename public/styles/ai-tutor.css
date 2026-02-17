@@ -988,6 +988,7 @@
 
   .modal-case.ai-panel-active .modal-body {
     margin-right: 0;
+    padding-bottom: 120px;
   }
 
   /* Weakness coach mobile */

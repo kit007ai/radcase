@@ -608,8 +608,8 @@
     grid-template-columns: 100px 1fr;
   }
   .dicom-viewer-area {
-    height: auto;
-    min-height: 200px;
-    max-height: 50vh;
+    height: 55vh;
+    min-height: 250px;
+    max-height: 65vh;
   }
 }

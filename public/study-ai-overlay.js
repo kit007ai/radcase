@@ -245,11 +245,9 @@
       this._panel.classList.remove('ai-chat-expanded');
       if (this._toggleBtn) this._toggleBtn.classList.add('active');
 
-      // Add class to modal for layout adjustment (desktop only)
-      if (!this._isMobile()) {
-        const caseModal = document.querySelector('#caseModal .modal.modal-case');
-        if (caseModal) caseModal.classList.add('ai-panel-active');
-      }
+      // Add class to modal for layout adjustment
+      const caseModal = document.querySelector('#caseModal .modal.modal-case');
+      if (caseModal) caseModal.classList.add('ai-panel-active');
 
       // Show step context
       this._updateStepContext(this._currentStep);
@@ -284,11 +282,9 @@
       this._isExpanded = true;
       if (this._panel) this._panel.classList.add('ai-chat-expanded');
 
-      // Add layout class on desktop
-      if (!this._isMobile()) {
-        const caseModal = document.querySelector('#caseModal .modal.modal-case');
-        if (caseModal) caseModal.classList.add('ai-panel-active');
-      }
+      // Ensure layout class is present
+      const caseModal = document.querySelector('#caseModal .modal.modal-case');
+      if (caseModal) caseModal.classList.add('ai-panel-active');
 
       setTimeout(() => {
         if (this._input) this._input.focus();

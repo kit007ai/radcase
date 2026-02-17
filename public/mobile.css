@@ -680,6 +680,26 @@ body.offline .sidebar {
     gap: 12px;
   }
 
+  /* Image viewer: larger, centered */
+  .case-viewer {
+    border-radius: 8px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .case-viewer img {
+    max-height: 55vh;
+    object-fit: contain;
+    background: #000;
+  }
+
+  /* DICOM viewer: more viewport height */
+  .dicom-viewer-area {
+    height: 55vh;
+    min-height: 250px;
+    max-height: 65vh;
+  }
+
   /* DICOM controls compact */
   .dicom-controls {
     padding: 8px;
