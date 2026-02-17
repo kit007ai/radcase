@@ -1,16 +1,7 @@
 // Quiz Engine - Unified session manager: card queue, scoring, session lifecycle, mode routing
 // Replaces the fragmented swipe-quiz.js and micro-learning.js
 
-// Shared HTML escaping utility
-window.escapeHtml = function(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
+// escapeHtml is now loaded from /escape-html.js
 
 class QuizEngine {
   constructor() {

@@ -5,6 +5,7 @@ const fs = require('fs');
 const sharp = require('sharp');
 const { upload } = require('../middleware/upload');
 const { cacheMiddleware } = require('../lib/cache');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -246,7 +247,7 @@ module.exports = function(db, cache, cacheInvalidator) {
   });
 
   // Create new case
-  router.post('/', (req, res) => {
+  router.post('/', requireAuth, (req, res) => {
     const { title, modality, body_part, diagnosis, difficulty, clinical_history, teaching_points, findings, tags } = req.body;
 
     // Input validation
@@ -285,7 +286,7 @@ module.exports = function(db, cache, cacheInvalidator) {
   });
 
   // Update case
-  router.put('/:id', (req, res) => {
+  router.put('/:id', requireAuth, (req, res) => {
     const { title, modality, body_part, diagnosis, difficulty, clinical_history, teaching_points, findings, tags } = req.body;
 
     db.prepare(`
@@ -313,7 +314,7 @@ module.exports = function(db, cache, cacheInvalidator) {
   });
 
   // Delete case
-  router.delete('/:id', (req, res) => {
+  router.delete('/:id', requireAuth, (req, res) => {
     const images = db.prepare('SELECT filename FROM images WHERE case_id = ?').all(req.params.id);
     for (const img of images) {
       fs.unlink(path.join(UPLOAD_DIR, img.filename), () => {});
@@ -325,7 +326,7 @@ module.exports = function(db, cache, cacheInvalidator) {
   });
 
   // Upload images for a case
-  router.post('/:id/images', upload.array('images', 20), async (req, res) => {
+  router.post('/:id/images', requireAuth, upload.array('images', 20), async (req, res) => {
     const caseId = req.params.id;
     const insertImage = db.prepare(`
       INSERT INTO images (id, case_id, filename, original_name, sequence)
@@ -362,7 +363,7 @@ module.exports = function(db, cache, cacheInvalidator) {
   });
 
   // Update image annotations
-  router.put('/:caseId/images/:id/annotations', (req, res) => {
+  router.put('/:caseId/images/:id/annotations', requireAuth, (req, res) => {
     const { annotations } = req.body;
     db.prepare('UPDATE images SET annotations = ? WHERE id = ?').run(JSON.stringify(annotations), req.params.id);
     res.json({ message: 'Annotations saved' });

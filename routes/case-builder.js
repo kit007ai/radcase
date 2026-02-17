@@ -28,7 +28,7 @@ module.exports = function(db) {
       const result = await builder.generateCase(reportText, dicomMetadata || {}, req.user.id);
       res.json(result);
     } catch (err) {
-      res.status(500).json({ error: 'Case generation failed: ' + err.message });
+      res.status(500).json({ error: 'Case generation failed. Please try again.' });
     }
   });
 
@@ -111,7 +111,7 @@ module.exports = function(db) {
       const result = builder.publishDraft(req.params.id, req.user.id);
       res.json({ success: true, ...result });
     } catch (err) {
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ error: 'Publish failed. Please check the draft status.' });
     }
   });
 
@@ -138,7 +138,7 @@ Return ONLY the regenerated ${section} content as valid JSON (matching the origi
         .run(JSON.stringify(content), req.params.id);
       res.json({ success: true, section, content: newSection });
     } catch (err) {
-      res.status(500).json({ error: 'Regeneration failed: ' + err.message });
+      res.status(500).json({ error: 'Regeneration failed. Please try again.' });
     }
   });
 

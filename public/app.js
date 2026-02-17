@@ -166,7 +166,9 @@ async function viewCase(id) {
   if (modalBody && !document.getElementById('caseModal').classList.contains('active')) {
     document.getElementById('modalTitle').textContent = 'Loading...';
   }
-  document.getElementById('caseModal').classList.add('active');
+  const caseModalEl = document.getElementById('caseModal');
+  caseModalEl.classList.add('active');
+  if (window.focusTrap) focusTrap.activate(caseModalEl);
 
   try {
     if (state.dicomViewer) {
@@ -260,7 +262,9 @@ async function viewCase(id) {
       initCasePanels(id);
     }
 
-    document.getElementById('caseModal').classList.add('active');
+    const caseModalEl2 = document.getElementById('caseModal');
+    caseModalEl2.classList.add('active');
+    if (window.focusTrap) focusTrap.activate(caseModalEl2);
   } catch (err) {
     toast('Failed to load case', 'error');
   }
@@ -905,7 +909,9 @@ function annotateCase() {
     } catch (e) {}
   }
 
-  document.getElementById('annotationModal').classList.add('active');
+  const annotModal = document.getElementById('annotationModal');
+  annotModal.classList.add('active');
+  if (window.focusTrap) focusTrap.activate(annotModal);
 }
 window.annotateCase = annotateCase;
 

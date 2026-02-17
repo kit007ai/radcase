@@ -57,7 +57,43 @@ html.font-large { font-size: 18px; }
   border: 0;
 }
 
-/* Focus indicators for better keyboard navigation */
+/* Focus indicators for keyboard navigation (WCAG 2.4.7) */
+.nav-item:focus-visible,
+.btn:focus-visible,
+.form-input:focus-visible,
+.form-select:focus-visible,
+.form-textarea:focus-visible,
+.hamburger-btn:focus-visible,
+.case-card:focus-visible,
+.collection-card:focus-visible,
+.bookmark-btn:focus-visible,
+.modal-bookmark-btn:focus-visible,
+.offline-download-btn:focus-visible,
+.modal-close:focus-visible,
+.auth-tab:focus-visible,
+.filter-select:focus-visible,
+.bookmark-filter-btn:focus-visible,
+.tab-btn:focus-visible,
+.quiz-option-btn:focus-visible,
+.quiz-hub-mode-btn:focus-visible,
+.quiz-session-close:focus-visible,
+.quiz-count-btn:focus-visible,
+.mode-btn:focus-visible,
+.pref-color-swatch:focus-visible,
+.trainee-level-btn:focus-visible,
+.bottom-nav-item:focus-visible,
+.voice-narrate-btn:focus-visible,
+.modal-nav-btn:focus-visible,
+.micro-learning-fab:focus-visible,
+.collections-tab:focus-visible,
+.add-to-collection-item:focus-visible,
+.study-step:focus-visible,
+details summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Fallback for older browsers without :focus-visible */
 .nav-item:focus,
 .btn:focus,
 .form-input:focus,

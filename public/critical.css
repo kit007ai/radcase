@@ -3,8 +3,8 @@
 html{touch-action:manipulation}
 :root{
   --bg-primary:#0a0a0f;--bg-secondary:#12121a;--bg-tertiary:#1a1a25;
-  --bg-card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.08);
-  --text-primary:#f4f4f5;--text-secondary:#a1a1aa;--text-muted:#71717a;
+  --bg-card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.12);
+  --text-primary:#f4f4f5;--text-secondary:#b8b8c0;--text-muted:#9898a0;
   --accent:#6366f1;--accent-hover:#818cf8;
   --success:#22c55e;--warning:#f59e0b;--danger:#ef4444;
   --gradient-1:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#d946ef 100%);

@@ -1,6 +1,8 @@
 // RadCase UI - DOM manipulation helpers, toast notifications, modal management
 import { state } from './state.js';
 
+const esc = (str) => window.escapeHtml ? window.escapeHtml(str) : String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 // ============ Toast Notifications ============
 
 export function toast(message, type = 'success') {
@@ -9,10 +11,14 @@ export function toast(message, type = 'success') {
   toastEl.className = `toast ${type}`;
   toastEl.innerHTML = `
     <span>${type === 'success' ? '\u2705' : '\u274C'}</span>
-    <span>${message}</span>
+    <span>${esc(message)}</span>
   `;
   container.appendChild(toastEl);
   setTimeout(() => toastEl.remove(), 3000);
+
+  // Announce to screen readers
+  const liveRegion = document.getElementById('a11yLiveRegion');
+  if (liveRegion) liveRegion.textContent = message;
 }
 
 // ============ Mobile Navigation ============
@@ -165,13 +171,17 @@ export function updateAuthUI() {
 }
 
 export function showAuthModal(tab = 'login') {
-  document.getElementById('authModal').classList.add('active');
+  const modal = document.getElementById('authModal');
+  modal.classList.add('active');
   document.getElementById('authError').classList.remove('show');
   switchAuthTab(tab);
+  if (window.focusTrap) focusTrap.activate(modal);
 }
 
 export function closeAuthModal() {
-  document.getElementById('authModal').classList.remove('active');
+  const modal = document.getElementById('authModal');
+  modal.classList.remove('active');
+  if (window.focusTrap) focusTrap.deactivate(modal);
   document.getElementById('loginForm').reset();
   document.getElementById('registerForm').reset();
   document.getElementById('authError').classList.remove('show');
@@ -202,7 +212,9 @@ export function showAuthError(message) {
 // ============ Modal Management ============
 
 export function closeModal() {
-  document.getElementById('caseModal').classList.remove('active');
+  const modal = document.getElementById('caseModal');
+  modal.classList.remove('active');
+  if (window.focusTrap) focusTrap.deactivate(modal);
   state.currentCase = null;
 
   // Close annotation modal if open
@@ -258,7 +270,9 @@ export function selectImage(filename, thumb) {
 }
 
 export function closeAnnotationModal() {
-  document.getElementById('annotationModal').classList.remove('active');
+  const modal = document.getElementById('annotationModal');
+  modal.classList.remove('active');
+  if (window.focusTrap) focusTrap.deactivate(modal);
   state.annotationCanvas = null;
 }
 
@@ -309,14 +323,14 @@ export function renderCases(cases) {
         <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
       </button>
       ${c.thumbnail
-        ? `<img class="case-image" src="/thumbnails/${c.thumbnail}" alt="${c.title}" onerror="this.outerHTML='<div class=\\'case-image-placeholder\\'>\\uD83E\\uDE7B</div>'">`
+        ? `<img class="case-image" src="/thumbnails/${c.thumbnail}" alt="${esc(c.title)}" onerror="this.outerHTML='<div class=\\'case-image-placeholder\\'>\\uD83E\\uDE7B</div>'">`
         : `<div class="case-image-placeholder">\uD83E\uDE7B</div>`
       }
       <div class="case-content">
-        <h3 class="case-title">${c.title}</h3>
+        <h3 class="case-title">${esc(c.title)}</h3>
         <div class="case-meta">
-          ${c.modality ? `<span class="badge badge-modality">${c.modality}</span>` : ''}
-          ${c.body_part ? `<span class="badge badge-bodypart">${c.body_part}</span>` : ''}
+          ${c.modality ? `<span class="badge badge-modality">${esc(c.modality)}</span>` : ''}
+          ${c.body_part ? `<span class="badge badge-bodypart">${esc(c.body_part)}</span>` : ''}
         </div>
         <div class="difficulty">
           ${[1,2,3,4,5].map(i => `<div class="difficulty-dot ${i <= c.difficulty ? 'active' : ''}"></div>`).join('')}
@@ -410,9 +424,13 @@ export function resetPreferences() {
 export function openPreferencesModal() {
   const prefs = loadPreferences();
   applyPreferences(prefs);
-  document.getElementById('preferencesOverlay').classList.add('active');
+  const modal = document.getElementById('preferencesOverlay');
+  modal.classList.add('active');
+  if (window.focusTrap) focusTrap.activate(modal);
 }
 
 export function closePreferencesModal() {
-  document.getElementById('preferencesOverlay').classList.remove('active');
+  const modal = document.getElementById('preferencesOverlay');
+  modal.classList.remove('active');
+  if (window.focusTrap) focusTrap.deactivate(modal);
 }

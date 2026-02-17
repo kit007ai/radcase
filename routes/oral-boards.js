@@ -67,7 +67,7 @@ module.exports = function(db) {
         timeLimit
       });
     } catch (err) {
-      res.status(500).json({ error: 'Failed to start session: ' + err.message });
+      res.status(500).json({ error: 'Failed to start session. Please try again.' });
     }
   });
 
@@ -142,7 +142,7 @@ module.exports = function(db) {
         isComplete: result.isComplete || false
       });
     } catch (err) {
-      res.status(500).json({ error: 'Failed to process response: ' + err.message });
+      res.status(500).json({ error: 'Failed to process response. Please try again.' });
     }
   });
 
@@ -202,7 +202,7 @@ module.exports = function(db) {
         recommendations: evaluation.recommendations || []
       });
     } catch (err) {
-      res.status(500).json({ error: 'Failed to end session: ' + err.message });
+      res.status(500).json({ error: 'Failed to end session. Please try again.' });
     }
   });
 
@@ -348,7 +348,7 @@ module.exports = function(db) {
         summary: annotationResult.summary || ''
       });
     } catch (err) {
-      res.status(500).json({ error: 'Failed to generate replay: ' + err.message });
+      res.status(500).json({ error: 'Failed to generate replay. Please try again.' });
     }
   });
 

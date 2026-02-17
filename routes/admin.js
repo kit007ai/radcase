@@ -12,11 +12,11 @@ module.exports = function(db, monitor) {
   const THUMB_DIR = path.join(__dirname, '..', 'thumbnails');
 
   // Performance monitoring endpoints
-  router.get('/metrics', (req, res) => {
+  router.get('/metrics', requireAdmin, (req, res) => {
     res.json(monitor.getMetrics());
   });
 
-  router.get('/health', (req, res) => {
+  router.get('/health', requireAdmin, (req, res) => {
     const health = monitor.getHealth();
     res.status(health.status === 'healthy' ? 200 : 503).json(health);
   });
@@ -218,7 +218,7 @@ module.exports = function(db, monitor) {
   });
 
   // Analytics
-  router.get('/analytics', (req, res) => {
+  router.get('/analytics', requireAdmin, (req, res) => {
     const caseCount = db.prepare('SELECT COUNT(*) as count FROM cases').get();
     const imageCount = db.prepare('SELECT COUNT(*) as count FROM images').get();
     const tagCount = db.prepare('SELECT COUNT(*) as count FROM tags').get();
@@ -270,7 +270,7 @@ module.exports = function(db, monitor) {
     db.prepare('INSERT OR REPLACE INTO ai_config (key, value) VALUES (?, ?)').run(key, value);
   }
 
-  router.get('/ai/status', (req, res) => {
+  router.get('/ai/status', requireAdmin, (req, res) => {
     const config = getAIConfig();
     res.json({
       configured: !!(config.provider && config.apiKey),
@@ -298,7 +298,7 @@ module.exports = function(db, monitor) {
       const response = await callAI(config, systemPrompt, messages);
       res.json({ response });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: 'Request failed. Please try again.' });
     }
   });
 
@@ -314,12 +314,12 @@ module.exports = function(db, monitor) {
       ], maxTokens);
       res.json({ response });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: 'Request failed. Please try again.' });
     }
   });
 
   // Export all cases
-  router.get('/export', (req, res) => {
+  router.get('/export', requireAdmin, (req, res) => {
     const cases = db.prepare(`
       SELECT c.*, GROUP_CONCAT(DISTINCT t.name) as tags
       FROM cases c
@@ -353,7 +353,7 @@ module.exports = function(db, monitor) {
   });
 
   // Import cases
-  router.post('/import', express.json({ limit: '100mb' }), async (req, res) => {
+  router.post('/import', requireAdmin, express.json({ limit: '100mb' }), async (req, res) => {
     const { cases } = req.body;
 
     if (!cases || !Array.isArray(cases)) {
@@ -426,7 +426,7 @@ module.exports = function(db, monitor) {
   });
 
   // Get all tags
-  router.get('/tags', (req, res) => {
+  router.get('/tags', requireAdmin, (req, res) => {
     const { cacheMiddleware: cm } = require('../lib/cache');
     const tags = db.prepare(`
       SELECT t.name, COUNT(ct.case_id) as count
@@ -439,7 +439,7 @@ module.exports = function(db, monitor) {
   });
 
   // Get filter options (distinct values)
-  router.get('/filters', (req, res) => {
+  router.get('/filters', requireAdmin, (req, res) => {
     const modalities = db.prepare('SELECT DISTINCT modality FROM cases WHERE modality IS NOT NULL ORDER BY modality').all();
     const bodyParts = db.prepare('SELECT DISTINCT body_part FROM cases WHERE body_part IS NOT NULL ORDER BY body_part').all();
 
@@ -462,7 +462,7 @@ module.exports = function(db, monitor) {
   });
 
   // Update image annotations (top-level route)
-  router.put('/images/:id/annotations', (req, res) => {
+  router.put('/images/:id/annotations', requireAuth, (req, res) => {
     const { annotations } = req.body;
     db.prepare('UPDATE images SET annotations = ? WHERE id = ?').run(JSON.stringify(annotations), req.params.id);
     res.json({ message: 'Annotations saved' });

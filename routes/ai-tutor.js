@@ -92,7 +92,7 @@ module.exports = function(db) {
         conversationId: convoId
       });
     } catch (err) {
-      res.status(500).json({ error: 'AI chat failed: ' + err.message });
+      res.status(500).json({ error: 'AI chat failed. Please try again.' });
     }
   });
 
@@ -137,7 +137,7 @@ Keep the hint to 2-3 sentences maximum.`;
         hintLevel: parseInt(hintLevel)
       });
     } catch (err) {
-      res.status(500).json({ error: 'Hint generation failed: ' + err.message });
+      res.status(500).json({ error: 'Hint generation failed. Please try again.' });
     }
   });
 
@@ -185,7 +185,7 @@ Keep the hint to 2-3 sentences maximum.`;
         questions
       });
     } catch (err) {
-      res.status(500).json({ error: 'Guidance generation failed: ' + err.message });
+      res.status(500).json({ error: 'Guidance generation failed. Please try again.' });
     }
   });
 
@@ -230,7 +230,7 @@ Keep the hint to 2-3 sentences maximum.`;
         suggestions: evaluation.suggestions || []
       });
     } catch (err) {
-      res.status(500).json({ error: 'Report evaluation failed: ' + err.message });
+      res.status(500).json({ error: 'Report evaluation failed. Please try again.' });
     }
   });
 
@@ -240,7 +240,7 @@ Keep the hint to 2-3 sentences maximum.`;
       const analysis = await engine.analyzeWeaknesses(req.user.id);
       res.json(analysis);
     } catch (err) {
-      res.status(500).json({ error: 'Weakness analysis failed: ' + err.message });
+      res.status(500).json({ error: 'Weakness analysis failed. Please try again.' });
     }
   });
 
@@ -268,7 +268,7 @@ Keep the hint to 2-3 sentences maximum.`;
         reason
       });
     } catch (err) {
-      res.status(500).json({ error: 'Practice recommendations failed: ' + err.message });
+      res.status(500).json({ error: 'Practice recommendations failed. Please try again.' });
     }
   });
 

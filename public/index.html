@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RadCase - Radiology Case Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,31 +25,19 @@
   <link rel="stylesheet" href="/styles/ai-tutor.css?v=1">
   <link rel="stylesheet" href="/styles/oral-boards.css?v=1">
   <link rel="stylesheet" href="/styles/milestones.css?v=1">
-  <script src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
-  <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
-  <script src="https://unpkg.com/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
-  <script src="https://unpkg.com/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js"></script>
-  <script src="https://unpkg.com/dicom-parser@1.8.21/dist/dicomParser.min.js"></script>
-  <script src="https://unpkg.com/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
-  <script>
-    cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-    cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
-    cornerstoneTools.external.cornerstone = cornerstone;
-    cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
-    cornerstoneTools.external.Hammer = Hammer;
-    cornerstoneTools.init();
-    cornerstoneWADOImageLoader.webWorkerManager.initialize({
-      maxWebWorkers: navigator.hardwareConcurrency || 2,
-      startWebWorkersOnDemand: true,
-      taskConfiguration: { decodeTask: { initializeCodecsOnStartup: false, strict: false } }
-    });
-  </script>
+  <!-- Cornerstone DICOM libs loaded deferred to avoid blocking first paint -->
+
 </head>
 <body>
+  <a href="#main-content" class="sr-only" style="position:absolute;top:-40px;left:0;background:var(--accent);color:#fff;padding:8px 16px;z-index:10000;transition:top 0.2s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Skip to main content</a>
   <header class="mobile-header">
-    <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle menu">&#x2630;</button>
+    <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="mobile-logo">
-      <div class="mobile-logo-icon">&#x1F3E5;</div>
+      <div class="mobile-logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="4"/></svg>
+      </div>
       <h1>RadCase</h1>
     </div>
   </header>
@@ -57,54 +45,52 @@
   <div class="app">
     <aside class="sidebar" role="complementary" aria-label="Navigation sidebar">
       <div class="logo">
-        <div class="logo-icon">&#x1F3E5;</div>
-        <div><h1>RadCase</h1><span>Teaching Case Library</span></div>
+        <div class="logo-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="4"/></svg>
+        </div>
+        <div><h1>RadCase</h1><span>Radiology Education Platform</span></div>
       </div>
       <nav class="nav" role="navigation" aria-label="Main navigation">
         <button class="nav-item active" data-page="library" aria-label="View case library" aria-current="page">
-          <span class="icon" aria-hidden="true">&#x1F4DA;</span> Case Library
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span> Case Library
         </button>
         <button class="nav-item" data-page="add" aria-label="Add new case">
-          <span class="icon" aria-hidden="true">&#x2795;</span> Add New Case
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span> Add New Case
         </button>
         <button class="nav-item" data-page="case-builder" aria-label="AI Case Builder">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-            </svg>
-          </span> AI Case Builder
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> AI Case Builder
         </button>
         <button class="nav-item" data-page="quiz" aria-label="Quiz mode">
-          <span class="icon" aria-hidden="true">&#x1F3AF;</span> Quiz Mode
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Quiz Mode
         </button>
         <button class="nav-item" data-page="collections" aria-label="Collections">
-          <span class="icon" aria-hidden="true">&#x1F4DA;</span> Collections
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span> Collections
         </button>
         <button class="nav-item" data-page="analytics" aria-label="View analytics">
-          <span class="icon" aria-hidden="true">&#x1F4CA;</span> Analytics
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Analytics
         </button>
         <button class="nav-item" data-page="oral-boards" aria-label="Oral Board Prep">
-          <span class="icon" aria-hidden="true">&#x1F399;</span> Oral Boards
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span> Oral Boards
         </button>
         <button class="nav-item" data-page="milestones" aria-label="ACGME Milestones">
-          <span class="icon" aria-hidden="true">&#x1F3AF;</span> Milestones
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span> Milestones
         </button>
         <button class="nav-item nav-item-preferences" onclick="openPreferencesModal()" aria-label="Preferences">
-          <span class="icon" aria-hidden="true">&#x2699;&#xFE0F;</span> Preferences
+          <span class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> Preferences
         </button>
       </nav>
       <div class="user-section" id="userSection">
         <div id="authButtons" class="auth-buttons">
-          <button class="btn btn-primary btn-sm" onclick="showAuthModal('login')">&#x1F510; Sign In</button>
-          <button class="btn btn-secondary btn-sm" onclick="showAuthModal('register')">&#x2728; Create Account</button>
+          <button class="btn btn-primary btn-sm" onclick="showAuthModal('login')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Sign In</button>
+          <button class="btn btn-secondary btn-sm" onclick="showAuthModal('register')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Create Account</button>
         </div>
         <div id="userCard" class="user-card hidden">
-          <div class="user-avatar" id="userAvatar">&#x1F464;</div>
+          <div class="user-avatar" id="userAvatar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4-4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
           <div class="user-info">
             <div class="user-name" id="userName">-</div>
             <div class="user-role" id="userRole">-</div>
           </div>
-          <button class="btn-icon" onclick="logout()" title="Sign out">&#x1F6AA;</button>
+          <button class="btn-icon" onclick="logout()" title="Sign out"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
         </div>
       </div>
       <div class="stats-card" id="sidebarStats">
@@ -121,13 +107,13 @@
       </div>
     </aside>
 
-    <main class="main" role="main" aria-label="Main content">
+    <main class="main" id="main-content" role="main" aria-label="Main content">
       <!-- Library Page -->
       <section id="page-library" class="page">
         <div class="page-header"><h2>Case Library</h2><p>Browse and search your radiology teaching cases</p></div>
         <div class="search-bar" role="search" aria-label="Search and filter cases">
           <div class="search-input-wrapper">
-            <span class="icon" aria-hidden="true">&#x1F50D;</span>
+            <span class="icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
             <input type="text" class="search-input" id="searchInput" placeholder="Search cases..." aria-label="Search radiology cases" autocomplete="off">
           </div>
           <div class="filter-group">
@@ -156,13 +142,13 @@
         <div class="card">
           <form id="addCaseForm">
             <div class="form-row">
-              <div class="form-group"><label class="form-label">Case Title *</label><input type="text" class="form-input" name="title" required placeholder="e.g., Classic Pneumothorax"></div>
-              <div class="form-group"><label class="form-label">Diagnosis *</label><input type="text" class="form-input" name="diagnosis" required placeholder="e.g., Right-sided pneumothorax"></div>
+              <div class="form-group"><label class="form-label" for="caseTitle">Case Title *</label><input type="text" class="form-input" id="caseTitle" name="title" required placeholder="e.g., Classic Pneumothorax"></div>
+              <div class="form-group"><label class="form-label" for="caseDiagnosis">Diagnosis *</label><input type="text" class="form-input" id="caseDiagnosis" name="diagnosis" required placeholder="e.g., Right-sided pneumothorax"></div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Modality</label>
-                <select class="form-select" name="modality">
+                <label class="form-label" for="caseModality">Modality</label>
+                <select class="form-select" id="caseModality" name="modality">
                   <option value="">Select modality...</option>
                   <option value="X-Ray">X-Ray</option><option value="CT">CT</option><option value="MRI">MRI</option>
                   <option value="Ultrasound">Ultrasound</option><option value="Nuclear Medicine">Nuclear Medicine</option>
@@ -171,8 +157,8 @@
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Body Part</label>
-                <select class="form-select" name="body_part">
+                <label class="form-label" for="caseBodyPart">Body Part</label>
+                <select class="form-select" id="caseBodyPart" name="body_part">
                   <option value="">Select body part...</option>
                   <option value="Chest">Chest</option><option value="Abdomen">Abdomen</option><option value="Pelvis">Pelvis</option>
                   <option value="Head">Head</option><option value="Neck">Neck</option><option value="Spine">Spine</option>
@@ -181,26 +167,26 @@
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Difficulty (1-5)</label>
-                <select class="form-select" name="difficulty">
+                <label class="form-label" for="caseDifficulty">Difficulty (1-5)</label>
+                <select class="form-select" id="caseDifficulty" name="difficulty">
                   <option value="1">1 - Easy</option><option value="2" selected>2 - Medium</option>
                   <option value="3">3 - Hard</option><option value="4">4 - Expert</option><option value="5">5 - Master</option>
                 </select>
               </div>
             </div>
-            <div class="form-group"><label class="form-label">Clinical History</label><textarea class="form-textarea" name="clinical_history" placeholder="Patient presentation, symptoms, relevant history..."></textarea></div>
-            <div class="form-group"><label class="form-label">Key Findings</label><textarea class="form-textarea" name="findings" placeholder="Describe the radiological findings..."></textarea></div>
-            <div class="form-group"><label class="form-label">Teaching Points</label><textarea class="form-textarea" name="teaching_points" placeholder="Important learning points for this case..."></textarea></div>
-            <div class="form-group"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-input" name="tags" placeholder="e.g., emergency, classic, must-know"></div>
+            <div class="form-group"><label class="form-label" for="caseHistory">Clinical History</label><textarea class="form-textarea" id="caseHistory" name="clinical_history" placeholder="Patient presentation, symptoms, relevant history..."></textarea></div>
+            <div class="form-group"><label class="form-label" for="caseFindings">Key Findings</label><textarea class="form-textarea" id="caseFindings" name="findings" placeholder="Describe the radiological findings..."></textarea></div>
+            <div class="form-group"><label class="form-label" for="caseTeaching">Teaching Points</label><textarea class="form-textarea" id="caseTeaching" name="teaching_points" placeholder="Important learning points for this case..."></textarea></div>
+            <div class="form-group"><label class="form-label" for="caseTags">Tags (comma separated)</label><input type="text" class="form-input" id="caseTags" name="tags" placeholder="e.g., emergency, classic, must-know"></div>
             <div class="form-group">
               <label class="form-label">Images</label>
-              <div class="upload-zone" id="uploadZone"><div class="icon">&#x1F4C1;</div><h3>Drop images here</h3><p>or click to browse - JPEG, PNG up to 50MB</p></div>
+              <div class="upload-zone" id="uploadZone"><div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><h3>Drop images here</h3><p>or click to browse - JPEG, PNG up to 50MB</p></div>
               <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
               <div class="image-grid" id="imagePreviewGrid"></div>
             </div>
             <div class="form-actions">
               <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear</button>
-              <button type="submit" class="btn btn-primary">&#x1F4BE; Save Case</button>
+              <button type="submit" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Case</button>
             </div>
           </form>
         </div>
@@ -219,16 +205,16 @@
 
           <div class="quiz-hub-modes" id="quizHubModes">
             <button class="quiz-hub-mode-btn" onclick="quizEngine.startDailyChallenge()">
-              <span class="quiz-hub-mode-icon">&#x1F4C5;</span>Daily Challenge
+              <span class="quiz-hub-mode-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Daily Challenge
             </button>
             <button class="quiz-hub-mode-btn" onclick="quizEngine.startQuickStudy()">
-              <span class="quiz-hub-mode-icon">&#x26A1;</span>Quick Study
+              <span class="quiz-hub-mode-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Quick Study
             </button>
             <button class="quiz-hub-mode-btn" onclick="quizEngine.startReviewDue()">
-              <span class="quiz-hub-mode-icon">&#x1F504;</span>Review Due
+              <span class="quiz-hub-mode-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></span>Review Due
             </button>
             <button class="quiz-hub-mode-btn" onclick="quizEngine.startWeaknessDrill()">
-              <span class="quiz-hub-mode-icon">&#x1F3AF;</span>Weakness Drill
+              <span class="quiz-hub-mode-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>Weakness Drill
             </button>
           </div>
 
@@ -305,7 +291,7 @@
   </div>
 
   <!-- Case View Modal -->
-  <div class="modal-overlay" id="caseModal">
+  <div class="modal-overlay" id="caseModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <button class="modal-nav-btn modal-nav-prev" onclick="navigateCase(-1)" title="Previous case">&#x2039;</button>
     <button class="modal-nav-btn modal-nav-next" onclick="navigateCase(1)" title="Next case">&#x203A;</button>
     <div class="modal modal-case">
@@ -316,7 +302,7 @@
           <span id="modalBookmarkLabel">Bookmark</span>
         </button>
         <button class="voice-narrate-btn" id="voiceNarrateBtn" onclick="toggleVoiceNarration()" title="Read case aloud" aria-label="Read case aloud">
-          <span class="voice-narrate-icon">&#x1F50A;</span>
+          <span class="voice-narrate-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg></span>
         </button>
         <div class="viewer-mode-switch" id="viewerModeSwitch">
           <button class="mode-btn" data-mode="reference" onclick="window.toggleViewerMode('reference')" title="See all case details immediately">
@@ -333,10 +319,10 @@
           </button>
         </div>
         <div class="modal-tabs hidden" id="viewerTabs">
-          <button class="tab-btn active" data-tab="images" onclick="switchViewerTab('images')">&#x1F4F7; Images</button>
-          <button class="tab-btn" data-tab="dicom" onclick="switchViewerTab('dicom')">&#x1F52C; DICOM</button>
+          <button class="tab-btn active" data-tab="images" onclick="switchViewerTab('images')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Images</button>
+          <button class="tab-btn" data-tab="dicom" onclick="switchViewerTab('dicom')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><circle cx="12" cy="12" r="10"/><line x1="14.31" y1="8" x2="20.05" y2="17.94"/><line x1="9.69" y1="8" x2="21.17" y2="8"/><line x1="7.38" y1="12" x2="13.12" y2="2.06"/></svg>DICOM</button>
         </div>
-        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+        <button class="modal-close" onclick="closeModal()" aria-label="Close case details">&#x2715;</button>
       </div>
       <div class="study-step-indicator" id="studyStepIndicator" style="display:none;">
         <div class="study-step active" data-step="0"><span class="study-step-dot"></span>History</div>
@@ -362,12 +348,12 @@
             </div>
             <div class="dicom-upload-section" id="dicomUploadSection">
               <details>
-                <summary>&#x1F4E4; Upload DICOM Series</summary>
+                <summary><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload DICOM Series</summary>
                 <div class="dicom-upload-inner">
                   <input type="file" id="dicomFileInput" multiple accept=".dcm,application/dicom" class="hidden">
                   <input type="file" id="dicomFolderInput" webkitdirectory directory multiple class="hidden">
                   <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dicomFileInput').click()">Select Files</button>
-                  <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dicomFolderInput').click()" style="margin-left: 8px;">&#x1F4C1; Select Folder</button>
+                  <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dicomFolderInput').click()" style="margin-left: 8px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>Select Folder</button>
                   <span id="dicomFileCount" style="margin-left: 12px; color: var(--text-muted);"></span>
                   <button class="btn btn-primary btn-sm hidden" id="uploadDicomBtn" style="margin-left: 12px;" onclick="uploadDicomFiles()">Upload</button>
                 </div>
@@ -388,45 +374,46 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-danger btn-sm" onclick="deleteCase()">&#x1F5D1;&#xFE0F; Delete</button>
-        <button class="btn btn-secondary" onclick="annotateCase()">&#x270F;&#xFE0F; Annotate</button>
-        <button class="btn btn-secondary" onclick="collectionsManager.showAddToCollectionPicker(state.currentCase?.id)">&#x1F4DA; Add to Collection</button>
-        <button class="btn btn-primary" onclick="presentCase()">&#x1F3AC; Present</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCase()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete</button>
+        <button class="btn btn-secondary" onclick="annotateCase()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Annotate</button>
+        <button class="btn btn-secondary" onclick="collectionsManager.showAddToCollectionPicker(state.currentCase?.id)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Add to Collection</button>
+        <button class="btn btn-primary" onclick="presentCase()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><polygon points="5 3 19 12 5 21 5 3"/></svg>Present</button>
         <button class="btn btn-secondary" onclick="closeModal()">Close</button>
       </div>
     </div>
   </div>
 
   <!-- Annotation Modal -->
-  <div class="modal-overlay" id="annotationModal">
+  <div class="modal-overlay" id="annotationModal" role="dialog" aria-modal="true" aria-label="Annotate Image">
     <div class="modal modal-annotation">
-      <div class="modal-header"><h2>Annotate Image</h2><button class="modal-close" onclick="closeAnnotationModal()">&#x2715;</button></div>
+      <div class="modal-header"><h2>Annotate Image</h2><button class="modal-close" onclick="closeAnnotationModal()" aria-label="Close annotation editor">&#x2715;</button></div>
       <div class="modal-body"><div id="annotationContainer" class="annotation-container"></div></div>
     </div>
   </div>
 
   <div class="toast-container" id="toastContainer"></div>
+  <div id="a11yLiveRegion" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
   <!-- Auth Modal -->
-  <div class="auth-modal" id="authModal">
+  <div class="auth-modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
     <div class="auth-box">
-      <button class="modal-close" onclick="closeAuthModal()">&#x2715;</button>
-      <div class="auth-header"><h2>&#x1F3E5; RadCase</h2><p>Track your learning progress</p></div>
+      <button class="modal-close" onclick="closeAuthModal()" aria-label="Close sign in">&#x2715;</button>
+      <div class="auth-header"><h2 id="authModalTitle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:6px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="4"/></svg>RadCase</h2><p>Track your learning progress</p></div>
       <div class="auth-tabs">
         <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
         <button class="auth-tab" onclick="switchAuthTab('register')">Create Account</button>
       </div>
       <div class="auth-error" id="authError"></div>
       <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
-        <div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" name="username" required autocomplete="username"></div>
-        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" name="password" required autocomplete="current-password"></div>
+        <div class="form-group"><label class="form-label" for="loginUsername">Username or Email</label><input type="text" class="form-input" id="loginUsername" name="username" required autocomplete="username"></div>
+        <div class="form-group"><label class="form-label" for="loginPassword">Password</label><input type="password" class="form-input" id="loginPassword" name="password" required autocomplete="current-password"></div>
         <button type="submit" class="btn btn-primary auth-submit">Sign In</button>
       </form>
       <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
-        <div class="form-group"><label class="form-label">Username *</label><input type="text" class="form-input" name="username" required autocomplete="username" pattern="[a-zA-Z0-9_]+" title="Letters, numbers, and underscores only"></div>
-        <div class="form-group"><label class="form-label">Display Name</label><input type="text" class="form-input" name="displayName" autocomplete="name" placeholder="How should we call you?"></div>
-        <div class="form-group"><label class="form-label">Email (optional)</label><input type="email" class="form-input" name="email" autocomplete="email"></div>
-        <div class="form-group"><label class="form-label">Password *</label><input type="password" class="form-input" name="password" required autocomplete="new-password" minlength="4" placeholder="At least 4 characters"></div>
+        <div class="form-group"><label class="form-label" for="regUsername">Username *</label><input type="text" class="form-input" id="regUsername" name="username" required autocomplete="username" pattern="[a-zA-Z0-9_]+" title="Letters, numbers, and underscores only"></div>
+        <div class="form-group"><label class="form-label" for="regDisplayName">Display Name</label><input type="text" class="form-input" id="regDisplayName" name="displayName" autocomplete="name" placeholder="How should we call you?"></div>
+        <div class="form-group"><label class="form-label" for="regEmail">Email (optional)</label><input type="email" class="form-input" id="regEmail" name="email" autocomplete="email"></div>
+        <div class="form-group"><label class="form-label" for="regPassword">Password *</label><input type="password" class="form-input" id="regPassword" name="password" required autocomplete="new-password" minlength="4" placeholder="At least 4 characters"></div>
         <div class="form-group">
           <label class="form-label">I am a...</label>
           <div class="trainee-level-selector" id="registerTraineeLevel">
@@ -444,7 +431,7 @@
   </div>
 
   <!-- Preferences Modal -->
-  <div class="preferences-overlay" id="preferencesOverlay">
+  <div class="preferences-overlay" id="preferencesOverlay" role="dialog" aria-modal="true" aria-label="Preferences">
     <div class="preferences-modal">
       <div class="modal-header">
         <h2>Preferences</h2>
@@ -487,16 +474,27 @@
 
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
     <div class="bottom-nav-items">
-      <button class="bottom-nav-item active" data-page="library" aria-label="Case Library"><span class="nav-icon" aria-hidden="true">&#x1F4DA;</span>Library</button>
-      <button class="bottom-nav-item" data-page="add" aria-label="Add Case"><span class="nav-icon" aria-hidden="true">&#x2795;</span>Add</button>
-      <button class="bottom-nav-item" data-page="quiz" aria-label="Quiz Mode"><span class="nav-icon" aria-hidden="true">&#x1F3AF;</span>Quiz</button>
-      <button class="bottom-nav-item" data-page="collections" aria-label="Collections"><span class="nav-icon" aria-hidden="true">&#x1F4DA;</span>Collections</button>
-      <button class="bottom-nav-item" data-page="analytics" aria-label="Analytics"><span class="nav-icon" aria-hidden="true">&#x1F4CA;</span>Stats</button>
+      <button class="bottom-nav-item active" data-page="library" aria-label="Case Library"><span class="nav-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>Library</button>
+      <button class="bottom-nav-item" data-page="add" aria-label="Add Case"><span class="nav-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>Add</button>
+      <button class="bottom-nav-item" data-page="quiz" aria-label="Quiz Mode"><span class="nav-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Quiz</button>
+      <button class="bottom-nav-item" data-page="collections" aria-label="Collections"><span class="nav-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Collections</button>
+      <button class="bottom-nav-item" data-page="analytics" aria-label="Analytics"><span class="nav-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Stats</button>
     </div>
   </nav>
 
-  <button class="micro-learning-fab" id="microLearningFab" onclick="quizEngine.startQuickStudy()" aria-label="Quick Study" title="Start Quick Study Session">&#x26A1;</button>
+  <button class="micro-learning-fab" id="microLearningFab" onclick="quizEngine.startQuickStudy()" aria-label="Quick Study" title="Start Quick Study Session"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></button>
 
+  <!-- Cornerstone DICOM libs - loaded at end of body to avoid blocking first paint -->
+  <script src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js" defer></script>
+  <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js" defer></script>
+  <script src="https://unpkg.com/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js" defer></script>
+  <script src="https://unpkg.com/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js" defer></script>
+  <script src="https://unpkg.com/dicom-parser@1.8.21/dist/dicomParser.min.js" defer></script>
+  <script src="https://unpkg.com/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js" defer></script>
+  <script src="/cornerstone-init.js?v=1" defer></script>
+
+  <script src="/escape-html.js?v=1"></script>
+  <script src="/focus-trap.js?v=1"></script>
   <script src="/lazy-loader.js?v=4"></script><script src="/performance-optimizer.js?v=4"></script><script src="/pwa-manager.js?v=4"></script>
   <script src="/annotate.js?v=4" defer></script><script src="/presentation.js?v=4" defer></script>
   <script src="/spaced-repetition.js?v=4" defer></script><script src="/dicom-viewer.js?v=4" defer></script>

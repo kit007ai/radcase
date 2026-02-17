@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const dicomParser = require('dicom-parser');
 const { cacheMiddleware } = require('../lib/cache');
+const { requireAuth } = require('../middleware/auth');
 
 const DICOM_DIR = path.join(__dirname, '..', 'dicom');
 
@@ -60,7 +61,11 @@ module.exports = function(db, cache) {
       return res.status(400).json({ error: 'Series path or ID required' });
     }
 
-    const seriesDir = path.join(DICOM_DIR, folder);
+    const seriesDir = path.resolve(DICOM_DIR, folder);
+
+    if (!seriesDir.startsWith(DICOM_DIR + path.sep) && seriesDir !== DICOM_DIR) {
+      return res.status(400).json({ error: 'Invalid series path' });
+    }
 
     if (!fs.existsSync(seriesDir)) {
       return res.status(404).json({ error: 'Series not found' });
@@ -139,7 +144,7 @@ module.exports = function(db, cache) {
   });
 
   // Delete DICOM series
-  router.delete('/:seriesId', (req, res) => {
+  router.delete('/:seriesId', requireAuth, (req, res) => {
     const series = db.prepare('SELECT folder_name FROM dicom_series WHERE id = ?').get(req.params.seriesId);
 
     if (series) {

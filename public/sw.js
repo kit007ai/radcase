@@ -24,6 +24,9 @@ const STATIC_FILES = [
   '/styles/ai-tutor.css',
   '/styles/oral-boards.css',
   '/styles/milestones.css',
+  '/cornerstone-init.js',
+  '/escape-html.js',
+  '/focus-trap.js',
   '/lazy-loader.js',
   '/performance-optimizer.js',
   '/pwa-manager.js',
@@ -232,28 +235,33 @@ async function cacheFirstStrategy(request, cacheName) {
   }
 }
 
-// Network-first strategy (good for API calls)
+// Network-first strategy (good for API calls) with timeout to prevent hanging on slow networks
 async function networkFirstStrategy(request, cacheName) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 4000);
+
   try {
     console.log('RadCase SW: Trying network first:', request.url);
-    const networkResponse = await fetch(request);
-    
+    const networkResponse = await fetch(request, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
-    console.log('RadCase SW: Network failed, trying cache:', request.url);
-    
+    clearTimeout(timeoutId);
+    console.log('RadCase SW: Network failed/timed out, trying cache:', request.url);
+
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
-    
+
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     throw error;
   }
 }

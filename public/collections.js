@@ -2,6 +2,7 @@ window.collectionsManager = {
   collections: [],
   currentCollection: null,
   activeTab: 'my', // 'my', 'curated', 'shared'
+  _esc(str) { return window.escapeHtml ? window.escapeHtml(str) : String(str || ''); },
 
   async init() {
     if (!window.radcaseState?.currentUser) {
@@ -95,12 +96,13 @@ window.collectionsManager = {
       return;
     }
 
+    const e = this._esc.bind(this);
     grid.innerHTML = filtered.map(c => `
       <div class="collection-card" onclick="collectionsManager.viewCollection('${c.id}')">
-        ${c.cover_image ? `<img class="collection-cover" src="/thumbnails/${c.cover_image}" alt="${c.name}" onerror="this.style.display='none'">` : `<div class="collection-cover-placeholder">📚</div>`}
+        ${c.cover_image ? `<img class="collection-cover" src="/thumbnails/${c.cover_image}" alt="${e(c.name)}" onerror="this.style.display='none'">` : `<div class="collection-cover-placeholder">📚</div>`}
         <div class="collection-info">
-          <h3 class="collection-name">${c.name}</h3>
-          <p class="collection-desc">${c.description || ''}</p>
+          <h3 class="collection-name">${e(c.name)}</h3>
+          <p class="collection-desc">${e(c.description || '')}</p>
           <div class="collection-meta">
             <span>${c.case_count || 0} cases</span>
             ${c.progress !== undefined ? `<div class="collection-progress-bar"><div class="collection-progress-fill" style="width:${c.progress}%"></div></div>` : ''}
@@ -127,12 +129,13 @@ window.collectionsManager = {
     const completedCount = cases.filter(c => c.completed).length;
     const progress = cases.length > 0 ? Math.round((completedCount / cases.length) * 100) : 0;
 
+    const e = this._esc.bind(this);
     page.innerHTML = `
       <div class="collection-detail">
         <div class="collection-detail-header">
           <button class="btn btn-secondary btn-sm" onclick="collectionsManager.init()">← Back</button>
-          <h2>${collection.name}</h2>
-          <p>${collection.description || ''}</p>
+          <h2>${e(collection.name)}</h2>
+          <p>${e(collection.description || '')}</p>
           <div class="collection-detail-meta">
             <span>${cases.length} cases</span>
             <span>${completedCount} completed</span>
@@ -150,8 +153,8 @@ window.collectionsManager = {
               <span class="collection-case-num">${i + 1}</span>
               ${c.thumbnail ? `<img class="collection-case-thumb" src="/thumbnails/${c.thumbnail}" alt="" onerror="this.style.display='none'">` : ''}
               <div class="collection-case-info">
-                <span class="collection-case-title">${c.title}</span>
-                <span class="collection-case-meta">${c.modality || ''} · Difficulty ${c.difficulty || '-'}</span>
+                <span class="collection-case-title">${e(c.title)}</span>
+                <span class="collection-case-meta">${e(c.modality || '')} · Difficulty ${c.difficulty || '-'}</span>
               </div>
               ${c.completed ? '<span class="collection-case-check">✓</span>' : ''}
               ${c.score !== undefined && c.score !== null ? `<span class="collection-case-score">${Math.round(c.score * 100)}%</span>` : ''}
@@ -241,7 +244,7 @@ window.collectionsManager = {
         <h4>Add to Collection</h4>
         ${collections.length > 0 ? collections.map(c => `
           <button class="add-to-collection-item" onclick="collectionsManager.addCaseToCollection('${c.id}', '${caseId}'); document.getElementById('addToCollectionPicker').remove();">
-            ${c.name} (${c.case_count || 0} cases)
+            ${this._esc(c.name)} (${c.case_count || 0} cases)
           </button>
         `).join('') : '<p class="text-muted">No collections. Create one first!</p>'}
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('addToCollectionPicker').remove()">Cancel</button>
