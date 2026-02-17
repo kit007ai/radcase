@@ -16,7 +16,9 @@ class DicomViewer {
 
   async init() {
     if (this.isInitialized) return;
-    
+
+    this.touchGesturesIntegrated = false;
+
     this.container = document.getElementById(this.containerId);
     if (!this.container) {
       console.error('DICOM viewer container not found:', this.containerId);
@@ -142,6 +144,7 @@ class DicomViewer {
   }
 
   setupTouchScrolling() {
+    if (this.touchGesturesIntegrated) return; // TouchGestureHandler handles all touch
     if (!this.element) return;
     
     let touchStartY = 0;
@@ -749,9 +752,9 @@ const dicomStyles = `
     pointer-events: none;
     padding: 12px;
     font-family: 'Monaco', 'Courier New', monospace;
-    font-size: 12px;
-    color: #0f0;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    font-size: 13px;
+    color: rgba(140, 220, 255, 0.85);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
   }
 
   .dicom-overlay-top-left {
@@ -928,6 +931,71 @@ const dicomStyles = `
   .dicom-preset-select option {
     background: #1a1a25;
     color: #f4f4f5;
+  }
+
+  /* Hide DicomViewer's tool buttons when TouchGestureHandler is active */
+  .touch-gestures-active .dicom-tool-controls {
+    display: none;
+  }
+
+  /* Mobile: larger DICOM controls for touch */
+  @media (max-width: 768px) {
+    .dicom-overlay {
+      font-size: 11px;
+    }
+
+    .dicom-controls {
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+    }
+
+    .dicom-scroll-controls {
+      width: 100%;
+      min-width: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+    }
+
+    .dicom-slider {
+      flex: 1;
+      min-width: 120px;
+      height: 10px;
+      border-radius: 5px;
+    }
+
+    .dicom-slider::-webkit-slider-thumb {
+      width: 28px;
+      height: 28px;
+    }
+
+    .dicom-slider::-moz-range-thumb {
+      width: 28px;
+      height: 28px;
+    }
+
+    .dicom-btn {
+      width: 44px;
+      height: 44px;
+    }
+
+    .dicom-preset-controls {
+      width: 100%;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 8px;
+    }
+
+    .dicom-preset-select {
+      width: 100%;
+      font-size: 15px;
+      height: 44px;
+      padding: 10px 12px;
+    }
+
+    .dicom-slice-counter {
+      font-size: 14px;
+      min-width: 55px;
+    }
   }
 `;
 

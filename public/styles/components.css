@@ -601,34 +601,45 @@
   color: var(--accent-hover);
 }
 
-/* Case navigation buttons */
-.modal-nav-btn {
+/* Case position indicator */
+.case-position-indicator {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Subtle desktop edge hover indicators for case navigation */
+.modal-overlay::before,
+.modal-overlay::after {
+  content: '';
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  z-index: var(--z-modal-nav);
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  border: none;
-  font-size: 3rem;
-  width: 56px;
-  height: 80px;
-  cursor: pointer;
+  width: 40px;
+  height: 120px;
   border-radius: 8px;
   opacity: 0;
-  transition: opacity 0.2s, background 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  padding: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 1001;
 }
-.modal-nav-btn:hover { background: rgba(0,0,0,0.85); }
-.modal-nav-prev { left: 12px; }
-.modal-nav-next { right: 12px; }
-.modal-overlay:hover .modal-nav-btn,
-.modal-overlay.active .modal-nav-btn { opacity: 0.7; }
-.modal-overlay:hover .modal-nav-btn:hover { opacity: 1; }
+.modal-overlay::before {
+  left: 8px;
+  background: linear-gradient(90deg, rgba(99,102,241,0.3), transparent);
+}
+.modal-overlay::after {
+  right: 8px;
+  background: linear-gradient(-90deg, rgba(99,102,241,0.3), transparent);
+}
+.modal-overlay.active:hover::before,
+.modal-overlay.active:hover::after {
+  opacity: 1;
+}
 
 /* Search & Filters */
 .search-bar {
@@ -998,9 +1009,11 @@
     padding: 6px 12px;
   }
 
-  .modal-nav-btn { opacity: 0.7; width: 40px; height: 60px; font-size: 2rem; }
-  .modal-nav-prev { left: 4px; }
-  .modal-nav-next { right: 4px; }
+  /* Hide desktop edge indicators on touch devices */
+  .modal-overlay::before,
+  .modal-overlay::after {
+    display: none;
+  }
 }
 
 /* Modal responsive (1024px) */

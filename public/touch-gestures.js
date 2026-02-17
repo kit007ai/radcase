@@ -347,9 +347,25 @@ class TouchGestureHandler {
     this.currentMode = mode;
     this.gestureState = 'idle';
     this.updateToolbarActive(mode);
+    this._showModeFeedback(mode);
     if (this.onGestureChange) {
       this.onGestureChange(mode);
     }
+  }
+
+  _showModeFeedback(modeName) {
+    if (!this.element) return;
+    let feedback = this.element.querySelector('.gesture-mode-feedback');
+    if (!feedback) {
+      feedback = document.createElement('div');
+      feedback.className = 'gesture-mode-feedback';
+      this.element.appendChild(feedback);
+    }
+    const labels = { scroll: 'Scroll', windowlevel: 'Window / Level', pan: 'Pan', zoom: 'Zoom', annotate: 'Annotate' };
+    feedback.textContent = labels[modeName] || modeName;
+    feedback.style.opacity = '1';
+    clearTimeout(this._feedbackTimer);
+    this._feedbackTimer = setTimeout(() => { feedback.style.opacity = '0'; }, 1200);
   }
 
   // Toolbar creation
@@ -441,13 +457,17 @@ class TouchGestureHandler {
     style.textContent = `
       .touch-toolbar {
         display: flex;
-        gap: 4px;
-        padding: 8px;
-        background: rgba(18, 18, 26, 0.95);
+        gap: 6px;
+        padding: 10px 12px;
+        background: rgba(18, 18, 26, 0.97);
         border-top: 1px solid rgba(255, 255, 255, 0.08);
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+        position: sticky;
+        bottom: 0;
+        z-index: 50;
+        justify-content: center;
       }
       .touch-toolbar::-webkit-scrollbar { display: none; }
 
@@ -459,9 +479,9 @@ class TouchGestureHandler {
         min-height: 48px;
         width: 48px;
         height: 48px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1.5px solid rgba(255, 255, 255, 0.1);
         background: rgba(255, 255, 255, 0.05);
-        border-radius: 10px;
+        border-radius: 12px;
         color: #a1a1aa;
         cursor: pointer;
         transition: all 0.2s;
@@ -469,17 +489,19 @@ class TouchGestureHandler {
         padding: 0;
       }
       .touch-tool-btn:active {
-        transform: scale(0.95);
+        transform: scale(0.93);
       }
       .touch-tool-btn.active {
-        background: rgba(99, 102, 241, 0.3);
-        border-color: #6366f1;
-        color: #818cf8;
+        background: rgba(99, 102, 241, 0.25);
+        border-color: #818cf8;
+        border-width: 2px;
+        color: #a5b4fc;
+        box-shadow: 0 0 12px rgba(99, 102, 241, 0.4), inset 0 0 8px rgba(99, 102, 241, 0.1);
       }
       .touch-tool-separator {
         width: 1px;
         background: rgba(255, 255, 255, 0.1);
-        margin: 4px 4px;
+        margin: 6px 4px;
         flex-shrink: 0;
       }
 
@@ -501,6 +523,26 @@ class TouchGestureHandler {
       }
       .gesture-feedback.visible {
         opacity: 1;
+      }
+
+      /* Mode switch feedback pill */
+      .gesture-mode-feedback {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        pointer-events: none;
+        z-index: 100;
+        transition: opacity 0.4s ease-out;
+        opacity: 0;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.1);
       }
     `;
     document.head.appendChild(style);
@@ -582,6 +624,29 @@ function integrateTouchGestures(dicomViewerInstance) {
       }
     }
   });
+
+  // Mark DicomViewer so its built-in touch handling and toolbar are disabled
+  dicomViewerInstance.touchGesturesIntegrated = true;
+
+  // Add class to viewer wrapper so CSS hides the duplicate toolbar
+  const viewerWrapper = dicomViewerInstance.container.querySelector('.dicom-viewer-wrapper');
+  if (viewerWrapper) {
+    viewerWrapper.classList.add('touch-gestures-active');
+  }
+
+  // Bidirectional sync: when DicomViewer changes tool (keyboard shortcut, preset dropdown),
+  // update TouchGestureHandler's active button to match
+  const origSetActiveTool = dicomViewerInstance.setActiveTool.bind(dicomViewerInstance);
+  dicomViewerInstance.setActiveTool = function(tool) {
+    origSetActiveTool(tool);
+    // Map DicomViewer tool names to TouchGestureHandler mode names
+    const reverseMap = { scroll: 'scroll', wwwc: 'windowlevel', pan: 'pan', zoom: 'zoom' };
+    const touchMode = reverseMap[tool];
+    if (touchMode && handler.currentMode !== touchMode) {
+      handler.currentMode = touchMode;
+      handler.updateToolbarActive(touchMode);
+    }
+  };
 
   return handler;
 }

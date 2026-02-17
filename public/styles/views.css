@@ -571,7 +571,11 @@
 .modal-annotation .modal-body { padding: 0; }
 
 /* DICOM viewer container */
-.dicom-viewer-area { height: 500px; }
+.dicom-viewer-area {
+  height: 60vh;
+  min-height: 300px;
+  max-height: 700px;
+}
 
 /* DICOM upload section */
 .dicom-upload-section { margin-top: 16px; }
@@ -602,5 +606,9 @@
   }
   .card-grid.view-list .case-card {
     grid-template-columns: 100px 1fr;
+  }
+  .dicom-viewer-area {
+    height: 50vh;
+    min-height: 250px;
   }
 }

@@ -292,11 +292,10 @@
 
   <!-- Case View Modal -->
   <div class="modal-overlay" id="caseModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <button class="modal-nav-btn modal-nav-prev" onclick="navigateCase(-1)" title="Previous case">&#x2039;</button>
-    <button class="modal-nav-btn modal-nav-next" onclick="navigateCase(1)" title="Next case">&#x203A;</button>
     <div class="modal modal-case">
       <div class="modal-header">
         <h2 id="modalTitle">Case Details</h2>
+        <span class="case-position-indicator" id="casePositionIndicator"></span>
         <button class="modal-bookmark-btn" id="modalBookmarkBtn" onclick="toggleModalBookmark()" aria-label="Bookmark this case" title="Bookmark">
           <svg viewBox="0 0 24 24"><path class="heart-outline" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           <span id="modalBookmarkLabel">Bookmark</span>

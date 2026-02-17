@@ -181,6 +181,15 @@ async function viewCase(id) {
     const caseData = await api.fetchCase(id);
     state.currentCase = caseData;
 
+    // Update case position indicator
+    const indicator = document.getElementById('casePositionIndicator');
+    if (indicator && state.caseIds.length > 1) {
+      indicator.textContent = `${state.currentCaseIndex + 1} / ${state.caseIds.length}`;
+      indicator.style.display = '';
+    } else if (indicator) {
+      indicator.style.display = 'none';
+    }
+
     // Reset study mode UI
     const studyIndicator = document.getElementById('studyStepIndicator');
     const diffArea = document.getElementById('differentialInputArea');
@@ -1165,10 +1174,12 @@ function setupEventListeners() {
     });
   });
 
-  // Touch swipe nav on case modal
+  // Touch swipe nav on case modal with visual feedback
   (function() {
-    let startX = 0, startY = 0, tracking = false;
+    let startX = 0, startY = 0, tracking = false, swiping = false;
     const modal = document.getElementById('caseModal');
+    const THRESHOLD = 60;
+
     modal.addEventListener('touchstart', (e) => {
       if (!modal.classList.contains('active')) return;
       if (e.target.closest('.dicom-viewer-wrapper') || e.target.closest('.dicom-element') || e.target.closest('.dicom-canvas-container')) return;
@@ -1177,14 +1188,94 @@ function setupEventListeners() {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       tracking = true;
+      swiping = false;
+      const modalBody = modal.querySelector('.modal-body');
+      if (modalBody) {
+        modalBody.style.transition = 'none';
+      }
     }, { passive: true });
-    modal.addEventListener('touchend', (e) => {
+
+    modal.addEventListener('touchmove', (e) => {
       if (!tracking) return;
-      tracking = false;
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const dx = currentX - startX;
+      const dy = currentY - startY;
+
+      // If vertical scroll is dominant, stop tracking horizontal swipe
+      if (!swiping && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+        tracking = false;
+        return;
+      }
+
+      if (Math.abs(dx) > 10) {
+        swiping = true;
+      }
+
+      if (swiping) {
+        const modalBody = modal.querySelector('.modal-body');
+        if (modalBody) {
+          const clampedDx = Math.sign(dx) * Math.min(Math.abs(dx) * 0.3, 50);
+          modalBody.style.transform = `translateX(${clampedDx}px)`;
+          modalBody.style.opacity = String(1 - Math.abs(clampedDx) / 200);
+        }
+      }
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      if (!tracking && !swiping) return;
+      const modalBody = modal.querySelector('.modal-body');
       const dx = e.changedTouches[0].clientX - startX;
-      const dy = e.changedTouches[0].clientY - startY;
-      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
-      navigateCase(dx < 0 ? 1 : -1);
+      tracking = false;
+
+      if (!swiping || Math.abs(dx) < THRESHOLD) {
+        // Snap back
+        if (modalBody && swiping) {
+          modalBody.style.transition = 'transform 0.25s ease-out, opacity 0.2s';
+          modalBody.style.transform = 'translateX(0)';
+          modalBody.style.opacity = '1';
+        }
+        swiping = false;
+        return;
+      }
+
+      swiping = false;
+      const dir = dx < 0 ? 1 : -1;
+      const nextIdx = state.currentCaseIndex + dir;
+
+      // Check bounds before animating
+      if (nextIdx < 0 || nextIdx >= state.caseIds.length) {
+        if (modalBody) {
+          modalBody.style.transition = 'transform 0.25s ease-out, opacity 0.2s';
+          modalBody.style.transform = 'translateX(0)';
+          modalBody.style.opacity = '1';
+        }
+        return;
+      }
+
+      // Animate out
+      if (modalBody) {
+        modalBody.style.transition = 'transform 0.25s ease-out, opacity 0.2s';
+        modalBody.style.transform = `translateX(${dx < 0 ? -80 : 80}px)`;
+        modalBody.style.opacity = '0.3';
+      }
+
+      setTimeout(() => {
+        navigateCase(dir);
+        // After new case loads, animate in from opposite side
+        if (modalBody) {
+          modalBody.style.transition = 'none';
+          modalBody.style.transform = `translateX(${dx < 0 ? 60 : -60}px)`;
+          modalBody.style.opacity = '0.3';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              modalBody.style.transition = 'transform 0.3s ease-out, opacity 0.25s';
+              modalBody.style.transform = 'translateX(0)';
+              modalBody.style.opacity = '1';
+            });
+          });
+        }
+      }, 250);
     }, { passive: true });
   })();
 
