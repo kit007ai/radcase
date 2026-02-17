@@ -693,11 +693,11 @@ body.offline .sidebar {
     background: #000;
   }
 
-  /* DICOM viewer: more viewport height */
+  /* DICOM viewer: fit screen width for square images */
   .dicom-viewer-area {
-    height: 55vh;
-    min-height: 250px;
-    max-height: 65vh;
+    height: calc(100vw - 24px);
+    min-height: 200px;
+    max-height: 55vh;
   }
 
   /* DICOM controls compact */

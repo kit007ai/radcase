@@ -941,11 +941,12 @@ const dicomStyles = `
   /* Mobile: larger DICOM controls for touch */
   @media (max-width: 768px) {
     .dicom-viewer-wrapper {
-      overflow: visible;
+      overflow: hidden;
+      max-width: 100%;
     }
 
     .dicom-canvas-container {
-      min-height: 250px;
+      min-height: 200px;
     }
 
     .dicom-overlay {
