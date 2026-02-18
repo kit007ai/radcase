@@ -183,8 +183,9 @@ async function viewCase(id) {
 
     // Update case position indicator
     const indicator = document.getElementById('casePositionIndicator');
+    const caseCountPrefix = state.caseIds.length > 1 ? `${state.currentCaseIndex + 1}/${state.caseIds.length}` : '';
     if (indicator && state.caseIds.length > 1) {
-      indicator.textContent = `${state.currentCaseIndex + 1} / ${state.caseIds.length}`;
+      indicator.textContent = caseCountPrefix;
       indicator.style.display = '';
     } else if (indicator) {
       indicator.style.display = 'none';
@@ -213,7 +214,7 @@ async function viewCase(id) {
       state.studySession = { caseId: id, currentStep: 0, startTime: Date.now(), differentialScore: null, completed: false };
       updateStudyStepIndicator(0);
 
-      document.getElementById('modalTitle').textContent = caseData.title;
+      document.getElementById('modalTitle').textContent = (caseCountPrefix ? caseCountPrefix + '  ' : '') + caseData.title;
       document.getElementById('modalHistory').textContent = caseData.clinical_history || '-';
       document.getElementById('modalDiagnosis').textContent = '[ Complete previous steps to reveal ]';
       document.getElementById('modalFindings').textContent = '[ Complete previous steps to reveal ]';
@@ -226,7 +227,7 @@ async function viewCase(id) {
       showStudyAdvanceButton();
     } else {
       studyIndicator.style.display = 'none';
-      document.getElementById('modalTitle').textContent = caseData.title;
+      document.getElementById('modalTitle').textContent = (caseCountPrefix ? caseCountPrefix + '  ' : '') + caseData.title;
       document.getElementById('modalHistory').textContent = caseData.clinical_history || '-';
       document.getElementById('modalDiagnosis').textContent = caseData.diagnosis || '-';
       document.getElementById('modalFindings').textContent = caseData.findings || '-';

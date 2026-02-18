@@ -775,20 +775,16 @@
     align-items: center;
   }
 
-  /* Row 1: position indicator + title (wrapping) + X close */
+  /* Row 1: full-width title (count is embedded in text) + X close */
   .case-position-indicator {
-    order: 1;
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    flex-shrink: 0;
+    display: none;
   }
 
   .modal-header h2 {
-    flex: 1;
-    min-width: 0;
+    flex: none;
+    width: calc(100% - 40px);
     font-size: 1rem;
     order: 1;
-    margin-right: 32px;
   }
 
   .modal-header .modal-close {
