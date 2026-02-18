@@ -111,11 +111,7 @@
 .viewer-mode-switch {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
-  background: rgba(10, 10, 20, 0.6);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 24px;
+  gap: 4px;
   margin-left: auto;
 }
 
@@ -123,15 +119,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border: none;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
   background: transparent;
-  color: var(--text-muted, #888);
-  transition: all 0.25s ease;
+  color: var(--text-secondary);
+  transition: all 0.2s;
   white-space: nowrap;
 }
 
@@ -140,18 +136,18 @@
 }
 
 .viewer-mode-switch .mode-btn:hover {
-  color: var(--text-primary, #e0e0e0);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent);
+  color: var(--text-primary);
 }
 
 .viewer-mode-switch .mode-btn.active {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--accent);
+  color: var(--accent-hover);
 }
 
 .viewer-mode-switch .mode-btn.active svg {
-  stroke: white;
+  stroke: var(--accent-hover);
 }
 
 /* Loading Spinner */
@@ -1141,7 +1137,7 @@
   }
 
   .viewer-mode-switch .mode-btn {
-    padding: 5px 10px;
+    padding: 5px 12px;
     font-size: 0;
     gap: 4px;
   }
@@ -1152,7 +1148,7 @@
   }
 
   .viewer-mode-switch .mode-btn .mode-label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 
   .trainee-level-selector {

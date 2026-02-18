@@ -775,10 +775,10 @@
     align-items: center;
   }
 
-  /* Row 1: position indicator + title + X close */
+  /* Row 1: position indicator + title (wrapping) + X close */
   .case-position-indicator {
     order: 1;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     padding: 2px 8px;
     flex-shrink: 0;
   }
@@ -786,9 +786,6 @@
   .modal-header h2 {
     flex: 1;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     font-size: 1rem;
     order: 1;
     margin-right: 32px;
@@ -802,7 +799,7 @@
     height: 36px;
   }
 
-  /* Row 2: tabs + actions + mode switch */
+  /* Row 2: tabs + bookmark + mode switch */
   .modal-tabs { order: 2; margin-left: 0; margin-right: 0; gap: 4px; }
   .modal-tabs .tab-btn { padding: 5px 12px; font-size: 0.8rem; }
   .modal-tabs .tab-btn svg { width: 14px; height: 14px; margin-right: 3px; }
@@ -810,13 +807,10 @@
   .modal-bookmark-btn { order: 2; padding: 6px 8px; margin-right: 0; }
   .modal-bookmark-btn span { display: none; }
 
-  .voice-narrate-btn { order: 2; width: 34px; height: 34px; min-width: 34px; min-height: 34px; padding: 0; }
-  .voice-narrate-btn svg { width: 16px; height: 16px; }
-
-  .viewer-mode-switch { order: 2; margin-left: auto; padding: 2px; gap: 1px; }
-  .viewer-mode-switch .mode-btn { padding: 5px 10px; font-size: 0; gap: 4px; }
+  .viewer-mode-switch { order: 2; margin-left: auto; gap: 4px; }
+  .viewer-mode-switch .mode-btn { padding: 5px 12px; font-size: 0; gap: 4px; }
   .viewer-mode-switch .mode-btn svg { width: 14px; height: 14px; }
-  .viewer-mode-switch .mode-btn .mode-label { font-size: 0.7rem; }
+  .viewer-mode-switch .mode-btn .mode-label { font-size: 0.75rem; }
 
   /* Quiz answer row: stack on mobile */
   .quiz-answer-row {
