@@ -111,7 +111,11 @@
 .viewer-mode-switch {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
+  padding: 3px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 24px;
   margin-left: auto;
 }
 
@@ -119,14 +123,14 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.9rem;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   transition: all 0.2s;
   white-space: nowrap;
 }
@@ -136,18 +140,16 @@
 }
 
 .viewer-mode-switch .mode-btn:hover {
-  border-color: var(--accent);
   color: var(--text-primary);
 }
 
 .viewer-mode-switch .mode-btn.active {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent);
-  color: var(--accent-hover);
+  background: var(--accent);
+  color: white;
 }
 
 .viewer-mode-switch .mode-btn.active svg {
-  stroke: var(--accent-hover);
+  stroke: white;
 }
 
 /* Loading Spinner */
@@ -1140,6 +1142,8 @@
     padding: 5px 12px;
     font-size: 0;
     gap: 4px;
+    border: none;
+    border-radius: 16px;
   }
 
   .viewer-mode-switch .mode-btn svg {

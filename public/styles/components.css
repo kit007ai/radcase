@@ -803,8 +803,8 @@
   .modal-bookmark-btn { order: 2; padding: 6px 8px; margin-right: 0; }
   .modal-bookmark-btn span { display: none; }
 
-  .viewer-mode-switch { order: 2; margin-left: auto; gap: 4px; }
-  .viewer-mode-switch .mode-btn { padding: 5px 12px; font-size: 0; gap: 4px; }
+  .viewer-mode-switch { order: 2; margin-left: auto; padding: 3px; gap: 0; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 20px; }
+  .viewer-mode-switch .mode-btn { padding: 5px 12px; font-size: 0; gap: 4px; border: none; border-radius: 16px; }
   .viewer-mode-switch .mode-btn svg { width: 14px; height: 14px; }
   .viewer-mode-switch .mode-btn .mode-label { font-size: 0.75rem; }
 
