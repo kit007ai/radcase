@@ -851,15 +851,34 @@ async function toggleBookmark(caseId, btnElement) {
 }
 window.toggleBookmark = toggleBookmark;
 
-function toggleModalBookmark() {
+async function toggleModalBookmark() {
   if (!state.currentCase) return;
+  if (!state.currentUser) {
+    // Show auth modal or notify user they need to log in
+    const authModal = document.getElementById('authModal');
+    if (authModal) authModal.classList.add('active');
+    return;
+  }
+  const caseId = state.currentCase.id;
   const btn = document.getElementById('modalBookmarkBtn');
-  toggleBookmark(state.currentCase.id, null);
-  btn.classList.toggle('bookmarked', state.bookmarkedCaseIds.has(state.currentCase.id));
+
+  // Optimistically update UI immediately for responsiveness
+  const willBeBookmarked = !state.bookmarkedCaseIds.has(caseId);
+  btn.classList.toggle('bookmarked', willBeBookmarked);
   document.getElementById('modalBookmarkLabel').textContent =
-    state.bookmarkedCaseIds.has(state.currentCase.id) ? 'Bookmarked' : 'Bookmark';
-  const card = document.querySelector(`.case-card[data-case-id="${state.currentCase.id}"] .bookmark-btn`);
-  if (card) card.classList.toggle('bookmarked', state.bookmarkedCaseIds.has(state.currentCase.id));
+    willBeBookmarked ? 'Bookmarked' : 'Bookmark';
+  const card = document.querySelector(`.case-card[data-case-id="${caseId}"] .bookmark-btn`);
+  if (card) card.classList.toggle('bookmarked', willBeBookmarked);
+
+  // Await the actual bookmark toggle (API call + state update)
+  await toggleBookmark(caseId, btn);
+
+  // Sync UI with final server-confirmed state
+  const isNowBookmarked = state.bookmarkedCaseIds.has(caseId);
+  btn.classList.toggle('bookmarked', isNowBookmarked);
+  document.getElementById('modalBookmarkLabel').textContent =
+    isNowBookmarked ? 'Bookmarked' : 'Bookmark';
+  if (card) card.classList.toggle('bookmarked', isNowBookmarked);
 }
 window.toggleModalBookmark = toggleModalBookmark;
 
@@ -1184,6 +1203,8 @@ function setupEventListeners() {
     modal.addEventListener('touchstart', (e) => {
       if (!modal.classList.contains('active')) return;
       if (e.target.closest('.dicom-viewer-wrapper') || e.target.closest('.dicom-element') || e.target.closest('.dicom-canvas-container')) return;
+      // Don't track swipes that start on interactive header elements (bookmark, close, tabs, mode switch)
+      if (e.target.closest('.modal-bookmark-btn') || e.target.closest('.modal-close') || e.target.closest('.modal-tabs') || e.target.closest('.viewer-mode-switch')) return;
       const dicomPanel = document.getElementById('dicomViewerPanel');
       if (dicomPanel && dicomPanel.style.display !== 'none' && e.target.closest('.viewer-container')) return;
       startX = e.touches[0].clientX;
