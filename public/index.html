@@ -7,7 +7,7 @@
   <script>
     // Force service worker update - removes stale SW cache (v5 migration)
     if ('serviceWorker' in navigator && !window.__swPurged) {
-      var SW_VERSION = 'v11';
+      var SW_VERSION = 'v12';
       if (localStorage.getItem('sw-version') !== SW_VERSION) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           var promises = regs.map(function(r) { return r.unregister(); });
@@ -28,23 +28,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/critical.css">
-  <link rel="stylesheet" href="/mobile.css?v=11" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/mobile.css?v=11"></noscript>
+  <link rel="stylesheet" href="/mobile.css?v=12" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/mobile.css?v=12"></noscript>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#6366f1">
   <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RadCase"><link rel="apple-touch-icon" href="/icon-apple-touch.png">
   <meta name="mobile-web-app-capable" content="yes"><meta name="application-name" content="RadCase">
   <meta name="HandheldFriendly" content="true"><meta name="MobileOptimized" content="320">
-  <link rel="stylesheet" href="/styles/design-tokens.css?v=11">
-  <link rel="stylesheet" href="/styles/base.css?v=11"><link rel="stylesheet" href="/styles/layout.css?v=11">
-  <link rel="stylesheet" href="/styles/components.css?v=11"><link rel="stylesheet" href="/styles/views.css?v=11">
-  <link rel="stylesheet" href="/styles/quiz.css?v=11">
-  <link rel="stylesheet" href="/styles/case-library.css?v=11">
-  <link rel="stylesheet" href="/styles/case-builder.css?v=11">
-  <link rel="stylesheet" href="/styles/ai-tutor.css?v=11">
-  <link rel="stylesheet" href="/styles/oral-boards.css?v=11">
-  <link rel="stylesheet" href="/styles/milestones.css?v=11">
+  <link rel="stylesheet" href="/styles/design-tokens.css?v=12">
+  <link rel="stylesheet" href="/styles/base.css?v=12"><link rel="stylesheet" href="/styles/layout.css?v=12">
+  <link rel="stylesheet" href="/styles/components.css?v=12"><link rel="stylesheet" href="/styles/views.css?v=12">
+  <link rel="stylesheet" href="/styles/quiz.css?v=12">
+  <link rel="stylesheet" href="/styles/case-library.css?v=12">
+  <link rel="stylesheet" href="/styles/case-builder.css?v=12">
+  <link rel="stylesheet" href="/styles/ai-tutor.css?v=12">
+  <link rel="stylesheet" href="/styles/oral-boards.css?v=12">
+  <link rel="stylesheet" href="/styles/milestones.css?v=12">
   <!-- Cornerstone DICOM libs loaded deferred to avoid blocking first paint -->
 
 </head>
@@ -510,34 +510,34 @@
   <script src="https://unpkg.com/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js" defer></script>
   <script src="https://unpkg.com/dicom-parser@1.8.21/dist/dicomParser.min.js" defer></script>
   <script src="https://unpkg.com/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js" defer></script>
-  <script src="/cornerstone-init.js?v=11" defer></script>
+  <script src="/cornerstone-init.js?v=12" defer></script>
 
-  <script src="/escape-html.js?v=11"></script>
-  <script src="/focus-trap.js?v=11"></script>
-  <script src="/lazy-loader.js?v=11"></script><script src="/performance-optimizer.js?v=11"></script><script src="/pwa-manager.js?v=11"></script>
-  <script src="/annotate.js?v=11" defer></script><script src="/presentation.js?v=11" defer></script>
-  <script src="/spaced-repetition.js?v=11" defer></script><script src="/dicom-viewer.js?v=11" defer></script>
-  <script src="/sync-manager.js?v=11" defer></script><script src="/touch-gestures.js?v=11" defer></script>
-  <script src="/quiz-engine.js?v=11" defer></script>
-  <script src="/quiz-cards.js?v=11" defer></script>
-  <script src="/quiz-gamification.js?v=11" defer></script>
-  <script src="/quiz-study-plans.js?v=11" defer></script>
-  <script src="/analytics-dashboard.js?v=11" defer></script>
-  <script src="/finding-quiz.js?v=11" defer></script>
-  <script src="/voice-narrator.js?v=11" defer></script>
-  <script src="/case-viewer.js?v=11" defer></script>
-  <script src="/differential-input.js?v=11" defer></script>
-  <script src="/key-findings-overlay.js?v=11" defer></script>
-  <script src="/discussions.js?v=11" defer></script>
-  <script src="/related-cases.js?v=11" defer></script>
-  <script src="/collections.js?v=11" defer></script>
-  <script src="/case-builder.js?v=11" defer></script>
-  <script src="/ai-tutor.js?v=11" defer></script>
-  <script src="/study-ai-overlay.js?v=11" defer></script>
-  <script src="/weakness-coach.js?v=11" defer></script>
-  <script src="/oral-boards.js?v=11" defer></script>
-  <script src="/milestones.js?v=11" defer></script>
-  <script src="/program-dashboard.js?v=11" defer></script>
-  <script type="module" src="/app.js?v=11"></script>
+  <script src="/escape-html.js?v=12"></script>
+  <script src="/focus-trap.js?v=12"></script>
+  <script src="/lazy-loader.js?v=12"></script><script src="/performance-optimizer.js?v=12"></script><script src="/pwa-manager.js?v=12"></script>
+  <script src="/annotate.js?v=12" defer></script><script src="/presentation.js?v=12" defer></script>
+  <script src="/spaced-repetition.js?v=12" defer></script><script src="/dicom-viewer.js?v=12" defer></script>
+  <script src="/sync-manager.js?v=12" defer></script><script src="/touch-gestures.js?v=12" defer></script>
+  <script src="/quiz-engine.js?v=12" defer></script>
+  <script src="/quiz-cards.js?v=12" defer></script>
+  <script src="/quiz-gamification.js?v=12" defer></script>
+  <script src="/quiz-study-plans.js?v=12" defer></script>
+  <script src="/analytics-dashboard.js?v=12" defer></script>
+  <script src="/finding-quiz.js?v=12" defer></script>
+  <script src="/voice-narrator.js?v=12" defer></script>
+  <script src="/case-viewer.js?v=12" defer></script>
+  <script src="/differential-input.js?v=12" defer></script>
+  <script src="/key-findings-overlay.js?v=12" defer></script>
+  <script src="/discussions.js?v=12" defer></script>
+  <script src="/related-cases.js?v=12" defer></script>
+  <script src="/collections.js?v=12" defer></script>
+  <script src="/case-builder.js?v=12" defer></script>
+  <script src="/ai-tutor.js?v=12" defer></script>
+  <script src="/study-ai-overlay.js?v=12" defer></script>
+  <script src="/weakness-coach.js?v=12" defer></script>
+  <script src="/oral-boards.js?v=12" defer></script>
+  <script src="/milestones.js?v=12" defer></script>
+  <script src="/program-dashboard.js?v=12" defer></script>
+  <script type="module" src="/app.js?v=12"></script>
 </body>
 </html>
