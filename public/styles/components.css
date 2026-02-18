@@ -765,24 +765,33 @@
     height: 140px;
   }
 
-  /* Modal header: wrap on mobile */
+  /* Modal header: 2-row mobile layout */
   .modal-header {
     flex-wrap: wrap;
-    gap: 4px 6px;
+    gap: 6px 8px;
     overflow: visible;
     position: relative;
     padding: 10px 12px;
+    align-items: center;
+  }
+
+  /* Row 1: position indicator + title + X close */
+  .case-position-indicator {
+    order: 1;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    flex-shrink: 0;
   }
 
   .modal-header h2 {
-    flex: none;
-    width: calc(100% - 40px);
+    flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 1rem;
     order: 1;
+    margin-right: 32px;
   }
 
   .modal-header .modal-close {
@@ -791,29 +800,23 @@
     right: 8px;
     width: 36px;
     height: 36px;
-    order: 1;
   }
 
-  .case-position-indicator { order: 2; font-size: 0.65rem; padding: 2px 6px; }
-  .modal-bookmark-btn { order: 2; padding: 3px 5px; margin-right: 0; }
-  .voice-narrate-btn { order: 2; width: 28px; height: 28px; min-width: 28px; min-height: 28px; padding: 0; }
-  .voice-narrate-btn svg { width: 14px; height: 14px; }
-  .modal-tabs { order: 2; margin-left: 0; margin-right: 0; gap: 2px; }
-  .modal-tabs .tab-btn { padding: 3px 8px; font-size: 0.7rem; }
-  .modal-tabs .tab-btn svg { width: 12px; height: 12px; margin-right: 2px; }
-  .viewer-mode-switch { order: 2; margin-left: auto; padding: 2px; gap: 0; }
-  .viewer-mode-switch .mode-btn { padding: 4px 8px; font-size: 0; gap: 3px; }
-  .viewer-mode-switch .mode-btn svg { width: 13px; height: 13px; }
-  .viewer-mode-switch .mode-btn .mode-label { font-size: 0.65rem; }
+  /* Row 2: tabs + actions + mode switch */
+  .modal-tabs { order: 2; margin-left: 0; margin-right: 0; gap: 4px; }
+  .modal-tabs .tab-btn { padding: 5px 12px; font-size: 0.8rem; }
+  .modal-tabs .tab-btn svg { width: 14px; height: 14px; margin-right: 3px; }
 
-  .modal-bookmark-btn span {
-    display: none;
-  }
+  .modal-bookmark-btn { order: 2; padding: 6px 8px; margin-right: 0; }
+  .modal-bookmark-btn span { display: none; }
 
-  .modal-bookmark-btn {
-    padding: 6px 8px;
-    margin-right: 0;
-  }
+  .voice-narrate-btn { order: 2; width: 34px; height: 34px; min-width: 34px; min-height: 34px; padding: 0; }
+  .voice-narrate-btn svg { width: 16px; height: 16px; }
+
+  .viewer-mode-switch { order: 2; margin-left: auto; padding: 2px; gap: 1px; }
+  .viewer-mode-switch .mode-btn { padding: 5px 10px; font-size: 0; gap: 4px; }
+  .viewer-mode-switch .mode-btn svg { width: 14px; height: 14px; }
+  .viewer-mode-switch .mode-btn .mode-label { font-size: 0.7rem; }
 
   /* Quiz answer row: stack on mobile */
   .quiz-answer-row {
