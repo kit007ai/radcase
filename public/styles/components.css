@@ -263,8 +263,13 @@
 
 /* Modal Bookmark Button */
 .modal-bookmark-btn {
+  -webkit-appearance: none;
+  appearance: none;
   background: none;
-  border: none;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
   padding: 6px;
   display: flex;
   align-items: center;
@@ -274,7 +279,14 @@
   font-size: 0.85rem;
   transition: color 0.2s;
   margin-right: auto;
-  outline: none;
+}
+
+.modal-bookmark-btn:focus,
+.modal-bookmark-btn:focus-visible,
+.modal-bookmark-btn:active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .modal-bookmark-btn:hover {
