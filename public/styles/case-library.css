@@ -1141,14 +1141,14 @@
   }
 
   .viewer-mode-switch .mode-btn {
-    padding: 5px 10px;
-    font-size: 0.7rem;
-    gap: 4px;
+    padding: 5px 8px;
+    font-size: 0;
+    gap: 0;
   }
 
   .viewer-mode-switch .mode-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
 
   .trainee-level-selector {

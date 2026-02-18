@@ -768,18 +768,39 @@
   /* Modal header: wrap on mobile */
   .modal-header {
     flex-wrap: wrap;
-    gap: 8px;
-    overflow: hidden;
+    gap: 4px 8px;
+    overflow: visible;
+    position: relative;
+    padding: 10px 12px;
   }
 
   .modal-header h2 {
-    flex: 1;
+    flex: none;
+    width: calc(100% - 40px);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    order: 1;
   }
+
+  .modal-header .modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    order: 1;
+  }
+
+  .case-position-indicator { order: 2; font-size: 0.7rem; padding: 2px 8px; }
+  .modal-bookmark-btn { order: 2; padding: 4px 6px; margin-right: 0; }
+  .voice-narrate-btn { order: 2; width: 32px; height: 32px; }
+  .viewer-mode-switch { order: 2; margin-left: auto; padding: 2px; gap: 1px; }
+  .viewer-mode-switch .mode-btn { padding: 5px 8px; font-size: 0; gap: 0; }
+  .viewer-mode-switch .mode-btn svg { width: 16px; height: 16px; }
+  .modal-tabs { order: 3; }
 
   .modal-tabs {
     order: 5;
