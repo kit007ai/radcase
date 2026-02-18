@@ -798,8 +798,9 @@
   .modal-bookmark-btn { order: 2; padding: 4px 6px; margin-right: 0; }
   .voice-narrate-btn { order: 2; width: 32px; height: 32px; }
   .viewer-mode-switch { order: 2; margin-left: auto; padding: 2px; gap: 1px; }
-  .viewer-mode-switch .mode-btn { padding: 5px 8px; font-size: 0; gap: 0; }
-  .viewer-mode-switch .mode-btn svg { width: 16px; height: 16px; }
+  .viewer-mode-switch .mode-btn { padding: 5px 10px; font-size: 0; gap: 4px; }
+  .viewer-mode-switch .mode-btn svg { width: 14px; height: 14px; }
+  .viewer-mode-switch .mode-btn .mode-label { font-size: 0.7rem; }
   .modal-tabs { order: 3; }
 
   .modal-tabs {
