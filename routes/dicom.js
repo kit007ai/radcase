@@ -10,12 +10,25 @@ const DICOM_DIR = path.join(__dirname, '..', 'dicom');
 const router = express.Router();
 
 // Helper function to parse DICOM metadata
+// Only reads the file header (up to 256KB) instead of the entire file,
+// and stops parsing before pixel data (tag 7FE00010) to avoid loading
+// large image data into memory.
+const HEADER_READ_MAX = 256 * 1024; // 256KB — more than enough for all metadata tags
+
 function parseDicomFile(filePath) {
+  let fd;
   try {
-    const buffer = fs.readFileSync(filePath);
+    fd = fs.openSync(filePath, 'r');
+    const stat = fs.fstatSync(fd);
+    const readSize = Math.min(stat.size, HEADER_READ_MAX);
+    const buffer = Buffer.alloc(readSize);
+    fs.readSync(fd, buffer, 0, readSize, 0);
+    fs.closeSync(fd);
+    fd = null;
+
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     const byteArray = new Uint8Array(arrayBuffer);
-    const dataSet = dicomParser.parseDicom(byteArray);
+    const dataSet = dicomParser.parseDicom(byteArray, { untilTag: 'x7fe00010' });
 
     const getString = (tag) => {
       try { return dataSet.string(tag) || ''; } catch (e) { return ''; }
@@ -46,6 +59,10 @@ function parseDicomFile(filePath) {
   } catch (e) {
     console.error('Error parsing DICOM:', e.message);
     return null;
+  } finally {
+    if (fd !== undefined && fd !== null) {
+      try { fs.closeSync(fd); } catch (_) {}
+    }
   }
 }
 
