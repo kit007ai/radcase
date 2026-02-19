@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
-const { upload } = require('../middleware/upload');
+const { upload, checkDiskSpace } = require('../middleware/upload');
 const { cacheMiddleware } = require('../lib/cache');
 const { requireAuth } = require('../middleware/auth');
 
@@ -338,7 +338,7 @@ module.exports = function(db, cache, cacheInvalidator) {
   });
 
   // Upload images for a case
-  router.post('/:id/images', requireAuth, upload.array('images', 20), async (req, res) => {
+  router.post('/:id/images', requireAuth, checkDiskSpace, upload.array('images', 20), async (req, res) => {
     const caseId = req.params.id;
     const insertImage = db.prepare(`
       INSERT INTO images (id, case_id, filename, original_name, sequence)
@@ -425,7 +425,7 @@ module.exports = function(db, cache, cacheInvalidator) {
 
   // Upload DICOM series for a case
   const { dicomUpload } = require('../middleware/upload');
-  router.post('/:id/dicom', dicomUpload.array('files', 1000), async (req, res) => {
+  router.post('/:id/dicom', checkDiskSpace, dicomUpload.array('files', 1000), async (req, res) => {
     const { parseDicomFile } = require('./dicom');
     console.log(`DICOM upload: ${req.files?.length} files received, seriesId=${req.dicomSeriesId}`);
     if (req.files) {

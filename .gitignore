@@ -4,6 +4,7 @@ node_modules/
 dicom/
 uploads/
 thumbnails/
+backups/
 .env
 .env.*
 .github/workflows/

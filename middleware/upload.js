@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 const {
   ALLOWED_IMAGE_MIMES,
@@ -11,6 +12,25 @@ const {
 
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
 const DICOM_DIR = path.join(__dirname, '..', 'dicom');
+
+// Minimum free disk space required for uploads (500 MB)
+const MIN_FREE_DISK_MB = parseInt(process.env.MIN_FREE_DISK_MB, 10) || 500;
+
+// Middleware to reject uploads when disk space is critically low
+function checkDiskSpace(req, res, next) {
+  try {
+    const output = execSync(`df -BM --output=avail "${UPLOAD_DIR}" 2>/dev/null | tail -1`, { encoding: 'utf8' });
+    const freeMB = parseInt(output.trim()) || 0;
+    if (freeMB < MIN_FREE_DISK_MB) {
+      return res.status(507).json({
+        error: `Insufficient disk space. ${freeMB} MB free, ${MIN_FREE_DISK_MB} MB required.`
+      });
+    }
+  } catch (_) {
+    // If we can't check, allow the upload rather than blocking
+  }
+  next();
+}
 
 // Enhanced multer storage with security validation
 const storage = multer.diskStorage({
@@ -81,4 +101,4 @@ const dicomUpload = multer({
   fileFilter: dicomFileFilter
 });
 
-module.exports = { upload, dicomUpload };
+module.exports = { upload, dicomUpload, checkDiskSpace };

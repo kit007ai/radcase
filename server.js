@@ -831,6 +831,12 @@ const { getMonitor } = require('./lib/monitor');
 const cache = getCache();
 const monitor = getMonitor();
 monitor.setCacheRef(cache);
+monitor.setDataDirs({
+  uploads: UPLOAD_DIR,
+  thumbnails: THUMB_DIR,
+  dicom: DICOM_DIR,
+  db: path.join(__dirname, 'radcase.db'),
+});
 const cacheInvalidator = new CacheInvalidator(cache);
 
 // Compression (50-70% bandwidth reduction for DICOM and JSON)
@@ -891,9 +897,34 @@ app.use(express.static(STATIC_DIR, {
   }
 }));
 
-// ============ Global API Rate Limiting ============
+// ============ API Rate Limiting ============
 if (process.env.NODE_ENV !== 'test') {
+  // Global: 100 requests/min for all API endpoints
   app.use('/api', rateLimit({ windowMs: 60000, max: 100, standardHeaders: true, legacyHeaders: false }));
+
+  // Stricter limits for upload endpoints (per user)
+  const uploadLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 30, // 30 uploads per 15 min
+    keyGenerator: (req) => req.user?.id || req.ip,
+    message: { error: 'Upload rate limit exceeded. Try again in a few minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use('/api/cases/:id/images', uploadLimiter);
+  app.use('/api/cases/:id/dicom', uploadLimiter);
+
+  // Stricter limits for auth endpoints (brute force protection)
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20, // 20 attempts per 15 min
+    keyGenerator: (req) => req.ip,
+    message: { error: 'Too many login attempts. Try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use('/api/auth/login', authLimiter);
+  app.use('/api/auth/register', authLimiter);
 }
 
 // ============ Mount Route Modules ============
