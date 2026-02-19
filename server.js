@@ -51,6 +51,10 @@ fs.mkdirSync(DICOM_DIR, { recursive: true });
 const db = new Database(path.join(__dirname, 'radcase.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+db.pragma('synchronous = NORMAL');       // Safe with WAL, significantly faster writes
+db.pragma('cache_size = -64000');         // 64MB page cache (default was 16MB)
+db.pragma('mmap_size = 268435456');       // 256MB memory-mapped I/O for faster reads
+db.pragma('temp_store = MEMORY');         // Keep temp tables in RAM instead of disk
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS cases (
@@ -795,7 +799,29 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_collections_created_by ON collections(created_by);
   CREATE INDEX IF NOT EXISTS idx_xp_transactions_user ON xp_transactions(user_id, created_at);
   CREATE INDEX IF NOT EXISTS idx_collection_cases_collection ON collection_cases(collection_id, display_order);
+
+  -- Missing indexes for frequently queried columns
+  CREATE INDEX IF NOT EXISTS idx_case_tags_tag ON case_tags(tag_id);
+  CREATE INDEX IF NOT EXISTS idx_quiz_attempts_session ON quiz_attempts(session_id);
+  CREATE INDEX IF NOT EXISTS idx_quiz_attempts_case ON quiz_attempts(case_id);
+  CREATE INDEX IF NOT EXISTS idx_quiz_sessions_user ON quiz_sessions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_study_plan_progress_plan ON study_plan_progress(plan_id);
+  CREATE INDEX IF NOT EXISTS idx_user_study_plans_user ON user_study_plans(user_id);
+  CREATE INDEX IF NOT EXISTS idx_user_daily_challenge_user ON user_daily_challenge(user_id, challenge_date);
+  CREATE INDEX IF NOT EXISTS idx_discussion_upvotes_user ON discussion_upvotes(user_id, discussion_id);
+  CREATE INDEX IF NOT EXISTS idx_pattern_group_cases_case ON pattern_group_cases(case_id);
+  CREATE INDEX IF NOT EXISTS idx_related_cases_a ON related_cases(case_id_a);
+  CREATE INDEX IF NOT EXISTS idx_related_cases_b ON related_cases(case_id_b);
+  CREATE INDEX IF NOT EXISTS idx_case_key_findings_case ON case_key_findings(case_id, image_id);
+  CREATE INDEX IF NOT EXISTS idx_bookmarks_user_case ON bookmarks(user_id, case_id);
+  CREATE INDEX IF NOT EXISTS idx_active_sessions_user ON active_sessions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_ai_conversations_user ON ai_conversations(user_id, case_id);
+  CREATE INDEX IF NOT EXISTS idx_report_attempts_user ON report_attempts(user_id);
+  CREATE INDEX IF NOT EXISTS idx_oral_board_sessions_user ON oral_board_sessions(user_id);
 `);
+
+// Run SQLite optimizer on shutdown (analyzes query patterns and updates statistics)
+process.on('exit', () => { try { db.pragma('optimize'); } catch(_) {} });
 
 // ============ PERFORMANCE MIDDLEWARE ============
 const compression = require('compression');
