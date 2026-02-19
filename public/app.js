@@ -544,6 +544,19 @@ function initDicomViewer() {
   state.dicomViewer = new DicomViewer('dicomViewerContainer');
   state.dicomViewer.init();
 
+  // Wire annotate/undo/redo callbacks to annotation system
+  state.dicomViewer.onAnnotateToggle = function(active) {
+    if (active) {
+      annotateCase();
+    }
+  };
+  state.dicomViewer.onUndo = function() {
+    if (state.annotationCanvas) state.annotationCanvas.undo();
+  };
+  state.dicomViewer.onRedo = function() {
+    if (state.annotationCanvas) state.annotationCanvas.redo();
+  };
+
   // Attach touch gestures after DICOM viewer initializes
   if (state.dicomViewer && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
     if (state.touchGestureHandler) state.touchGestureHandler.destroy();

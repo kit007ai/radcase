@@ -86,10 +86,28 @@ class DicomViewer {
                 <path d="M21 21l-4.35-4.35M11 8v6M8 11h6"></path>
               </svg>
             </button>
+            <button class="dicom-btn dicom-tool-btn" data-tool="annotate" title="Annotate (A)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+              </svg>
+            </button>
+            <div class="dicom-tool-separator"></div>
             <button class="dicom-btn" id="${this.containerId}-reset" title="Reset View (R)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                 <path d="M3 3v5h5"></path>
+              </svg>
+            </button>
+            <button class="dicom-btn" id="${this.containerId}-undo" title="Undo (Ctrl+Z)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 7v6h6"></path>
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+              </svg>
+            </button>
+            <button class="dicom-btn" id="${this.containerId}-redo" title="Redo (Ctrl+Y)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 7v6h-6"></path>
+                <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"></path>
               </svg>
             </button>
           </div>
@@ -231,6 +249,12 @@ class DicomViewer {
     // Reset button
     resetBtn.addEventListener('click', () => this.resetView());
 
+    // Undo/Redo buttons
+    const undoBtn = document.getElementById(`${this.containerId}-undo`);
+    const redoBtn = document.getElementById(`${this.containerId}-redo`);
+    if (undoBtn) undoBtn.addEventListener('click', () => { if (this.onUndo) this.onUndo(); });
+    if (redoBtn) redoBtn.addEventListener('click', () => { if (this.onRedo) this.onRedo(); });
+
     // Window presets
     presets.addEventListener('change', (e) => {
       this.applyPreset(e.target.value);
@@ -274,6 +298,10 @@ class DicomViewer {
         case 'Z':
           this.setActiveTool('zoom');
           break;
+        case 'a':
+        case 'A':
+          this.setActiveTool('annotate');
+          break;
         case 'r':
         case 'R':
           this.resetView();
@@ -308,6 +336,14 @@ class DicomViewer {
       });
       // Re-enable mouse wheel scrolling and right-click zoom for desktop
       cornerstoneTools.setToolActive('StackScrollMouseWheel', {});
+    } else if (tool === 'annotate') {
+      // Annotate mode — disable cornerstone mouse tools so drawing works
+      this.activeTouchTool = 'annotate';
+      Object.values(toolMap).forEach(t => {
+        cornerstoneTools.setToolDisabled(t);
+      });
+      cornerstoneTools.setToolActive('StackScrollMouseWheel', {});
+      if (this.onAnnotateToggle) this.onAnnotateToggle(true);
     } else if (toolMap[tool]) {
       // Activate selected cornerstone tool for both mouse and touch
       this.activeTouchTool = tool;
@@ -317,6 +353,11 @@ class DicomViewer {
       });
       cornerstoneTools.setToolActive(toolMap[tool], { mouseButtonMask: 1 });
       cornerstoneTools.setToolActive('StackScrollMouseWheel', {});
+    }
+
+    // Notify annotate toggle off when switching away
+    if (tool !== 'annotate' && this.onAnnotateToggle) {
+      this.onAnnotateToggle(false);
     }
 
     // Update UI
@@ -1001,6 +1042,15 @@ const dicomStyles = `
   .dicom-tool-controls {
     display: flex;
     gap: 4px;
+    align-items: center;
+  }
+
+  .dicom-tool-separator {
+    width: 1px;
+    height: 24px;
+    background: rgba(255,255,255,0.12);
+    margin: 0 4px;
+    flex-shrink: 0;
   }
 
   .dicom-preset-controls {
