@@ -454,11 +454,39 @@ module.exports = function(db, monitor) {
   router.delete('/images/:id', requireAuth, (req, res) => {
     const image = db.prepare('SELECT filename FROM images WHERE id = ?').get(req.params.id);
     if (image) {
-      fs.unlink(path.join(UPLOAD_DIR, image.filename), () => {});
-      fs.unlink(path.join(THUMB_DIR, image.filename), () => {});
+      const webpName = image.filename.replace(/\.[^.]+$/, '.webp');
+      try { fs.unlinkSync(path.join(UPLOAD_DIR, image.filename)); } catch (_) {}
+      try { fs.unlinkSync(path.join(THUMB_DIR, image.filename)); } catch (_) {}
+      try { fs.unlinkSync(path.join(THUMB_DIR, webpName)); } catch (_) {}
     }
     db.prepare('DELETE FROM images WHERE id = ?').run(req.params.id);
     res.json({ message: 'Image deleted' });
+  });
+
+  // Scan for orphaned files (files on disk with no DB record)
+  // GET returns a report, POST with ?clean=true deletes orphans
+  router.get('/orphaned-files', requireAdmin, (req, res) => {
+    const DICOM_DIR = path.join(__dirname, '..', 'dicom');
+    const report = findOrphanedFiles(db, UPLOAD_DIR, THUMB_DIR, DICOM_DIR);
+    res.json(report);
+  });
+
+  router.post('/orphaned-files/clean', requireAdmin, (req, res) => {
+    const DICOM_DIR = path.join(__dirname, '..', 'dicom');
+    const report = findOrphanedFiles(db, UPLOAD_DIR, THUMB_DIR, DICOM_DIR);
+
+    let cleaned = 0;
+    for (const f of report.orphanedUploads) {
+      try { fs.unlinkSync(path.join(UPLOAD_DIR, f)); cleaned++; } catch (_) {}
+    }
+    for (const f of report.orphanedThumbnails) {
+      try { fs.unlinkSync(path.join(THUMB_DIR, f)); cleaned++; } catch (_) {}
+    }
+    for (const d of report.orphanedDicomDirs) {
+      try { fs.rmSync(path.join(DICOM_DIR, d), { recursive: true, force: true }); cleaned++; } catch (_) {}
+    }
+
+    res.json({ ...report, cleaned });
   });
 
   // Update image annotations (top-level route)
@@ -470,6 +498,76 @@ module.exports = function(db, monitor) {
 
   return router;
 };
+
+// Find files on disk that have no corresponding database record
+function findOrphanedFiles(db, uploadDir, thumbDir, dicomDir) {
+  // Get all known filenames from DB
+  const dbImages = new Set(
+    db.prepare('SELECT filename FROM images').all().map(r => r.filename)
+  );
+  const dbDicomDirs = new Set(
+    db.prepare('SELECT folder_name FROM dicom_series').all().map(r => r.folder_name)
+  );
+
+  // Also build a set of expected WebP thumbnail names
+  const dbWebpNames = new Set();
+  for (const name of dbImages) {
+    dbWebpNames.add(name.replace(/\.[^.]+$/, '.webp'));
+  }
+
+  // Scan uploads directory
+  const orphanedUploads = [];
+  try {
+    for (const f of fs.readdirSync(uploadDir)) {
+      if (!dbImages.has(f)) orphanedUploads.push(f);
+    }
+  } catch (_) {}
+
+  // Scan thumbnails directory (includes WebP variants)
+  const orphanedThumbnails = [];
+  try {
+    for (const f of fs.readdirSync(thumbDir)) {
+      if (!dbImages.has(f) && !dbWebpNames.has(f)) orphanedThumbnails.push(f);
+    }
+  } catch (_) {}
+
+  // Scan DICOM directories
+  const orphanedDicomDirs = [];
+  try {
+    for (const d of fs.readdirSync(dicomDir)) {
+      const full = path.join(dicomDir, d);
+      if (fs.statSync(full).isDirectory() && !dbDicomDirs.has(d)) {
+        orphanedDicomDirs.push(d);
+      }
+    }
+  } catch (_) {}
+
+  // Calculate wasted disk space
+  let orphanedBytes = 0;
+  for (const f of orphanedUploads) {
+    try { orphanedBytes += fs.statSync(path.join(uploadDir, f)).size; } catch (_) {}
+  }
+  for (const f of orphanedThumbnails) {
+    try { orphanedBytes += fs.statSync(path.join(thumbDir, f)).size; } catch (_) {}
+  }
+  for (const d of orphanedDicomDirs) {
+    const dir = path.join(dicomDir, d);
+    try {
+      for (const f of fs.readdirSync(dir)) {
+        try { orphanedBytes += fs.statSync(path.join(dir, f)).size; } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
+  return {
+    orphanedUploads,
+    orphanedThumbnails,
+    orphanedDicomDirs,
+    totalOrphaned: orphanedUploads.length + orphanedThumbnails.length + orphanedDicomDirs.length,
+    orphanedBytes,
+    orphanedMB: Math.round(orphanedBytes / 1024 / 1024 * 100) / 100
+  };
+}
 
 // Generic AI call function supporting multiple providers
 async function callAI(config, systemPrompt, messages, maxTokens = 1000) {

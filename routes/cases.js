@@ -315,10 +315,22 @@ module.exports = function(db, cache, cacheInvalidator) {
 
   // Delete case
   router.delete('/:id', requireAuth, (req, res) => {
+    const DICOM_DIR = path.join(__dirname, '..', 'dicom');
+
+    // Clean up image files (uploads + thumbnails + WebP thumbnails)
     const images = db.prepare('SELECT filename FROM images WHERE case_id = ?').all(req.params.id);
     for (const img of images) {
-      fs.unlink(path.join(UPLOAD_DIR, img.filename), () => {});
-      fs.unlink(path.join(THUMB_DIR, img.filename), () => {});
+      const webpName = img.filename.replace(/\.[^.]+$/, '.webp');
+      try { fs.unlinkSync(path.join(UPLOAD_DIR, img.filename)); } catch (_) {}
+      try { fs.unlinkSync(path.join(THUMB_DIR, img.filename)); } catch (_) {}
+      try { fs.unlinkSync(path.join(THUMB_DIR, webpName)); } catch (_) {}
+    }
+
+    // Clean up DICOM series directories
+    const series = db.prepare('SELECT folder_name FROM dicom_series WHERE case_id = ?').all(req.params.id);
+    for (const s of series) {
+      const seriesDir = path.join(DICOM_DIR, s.folder_name);
+      try { fs.rmSync(seriesDir, { recursive: true, force: true }); } catch (_) {}
     }
 
     db.prepare('DELETE FROM cases WHERE id = ?').run(req.params.id);
