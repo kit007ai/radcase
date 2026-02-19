@@ -4,14 +4,6 @@
 if (typeof cornerstoneWADOImageLoader !== 'undefined') {
   cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
   cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
-
-  // Allow concurrent DICOM fetches for faster series prefetch
-  cornerstoneWADOImageLoader.configure({ beforeSend: function() {} });
-  if (cornerstoneWADOImageLoader.webWorkerManager) {
-    cornerstoneWADOImageLoader.webWorkerManager.initialize({
-      maxWebWorkers: navigator.hardwareConcurrency || 4
-    });
-  }
 }
 
 if (typeof cornerstoneTools !== 'undefined') {
