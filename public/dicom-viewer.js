@@ -391,6 +391,8 @@ class DicomViewer {
       const slider = document.getElementById(`${this.containerId}-slider`);
       slider.max = this.imageIds.length - 1;
       slider.value = 0;
+      this.currentIndex = 0;
+      this.imageCache = { 0: image };
       this.updateCounter();
 
       // Store metadata if available
@@ -403,6 +405,9 @@ class DicomViewer {
       if (data.metadata?.windowCenter && data.metadata?.windowWidth) {
         this.setWindowLevel(data.metadata.windowWidth, data.metadata.windowCenter);
       }
+
+      // Start full series background prefetch
+      this.startSeriesPrefetch(0);
 
     } catch (e) {
       console.error('Failed to load DICOM series:', e);
@@ -457,12 +462,12 @@ class DicomViewer {
       this.imageCache = { 0: image }; // Initialize cache with first image
       this.updateCounter();
       this.updatePatientInfo();
-      
+
       // Re-bind events to make sure they work
       this.bindSliceControls();
-      
-      // Preload first several slices for smooth initial scrolling
-      this.preloadAdjacent(0);
+
+      // Start full series background prefetch for smooth scrolling
+      this.startSeriesPrefetch(0);
 
     } catch (e) {
       console.error('Failed to load DICOM images:', e);
@@ -555,18 +560,18 @@ class DicomViewer {
       // Use cached image - instant display
       this.displayImageSmooth(element, cachedImage);
     } else {
-      // Load and display
+      // Cache miss — load this slice now and re-prioritise prefetch around it
       cornerstone.loadAndCacheImage(imageId).then(function(image) {
-        // Cache it
         if (!self.imageCache) self.imageCache = {};
         self.imageCache[index] = image;
-        
+        self._updateBufferBar();
+
         // Only display if still on this slice
         if (self.currentIndex === index) {
           self.displayImageSmooth(element, image);
         }
-        
-        // Preload adjacent slices
+
+        // Re-prioritise prefetch from this position (user jumped ahead)
         self.preloadAdjacent(index);
       }).catch(function(e) {
         console.error('Failed to load slice ' + index);
@@ -593,22 +598,113 @@ class DicomViewer {
     }
   }
   
-  preloadAdjacent(currentIndex) {
-    // Preload next 3 and previous 2 slices
-    const preloadIndices = [
-      currentIndex + 1, currentIndex + 2, currentIndex + 3,
-      currentIndex - 1, currentIndex - 2
-    ].filter(i => i >= 0 && i < this.imageIds.length);
-    
-    const self = this;
-    preloadIndices.forEach(function(idx) {
-      if (!self.imageCache || !self.imageCache[idx]) {
-        cornerstone.loadAndCacheImage(self.imageIds[idx]).then(function(image) {
-          if (!self.imageCache) self.imageCache = {};
-          self.imageCache[idx] = image;
-        }).catch(function() {});
-      }
+  // --------------- Series Prefetch Engine ---------------
+  // Two tiers: immediate neighbors (high priority, blocking-ish)
+  // and full series background queue (lower priority, concurrency-pooled).
+
+  startSeriesPrefetch(startIndex) {
+    // Cancel any previous prefetch run
+    if (this._prefetchAbort) this._prefetchAbort.abort = true;
+    var abort = { abort: false };
+    this._prefetchAbort = abort;
+
+    var self = this;
+    var total = this.imageIds.length;
+    if (total <= 1) return;
+
+    // Build load order: outward spiral from startIndex
+    var order = this._buildSpiralOrder(startIndex, total);
+
+    // Immediate tier: first 10 neighbors (7 forward, 3 back) — load ASAP
+    var immediate = order.splice(0, 10);
+    immediate.forEach(function(idx) {
+      self._prefetchOne(idx);
     });
+
+    // Background tier: remaining slices, concurrency-limited
+    this._runBackgroundQueue(order, abort);
+  }
+
+  // Re-prioritise when the user scrolls to a new position
+  preloadAdjacent(currentIndex) {
+    // Cancel the old background queue and restart from new position
+    this.startSeriesPrefetch(currentIndex);
+  }
+
+  _buildSpiralOrder(center, total) {
+    var order = [];
+    var added = {};
+    // center itself is already cached
+    added[center] = true;
+    for (var d = 1; d < total; d++) {
+      var forward = center + d;
+      var backward = center - d;
+      if (forward < total && !added[forward]) { order.push(forward); added[forward] = true; }
+      if (backward >= 0 && !added[backward]) { order.push(backward); added[backward] = true; }
+    }
+    return order;
+  }
+
+  _prefetchOne(idx) {
+    if (this.imageCache && this.imageCache[idx]) return Promise.resolve();
+    var self = this;
+    return cornerstone.loadAndCacheImage(this.imageIds[idx]).then(function(image) {
+      if (!self.imageCache) self.imageCache = {};
+      self.imageCache[idx] = image;
+      self._updateBufferBar();
+    }).catch(function() {});
+  }
+
+  _runBackgroundQueue(queue, abort) {
+    var self = this;
+    var concurrency = Math.min(navigator.hardwareConcurrency || 4, 6);
+    var i = 0;
+
+    function next() {
+      if (abort.abort) return;
+      while (i < queue.length) {
+        var idx = queue[i++];
+        // Skip already-cached
+        if (self.imageCache && self.imageCache[idx]) continue;
+        return self._prefetchOne(idx).then(next);
+      }
+    }
+
+    // Launch concurrency workers
+    for (var w = 0; w < concurrency; w++) {
+      next();
+    }
+  }
+
+  _updateBufferBar() {
+    if (!this._bufferBar) {
+      this._createBufferBar();
+      if (!this._bufferBar) return;
+    }
+    var cached = this.imageCache ? Object.keys(this.imageCache).length : 0;
+    var total = this.imageIds.length;
+    var pct = total > 0 ? (cached / total) * 100 : 0;
+    this._bufferBar.style.width = pct + '%';
+    if (pct >= 100) {
+      // Fade out once fully loaded
+      this._bufferBar.style.opacity = '0';
+    }
+  }
+
+  _createBufferBar() {
+    var slider = this.container ? this.container.querySelector('.dicom-slider') : null;
+    if (!slider || !slider.parentElement) return;
+    // Only create once
+    if (this._bufferBar) return;
+    var wrap = slider.parentElement;
+    if (!wrap.style.position || wrap.style.position === 'static') {
+      wrap.style.position = 'relative';
+    }
+    var bar = document.createElement('div');
+    bar.className = 'dicom-buffer-bar';
+    bar.style.cssText = 'position:absolute;bottom:0;left:0;height:3px;background:rgba(99,102,241,0.4);border-radius:2px;transition:width 0.3s,opacity 0.5s;width:0;pointer-events:none;';
+    wrap.appendChild(bar);
+    this._bufferBar = bar;
   }
 
   previousSlice() {
@@ -710,6 +806,11 @@ class DicomViewer {
   }
 
   destroy() {
+    // Cancel background prefetch
+    if (this._prefetchAbort) this._prefetchAbort.abort = true;
+    this._bufferBar = null;
+    this.imageCache = null;
+
     if (this.element) {
       cornerstone.disable(this.element);
     }
