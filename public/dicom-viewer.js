@@ -45,8 +45,7 @@ class DicomViewer {
             </div>
           </div>
           <div class="dicom-loading" style="display: none;">
-            <div class="dicom-spinner"></div>
-            <span>Loading DICOM...</span>
+            <div class="dicom-loading-bar"></div>
           </div>
         </div>
         <div class="dicom-controls">
@@ -889,27 +888,22 @@ const dicomStyles = `
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-    gap: 12px;
+    height: 3px;
+    z-index: 20;
+    pointer-events: none;
   }
 
-  .dicom-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(255,255,255,0.2);
-    border-top-color: #6366f1;
-    border-radius: 50%;
-    animation: dicom-spin 1s linear infinite;
+  .dicom-loading-bar {
+    height: 100%;
+    width: 30%;
+    background: linear-gradient(90deg, transparent, #6366f1, #818cf8, #6366f1, transparent);
+    border-radius: 2px;
+    animation: dicom-loading-slide 1.2s ease-in-out infinite;
   }
 
-  @keyframes dicom-spin {
-    to { transform: rotate(360deg); }
+  @keyframes dicom-loading-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
   }
 
   .dicom-error {
