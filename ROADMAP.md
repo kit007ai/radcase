@@ -1,221 +1,141 @@
-# RadCase Roadmap — AI-Powered Radiology Education Platform
+# RadCase — Roadmap
 
-## Vision
-
-An AI-powered radiology education platform where institutions upload clinical cases (DICOM + finalized reports), AI transforms them into board-level teaching material, and residents learn through progressive case study, differential practice, and simulated oral boards — all mapped to ACGME milestones and tracked for program directors.
-
-## Core Principles
-
-- Fix fundamentals before adding features
-- AI deeply integrated: content creation, tutoring, oral board simulation
-- Board-prep level for residents, simplified for medical students
-- Reference quality scoring for transparency
-- Admin uploads raw clinical materials, AI does pedagogical structuring
-- Admin review gate on all AI-generated content
-- Mobile-first: designed for 2-10 minute study windows between cases
+> AI-Powered Radiology Education Platform
+> Board-level teaching cases, progressive learning, oral board simulation.
 
 ---
 
-## Phase 1: Harden the Foundation
+## Current Phase: **Content & Integration**
 
-### Security (Critical)
-- [ ] Add requireAdmin to POST /admin/ai/configure and POST /admin/ai/chat, POST /admin/ai/complete
-- [ ] Add requireAuth to DELETE /admin/images/:id
-- [ ] Add requireAuth to POST /sync/annotations and POST /sync/progress
-- [ ] Increase password minimum from 4 to 8 characters
-- [ ] Add global rate limiting (not just auth endpoints)
-
-### Study Mode Visibility (Critical)
-- [ ] Make study/reference mode toggle visible and obvious in case modal header
-- [ ] Add onboarding hint or tooltip for first-time users
-- [ ] Ensure keyboard shortcuts (Space/Enter to advance) are discoverable
-
-### Design System Unification
-- [ ] Create design-tokens.css with spacing scale, typography scale, border-radius, shadows
-- [ ] Fix z-index conflicts (define clear scale: base → dropdowns → modals → toasts → system)
-- [ ] Fix color contrast for WCAG AA (--text-secondary, --text-muted, --border)
-- [ ] Replace all hardcoded hex colors with CSS custom properties
-- [ ] Unify component styles: buttons, cards, badges, inputs across all features
-- [ ] Add prefers-reduced-motion support
-- [ ] Standardize animation durations (150ms instant, 300ms normal, 600ms slow)
-
-### Backend Architecture
-- [ ] Remove duplicate case_finding_regions table (keep case_key_findings)
-- [ ] Add missing database indexes (quiz_attempts, case_discussions, collections)
-- [ ] Consolidate spaced repetition algorithms (use SM-2 everywhere)
-- [ ] Standardize error response format ({ error: "..." }) across all routes
-- [ ] Fix collection case_count sync issue
-- [ ] Create lib/utils.js with shared utilities (escapeHtml, etc.)
-
-### Frontend Architecture
-- [ ] Fix undefined integrateTouchGestures() call
-- [ ] Fix event listener memory leaks (quiz swipe handler, preference modal, differential input)
-- [ ] Add error handling to all API calls in api.js
-- [ ] Fix modal stacking (close child modals when parent closes)
-- [ ] Add loading states for async operations
-- [ ] Remove unused state fields
-- [ ] Consolidate _escapeHtml() from 4 files into shared module
-
-### Tests
-- [ ] Update test suite for security changes (new auth requirements)
-- [ ] Add tests for study mode toggle
-- [ ] All 145+ existing tests must continue to pass
+| Field | Value |
+|-------|-------|
+| Priority | 🟡 Tier 2 — High Value |
+| Health | 🟢 On Track |
+| Version | 1.0.0 |
+| Stack | React + Vite + Express.js + SQLite + Cornerstone.js (Dark HUD) |
+| Tests | Jest suite + load tests |
+| CI/CD | ❌ Not yet (next up) |
+| URL | radcase.kit-apps.dev |
+| Service | `radcase` |
 
 ---
 
-## Phase 2: AI Case Builder Pipeline
+## Phase 1: Foundation ✅ COMPLETE
 
-### Content Pipeline
-- [ ] Build DICOM metadata + report parser
-- [ ] Create AI case generation service (report → structured teaching case)
-- [ ] Implement reference enrichment (Radiopaedia, ACR guidelines, peer-reviewed journals)
-- [ ] Add reference quality scoring (Gold/Silver/Bronze/Unverified tiers)
-- [ ] Build admin review workflow (section-by-section approve/edit/reject)
-- [ ] Generate board-level content for residents
-- [ ] Generate simplified versions for medical students
-- [ ] Auto-generate differential diagnosis lists with reasoning
-- [ ] Auto-generate key findings annotations
-- [ ] Auto-generate MCQ questions at multiple difficulty levels
-- [ ] Auto-generate teaching pearls
+*Core platform with DICOM viewer, quiz mode, spaced repetition.*
 
-### Admin Interface
-- [ ] Case builder wizard: upload DICOM + paste report → AI generates → review → publish
-- [ ] Bulk case import workflow
-- [ ] Content quality dashboard (reference scores, review status)
-- [ ] Case template management
+- [x] Case library with DICOM viewer (Cornerstone.js)
+- [x] Quiz mode with spaced repetition (SM-2 algorithm)
+- [x] Micro-learning sessions (5-minute optimal)
+- [x] Presentation mode
+- [x] Sprint 1: Mobile responsive, accessibility, ARIA labels, keyboard nav
+- [x] Sprint 2: Advanced mobile UX, PWA (offline/installable), touch annotations
+- [x] Sprint 3: React migration + Vite build system
+- [x] Security hardening (JWT, file upload validation, directory traversal protection)
+- [x] Performance infrastructure (caching, compression, monitoring)
 
-### AI Architecture
-- [ ] Configurable AI provider (Claude, GPT-4, local models)
-- [ ] RAG pipeline for medical reference enrichment
-- [ ] Prompt engineering for consistent case generation
-- [ ] Content validation layer (medical accuracy checks)
-- [ ] API key encryption in database
+## Phase 2: AI Case Builder Pipeline ✅ COMPLETE
 
----
+*AI transforms raw clinical materials into board-level teaching cases.*
 
-## Phase 3: AI Tutor Integration
+- [x] DICOM metadata + report parser
+- [x] AI case generation service (report → structured teaching case)
+- [x] Reference enrichment (Radiopaedia, ACR guidelines, peer-reviewed journals)
+- [x] Reference quality scoring (Gold/Silver/Bronze/Unverified tiers)
+- [x] Admin review workflow (section-by-section approve/edit/reject)
+- [x] Board-level content for residents + simplified for medical students
+- [x] Auto-generated differentials, key findings, MCQs, teaching pearls
 
-### Socratic Questioning
-- [ ] AI tutor in study mode: asks probing questions during progressive reveal
-- [ ] Adapts questioning style to trainee level
-- [ ] Explains WHY a differential is right/wrong based on specific imaging findings
-- [ ] "Look here" hints with image region references
+## Phase 3: AI Tutor Integration ✅ COMPLETE
 
-### Weakness Detection & Deliberate Practice
-- [ ] Analyze error patterns across all quiz/study attempts
-- [ ] Identify specific weakness patterns (not just "neuro is weak" but "misses posterior fossa findings on CT")
-- [ ] Generate personalized practice recommendations
-- [ ] Create deliberate practice sessions targeting specific weaknesses
-- [ ] "Satisfaction of search" exercises (cases with multiple findings)
+*Socratic questioning, weakness detection, personalized practice.*
 
-### AI Report Feedback
-- [ ] Resident writes structured report for a case
-- [ ] AI compares to attending's finalized report
-- [ ] Highlights missed findings, overcalls, organization issues
-- [ ] Tracks reporting improvement over time
+- [x] AI tutor in study mode (Socratic probing during progressive reveal)
+- [x] Adaptive questioning style based on trainee level
+- [x] Weakness detection & deliberate practice recommendations
+- [x] AI report feedback (compare resident report to attending's)
+- [x] Natural language case search (embeddings-based retrieval)
 
-### Natural Language Case Search
-- [ ] Embeddings-based case retrieval
-- [ ] "Show me a subtle pneumothorax in a young patient"
-- [ ] Filter by clinical scenario, not just metadata
+## Phase 4: Oral Board Simulator ✅ COMPLETE
 
----
+*Full ABR oral board simulation with voice I/O.*
 
-## Phase 4: Oral Board Simulator
+- [x] AI examiner engine (ABR style: systematic approach expected)
+- [x] Speech-to-text via Web Speech API / Whisper
+- [x] Text-to-speech for AI examiner voice
+- [x] Real-time Socratic dialogue
+- [x] Session transcript + performance scoring
+- [x] Practice modes: timed, practice, review
 
-### Core Experience
-- [ ] Oral board prep mode: AI presents case, resident speaks response
-- [ ] Speech-to-text via Web Speech API or Whisper
-- [ ] Text-to-speech for AI examiner voice
-- [ ] Real-time Socratic dialogue (start broad, probe deeper on weak areas)
-- [ ] ABR exam format: systematic approach expected
+## Phase 5: Institutional Features ✅ COMPLETE
 
-### AI Examiner
-- [ ] System prompt engineered to simulate ABR examiner style
-- [ ] Grounded in vetted, admin-approved case content (RAG)
-- [ ] Probes weaknesses, redirects off-track candidates
-- [ ] Evaluates accuracy, completeness, and presentation style
+*ACGME milestones, program director dashboard, multi-institution.*
 
-### Session Management
-- [ ] Full transcript saved for review
-- [ ] AI annotations: strong points, weak points, missed findings
-- [ ] Performance scoring rubric aligned with ABR expectations
-- [ ] Session replay with annotated timeline
-- [ ] Progress tracking across oral board prep sessions
+- [x] ACGME milestone mapping (16 ABR diagnostic radiology domains)
+- [x] Resident progress visualization per domain (Level 1-5)
+- [x] Program director dashboard (cohort overview + individual deep-dive)
+- [x] Milestone progress reports (exportable for ACGME review)
+- [x] CME/CPD credit tracking integration
+- [x] Multi-institution support
 
-### Practice Modes
-- [ ] Timed mode (simulates real exam pressure)
-- [ ] Practice mode (unlimited time, more hints)
-- [ ] Review mode (replay past sessions with coaching notes)
+## Phase 6: Content & Polish ◀ CURRENT
 
----
+*The features are built. Now fill it with real cases and harden for production.*
 
-## Phase 5: Institutional Features & Milestone Tracking
+**Target: Q1-Q2 2026 (Mar-May)**
 
-### ACGME Milestone Mapping
-- [ ] Map all 16 ABR diagnostic radiology domains
-- [ ] Every case, quiz, and learning activity tagged to milestones
-- [ ] Resident progress visualization per domain (Level 1-5)
-- [ ] Gap identification: which milestones need more cases
-- [ ] Rotation-aware study plans (adjust to current clinical rotation)
+- [ ] **CI/CD pipeline** — GitHub Actions (follow IHQ v5 pattern)
+  - Owner: Claude Code
+- [ ] **De-identified DICOM teaching cases** — populate the case library
+  - Owner: Raj (source cases) + Kit (coordinate de-identification)
+  - ⚠️ BLOCKER: Need de-identified clinical DICOM studies
+- [ ] **ACGME milestone validation** — verify mapping with program directors
+  - Owner: Raj
+- [ ] **Content quality pass** — review all AI-generated content for medical accuracy
+  - Owner: Raj
+- [ ] **PostgreSQL migration** — follow IHQ v5 pattern for production scale
+  - Owner: Claude Code
+  - Note: Currently SQLite, works fine for now
+- [ ] **Production hardening** — error monitoring, logging, backup strategy
+  - Owner: Claude Code
+- [ ] **User acceptance testing** — get 2-3 residents to test and provide feedback
+  - Owner: Raj
 
-### Program Director Dashboard
-- [ ] Cohort overview: all residents at a glance
-- [ ] Individual resident deep-dive: strengths, weaknesses, trajectory
-- [ ] Milestone progress reports (exportable for ACGME review)
-- [ ] Identify at-risk residents early
-- [ ] Compare cohort performance to national benchmarks
+## Phase 7: Growth
 
-### Institutional Features
-- [ ] Multi-institution support
-- [ ] Program-specific case libraries
-- [ ] Shared curated collections across programs
-- [ ] Anonymous peer comparison within cohort
-- [ ] CME/CPD credit tracking integration
+*Scale to other programs, integrate with RadIntel.*
+
+**Target: Q3-Q4 2026**
+
+- [ ] RadIntel integration — auto-generate teaching files from interesting reports
+- [ ] PACS integration — pull cases directly from Agfa EI
+- [ ] Collaborative annotations — multiple users on same case
+- [ ] Analytics dashboard — study patterns, knowledge gaps, cohort benchmarks
+- [ ] National benchmarking — compare program performance
 
 ---
 
-## Technical Architecture Notes
+## Dependencies
 
-### AI Roles & Architecture
-| Role | Model Tier | Context Source | Risk Mitigation |
-|------|-----------|---------------|----------------|
-| Content Creator | Large (Opus/GPT-4) | DICOM + report + web search | Admin review gate |
-| Tutor/Coach | Medium (Sonnet) | Approved case data + conversation | Grounded in vetted content |
-| Examiner/Evaluator | Large (Opus/GPT-4) | Case data + ABR guidelines + rubric | Scoring validated against known answers |
-
-### Reference Quality Scoring
-| Tier | Source Type | Score |
-|------|-----------|-------|
-| Gold | Peer-reviewed journals (Radiology, AJR, RadioGraphics), ACR Criteria | 5/5 |
-| Silver | Radiopaedia (peer-reviewed), STATdx, UpToDate | 4/5 |
-| Bronze | Textbooks, society guidelines | 3/5 |
-| Unverified | AI-synthesized without specific source | 1/5 |
-
-### Content Pipeline Flow
-```
-Admin uploads DICOM + finalized report
-         |
-AI parses report (findings, impression, clinical history)
-         |
-AI extracts key teaching points from images + report
-         |
-AI enriches with external sources (with reference quality scores)
-         |
-AI generates: board-level case, student version, differentials,
-              key findings annotations, MCQs, teaching pearls
-         |
-Admin reviews section-by-section, approves/edits/rejects
-         |
-Published to library
-```
+| Dependency | Blocks | Status |
+|-----------|--------|--------|
+| De-identified DICOM cases | Phase 6 content | ⬜ Raj to source |
+| Program director feedback | ACGME validation | ⬜ Raj to coordinate |
+| De-identification pipeline | Real case import | ⬜ Shared with RadIntel |
+| Agfa EI 8.4 API | PACS integration | 🔄 March upgrade |
 
 ---
 
-## Current Status
+## Key Files
 
-- **Phase 1:** COMPLETE — Foundation hardened (security, UX, CSS design system, code quality)
-- **Phase 2:** COMPLETE — AI Case Builder pipeline (report parsing, reference enrichment, admin review)
-- **Phase 3:** COMPLETE — AI Tutor integration (Socratic chat, weakness coaching, study mode hooks)
-- **Phase 4:** COMPLETE — Oral Board Simulator (ABR examiner engine, voice I/O, session review)
-- **Phase 5:** COMPLETE — Institutional features (ACGME milestones, program dashboard, CME tracking)
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | Architecture & sprint context |
+| `STATUS.md` | Current state snapshot |
+| `ROADMAP.md` | This file |
+| `DESIGN-SYSTEM.md` | UI component library docs |
+| `docs/` | Sprint plans, coordination, research |
+
+---
+
+*Created: Feb 2026 | Last updated: Feb 27, 2026*
